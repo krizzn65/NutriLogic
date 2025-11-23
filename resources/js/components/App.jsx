@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LandingPage from './LandingPage';
 import AuthSwitch from './auth/AuthSwitch';
-import Dashboard from './Dashboard';
+import PageUtama from './PageUtama';
 import ForgotPassword from './auth/ForgotPassword';
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthSwitch />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/dashboard/*" element={<Dashboard />} />
+                <Route path="/dashboard/*" element={<PageUtama />} />
             </Routes>
         </div>
         
