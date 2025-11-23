@@ -6,11 +6,16 @@ use App\Models\Child;
 use App\Models\Consultation;
 use App\Models\ConsultationMessage;
 use App\Models\User;
+use App\Services\PointsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ParentConsultationController extends Controller
 {
+    public function __construct(
+        private PointsService $pointsService
+    ) {
+    }
     /**
      * Get list of consultations for parent (ibu)
      */
@@ -242,6 +247,11 @@ class ParentConsultationController extends Controller
 
         // Update consultation updated_at
         $consultation->touch();
+
+        // Add points and check badges for ibu role only
+        if ($user->isIbu()) {
+            $this->pointsService->addPoints($user, 3, 'consultation_message');
+        }
 
         $message->load('sender');
 

@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\PointsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private PointsService $pointsService
+    ) {
+    }
     /**
      * Register a new user.
      * 
@@ -68,6 +73,11 @@ class AuthController extends Controller
 
         // Generate Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Add points and check badges for login (only for ibu role)
+        if ($user->isIbu()) {
+            $this->pointsService->checkBadgesAfterActivity($user, 'login');
+        }
 
         return response()->json([
             'user' => $user,

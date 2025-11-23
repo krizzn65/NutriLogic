@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Child;
 use App\Models\WeighingLog;
+use App\Services\PointsService;
 use App\Services\ZScoreService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -12,10 +13,12 @@ use Illuminate\Http\Request;
 class WeighingLogController extends Controller
 {
     protected ZScoreService $zScoreService;
+    protected PointsService $pointsService;
 
-    public function __construct(ZScoreService $zScoreService)
+    public function __construct(ZScoreService $zScoreService, PointsService $pointsService)
     {
         $this->zScoreService = $zScoreService;
+        $this->pointsService = $pointsService;
     }
 
     /**
@@ -159,6 +162,11 @@ class WeighingLogController extends Controller
             'is_posyandu_day' => $validated['is_posyandu_day'] ?? true,
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        // Add points and check badges for ibu role only
+        if ($user->isIbu()) {
+            $this->pointsService->addPoints($user, 10, 'weighing_log');
+        }
 
         return response()->json([
             'data' => $log->load('child'),

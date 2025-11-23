@@ -8,6 +8,7 @@ import NutriAssistPage from "./konten/NutriAssistPage";
 import ConsultationList from "./konten/ConsultationList";
 import ConsultationDetail from "./konten/ConsultationDetail";
 import CreateConsultation from "./konten/CreateConsultation";
+import PointsAndBadgesPage from "./konten/PointsAndBadgesPage";
 
 export default function OrangTua() {
   return (
@@ -22,7 +23,7 @@ export default function OrangTua() {
           <Route path="konsultasi" element={<ConsultationList />} />
           <Route path="konsultasi/new" element={<CreateConsultation />} />
           <Route path="konsultasi/:id" element={<ConsultationDetail />} />
-          <Route path="gamification" element={<GamificationPage />} />
+          <Route path="gamification" element={<PointsAndBadgesPage />} />
           <Route path="riwayat" element={<RiwayatPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
@@ -55,11 +56,3 @@ const SettingsPage = () => (
 
 
 
-const GamificationPage = () => (
-  <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-    <h1 className="text-3xl font-bold text-gray-800">Poin & Badge</h1>
-    <p className="text-gray-600 mt-2">
-      Lihat poin dan badge yang telah Anda dapatkan dari aktivitas rutin update data, membaca artikel edukasi, dan patuh jadwal posyandu.
-    </p>
-  </div>
-);

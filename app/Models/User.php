@@ -27,6 +27,7 @@ class User extends Authenticatable
         'password',
         'role',
         'posyandu_id',
+        'points',
     ];
 
     /**
@@ -49,6 +50,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'points' => 'integer',
         ];
     }
 
@@ -100,5 +102,18 @@ class User extends Authenticatable
     public function consultationMessages(): HasMany
     {
         return $this->hasMany(ConsultationMessage::class, 'sender_id');
+    }
+
+    public function badges(): HasMany
+    {
+        return $this->hasMany(UserBadge::class);
+    }
+
+    /**
+     * Check if user has a specific badge
+     */
+    public function hasBadge(string $badgeCode): bool
+    {
+        return $this->badges()->where('badge_code', $badgeCode)->exists();
     }
 }

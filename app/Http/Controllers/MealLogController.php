@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Child;
 use App\Models\MealLog;
+use App\Services\PointsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MealLogController extends Controller
 {
+    public function __construct(
+        private PointsService $pointsService
+    ) {
+    }
     /**
      * Get meal logs for a child
      */
@@ -99,6 +104,11 @@ class MealLogController extends Controller
         }
 
         $log = MealLog::create($validated);
+
+        // Add points and check badges for ibu role only
+        if ($user->isIbu()) {
+            $this->pointsService->addPoints($user, 5, 'meal_log');
+        }
 
         return response()->json([
             'data' => $log->load('child'),
