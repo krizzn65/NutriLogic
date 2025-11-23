@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 
 // --- Data for the image accordion ---
 const accordionItems = [
@@ -30,7 +31,7 @@ const accordionItems = [
 ];
 
 // --- Accordion Card Component (Redesigned) ---
-const AccordionCard = ({ item, isActive, onMouseEnter }) => {
+const AccordionCard = ({ item, isActive, onMouseEnter, index, isVisible }) => {
   return (
     <div
       className={`
@@ -38,15 +39,17 @@ const AccordionCard = ({ item, isActive, onMouseEnter }) => {
         transition-all duration-700 ease-in-out
         h-[300px] sm:h-[400px] md:h-[500px] lg:h-[650px]
         rounded-2xl shadow-lg
+        ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}
         ${isActive ? 'w-[200px] sm:w-[300px] md:w-[400px] lg:w-[600px]' : 'w-[50px] sm:w-[60px] md:w-[80px] lg:w-[100px]'}
       `}
-      onMouseEnter={onMouseEnter}
       style={{
         backgroundImage: `url(${item.imageUrl})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        animationDelay: `${index * 150}ms`,
       }}
+      onMouseEnter={onMouseEnter}
     >
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
@@ -75,28 +78,28 @@ const AccordionCard = ({ item, isActive, onMouseEnter }) => {
 // --- Main AboutUs Component ---
 const AboutUs = () => {
   const [activeIndex, setActiveIndex] = useState(4);
+  const [sectionRef, isVisible] = useIntersectionObserver({ threshold: 0.1 });
 
   const handleItemHover = (index) => {
     setActiveIndex(index);
   };
 
   return (
-    <div className="bg-white font-montserrat min-h-screen flex items-center w-full" id="About">
-      <section className="w-full px-4 sm:px-8 md:px-12 lg:px-20 xl:px-32 py-12 sm:py-16 md:py-20 lg:py-24">
+    <div className="font-montserrat min-h-screen flex items-center w-full" style={{ backgroundColor: '#F3F4F6' }} id="About">
+      <section ref={sectionRef} className="w-full px-4 sm:px-8 md:px-12 lg:px-20 xl:px-32 py-12 sm:py-16 md:py-20 lg:py-24">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-12 md:gap-16 lg:gap-20 w-full">
           
           {/* Left Side: Text Content */}
           <div className="w-full lg:w-[45%] text-center lg:text-left">
-            <h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-gray-900 leading-tight tracking-tighter">
+            <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-gray-900 leading-tight tracking-tighter ${isVisible ? 'animate-fade-in-left delay-100' : 'opacity-0'}`}>
               About NutriLogic
             </h1>
-            <p className="mt-6 sm:mt-8 md:mt-10 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed">
+            <p className={`mt-6 sm:mt-8 md:mt-10 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed ${isVisible ? 'animate-fade-in-left delay-300' : 'opacity-0'}`}>
               NutriLogic hadir sebagai solusi digital terintegrasi untuk optimalisasi pemantauan status gizi anak dan kinerja Posyandu.
              Secara khusus, platform ini dirancang untuk mendukung ekosistem kesehatan di Desa Kaliwining, 
               bersinergi langsung dengan 21 Posyandu setempat.
             </p>
-            <p className="mt-4 sm:mt-6 md:mt-8 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed">
+            <p className={`mt-4 sm:mt-6 md:mt-8 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed ${isVisible ? 'animate-fade-in-left delay-500' : 'opacity-0'}`}>
               Kami berkomitmen menjadikan teknologi sebagai jembatan untuk menciptakan generasi yang lebih sehat melalui data yang akurat, pemantauan real-time, dan kemudahan akses bagi para kader maupun orang tua.
             </p>
           </div>
@@ -108,7 +111,9 @@ const AboutUs = () => {
                 <AccordionCard
                   key={item.id}
                   item={item}
+                  index={index}
                   isActive={index === activeIndex}
+                  isVisible={isVisible}
                   onMouseEnter={() => handleItemHover(index)} />
               ))}
             </div>

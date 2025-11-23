@@ -1,10 +1,34 @@
 import React from 'react'
 import { AdvancedMap } from '../interactive-map'
 import { ActivityChartCard } from '../activity-chart-card'
-import { HyperText } from '../ui/hyper-text'
 import { cn } from "@/lib/utils"
+import { Icon } from '@iconify/react'
 
 const Problem = () => {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const sectionRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
 
   const stuntingData = [
     {
@@ -172,23 +196,47 @@ const Problem = () => {
   ]
 
   return (
-    <div className='pb-16 pt-28 font-montserrat' id='Problem'>
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <HyperText 
-            text="DATA STUNTING" 
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-black inline-block"
-            duration={1000}
-            animateOnLoad={true}
-          />
+    <div ref={sectionRef} className='pb-16 pt-20 font-montserrat' style={{ backgroundColor: '#F3F4F6' }} id='Problem'>
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
+      <div className="w-full px-6 md:px-8 lg:px-12 xl:px-16">
+        {/* Header */}
+        <div className={`mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
+            Data Stunting
+          </h2>
+          <div className="flex items-center gap-2 text-gray-500">
+            <Icon icon="mdi:layers-outline" className="w-5 h-5" />
+            <span className="text-sm md:text-base font-medium uppercase tracking-wide">Ringkasan Wilayah</span>
+          </div>
         </div>
         
-        <div className="flex flex-col lg:flex-row gap-6 mb-12 justify-center items-center">
+        {/* Chart Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6 mb-8">
           {stuntingData.map((stat, index) => (
-            <div key={index} className="w-full flex justify-center lg:flex-1 max-w-md">
+            <div 
+              key={index} 
+              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} 
+              style={{ animationDelay: `${200 + index * 100}ms` }}
+            >
               <ActivityChartCard
                 title={stat.title}
-                totalValue={stat.value + (stat.suffix || '')}
+                totalValue={stat.value}
                 data={stat.chartData}
                 className="bg-white h-full w-full"
                 description={stat.description}
@@ -197,25 +245,76 @@ const Problem = () => {
           ))}
         </div>
 
-        <div className="mb-6">
-          <p className="text-sm md:text-base lg:text-lg text-gray-500 max-w-3xl mx-auto leading-relaxed text-center">
-            Peta interaktif menampilkan wilayah Kecamatan Rambipuji, Kabupaten Jember dengan data stunting terkini. 
-            Klik pada area merah untuk melihat informasi detail tentang kondisi stunting di wilayah ini.
-          </p>
+        {/* Info Text with Icon */}
+        <div className={`mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '600ms' }}>
+          <div className="flex items-start gap-3 text-gray-600">
+            <Icon icon="mdi:information-outline" className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <p className="text-sm md:text-base leading-relaxed">
+              Peta Interaktif Menampilkan Wilayah Kecamatan Rambipuji, Kabupaten Jember Dengan Data Stunting Terkini.
+            </p>
+          </div>
         </div>
         
-        <div className='w-full h-[600px] overflow-hidden rounded-2xl shadow-2xl bg-gray-100'>
-          <AdvancedMap
-            center={[-8.1986, 113.6286]}
-            zoom={12}
-            markers={[]}
-            polygons={rambipujiPolygon}
-            enableClustering={false}
-            enableSearch={false}
-            enableControls={true}
-            onMapClick={() => {}}
-            style={{ height: '100%', width: '100%' }}
-          />
+        {/* Map and CTA Section */}
+        <div className={`flex flex-col lg:flex-row gap-6 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '700ms' }}>
+          {/* Map - 60% */}
+          <div 
+            className="w-full lg:w-[60%] h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative"
+            onWheel={(e) => e.stopPropagation()}
+          >
+            <style>{`
+              .leaflet-container {
+                cursor: default !important;
+              }
+              .leaflet-grab {
+                cursor: default !important;
+              }
+              .leaflet-dragging .leaflet-grab {
+                cursor: default !important;
+              }
+              /* Popup tetap bisa diklik */
+              .leaflet-popup {
+                z-index: 1001 !important;
+              }
+            `}</style>
+            <AdvancedMap
+              center={[-8.1986, 113.6286]}
+              zoom={11}
+              markers={[]}
+              polygons={rambipujiPolygon}
+              enableClustering={false}
+              enableSearch={false}
+              enableControls={false}
+              scrollWheelZoom={false}
+              dragging={false}
+              doubleClickZoom={false}
+              touchZoom={false}
+              zoomControl={false}
+              boxZoom={false}
+              keyboard={false}
+              tap={false}
+              trackResize={false}
+              onMapClick={() => {}}
+              style={{ height: '100%', width: '100%' }}
+            />
+          </div>
+
+          {/* CTA Box - 40% */}
+          <div className="w-full lg:w-[40%] bg-white rounded-2xl shadow-lg p-8 md:p-10 flex flex-col justify-center">
+            <div className="text-center lg:text-left">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-6">
+                ISI DENGAN SOLUSI KAMI<br />
+                ISI NYA TENTANG NUTRILOGIC
+              </h3>
+              <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-8">
+                Platform digital terintegrasi untuk monitoring dan pencegahan stunting di Kecamatan Rambipuji dengan data real-time dan analisis mendalam.
+              </p>
+              <button className="w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+                <span>Pelajari Lebih Lanjut</span>
+                <Icon icon="mdi:arrow-right" className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
