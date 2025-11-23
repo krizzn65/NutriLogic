@@ -10,6 +10,8 @@ use App\Http\Controllers\ParentConsultationController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\ParentHistoryController;
 use App\Http\Controllers\ParentPointsController;
+use App\Http\Controllers\ParentProfileController;
+use App\Http\Controllers\ParentSettingsController;
 use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\WeighingLogController;
 use Illuminate\Support\Facades\Route;
@@ -93,17 +95,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/children', [ParentDashboardController::class, 'children']);
         Route::get('/children/{id}', [ParentDashboardController::class, 'showChild']);
         Route::post('/children/{id}/nutri-assist', [ParentDashboardController::class, 'nutriAssist']);
-        
+
         // Parent consultation routes
         Route::get('/consultations', [ParentConsultationController::class, 'index']);
         Route::post('/consultations', [ParentConsultationController::class, 'store']);
         Route::get('/consultations/{id}', [ParentConsultationController::class, 'show']);
         Route::post('/consultations/{id}/messages', [ParentConsultationController::class, 'sendMessage']);
-        
+
         // Parent points & badges routes
         Route::get('/points', [ParentPointsController::class, 'index']);
-        
+
         // Parent history routes
         Route::get('/history', [ParentHistoryController::class, 'index']);
+
+        // Parent settings routes
+        Route::get('/settings', [ParentSettingsController::class, 'index']);
+        Route::put('/settings', [ParentSettingsController::class, 'update']);
+
+        // Parent profile routes
+        Route::put('/profile', [ParentProfileController::class, 'update']);
+        Route::put('/profile/password', [ParentProfileController::class, 'updatePassword']);
     });
 });

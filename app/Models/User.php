@@ -28,6 +28,7 @@ class User extends Authenticatable
         'role',
         'posyandu_id',
         'points',
+        'notification_channel',
     ];
 
     /**
