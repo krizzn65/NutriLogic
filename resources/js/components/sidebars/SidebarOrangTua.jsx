@@ -7,6 +7,9 @@ import {
   FileText,
   Baby,
   LogOut,
+  UtensilsCrossed,
+  MessageCircle,
+  Award,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
@@ -32,10 +35,24 @@ export default function SidebarOrangTua() {
       ),
     },
     {
-      label: "Profil",
-      href: "/dashboard/profile",
+      label: "Nutri-Assist",
+      href: "/dashboard/nutri-assist",
       icon: (
-        <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+        <UtensilsCrossed className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Konsultasi",
+      href: "/dashboard/konsultasi",
+      icon: (
+        <MessageCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Poin & Badge",
+      href: "/dashboard/gamification",
+      icon: (
+        <Award className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
@@ -43,6 +60,13 @@ export default function SidebarOrangTua() {
       href: "/dashboard/riwayat",
       icon: (
         <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Profil",
+      href: "/dashboard/profile",
+      icon: (
+        <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {

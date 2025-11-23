@@ -6,6 +6,7 @@ use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ImmunizationScheduleController;
 use App\Http\Controllers\MealLogController;
 use App\Http\Controllers\NutriAssistController;
+use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\WeighingLogController;
 use Illuminate\Support\Facades\Route;
@@ -81,5 +82,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Nutri-Assist routes
     Route::prefix('nutri-assist')->group(function () {
         Route::post('/recommend', [NutriAssistController::class, 'recommend']);
+    });
+
+    // Parent dashboard routes
+    Route::prefix('parent')->group(function () {
+        Route::get('/dashboard', [ParentDashboardController::class, 'dashboard']);
+        Route::get('/children', [ParentDashboardController::class, 'children']);
+        Route::get('/children/{id}', [ParentDashboardController::class, 'showChild']);
     });
 });
