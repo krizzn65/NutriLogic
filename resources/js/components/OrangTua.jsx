@@ -4,6 +4,7 @@ import SidebarOrangTua from "./sidebars/SidebarOrangTua";
 import DashboardOrangTuaContent from "./konten/DashboardOrangTua";
 import DataAnakList from "./konten/DataAnakList";
 import DataAnakDetail from "./konten/DataAnakDetail";
+import NutriAssistPage from "./konten/NutriAssistPage";
 
 export default function OrangTua() {
   return (
@@ -47,14 +48,6 @@ const SettingsPage = () => (
   </div>
 );
 
-const NutriAssistPage = () => (
-  <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-    <h1 className="text-3xl font-bold text-gray-800">Nutri-Assist</h1>
-    <p className="text-gray-600 mt-2">
-      Input bahan makanan yang ada di rumah untuk mendapatkan rekomendasi menu MPASI yang sesuai gizi anak.
-    </p>
-  </div>
-);
 
 const KonsultasiPage = () => (
   <div className="p-4 md:p-10 w-full h-full bg-gray-50">

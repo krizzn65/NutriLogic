@@ -89,5 +89,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [ParentDashboardController::class, 'dashboard']);
         Route::get('/children', [ParentDashboardController::class, 'children']);
         Route::get('/children/{id}', [ParentDashboardController::class, 'showChild']);
+        Route::post('/children/{id}/nutri-assist', [ParentDashboardController::class, 'nutriAssist']);
     });
 });

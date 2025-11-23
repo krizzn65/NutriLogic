@@ -3,12 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Child;
+use App\Services\NutritionService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ParentDashboardController extends Controller
 {
+    protected NutritionService $nutritionService;
+
+    public function __construct(NutritionService $nutritionService)
+    {
+        $this->nutritionService = $nutritionService;
+    }
     /**
      * Get dashboard data for parent (ibu)
      * 
@@ -273,6 +280,72 @@ class ParentDashboardController extends Controller
                 'weighing_logs' => $weighingLogs,
                 'meal_logs' => $mealLogs,
                 'immunization_schedules' => $immunizationSchedules,
+            ],
+        ], 200);
+    }
+
+    /**
+     * Get menu recommendations for a child based on available ingredients
+     * 
+     * TODO: Integrate with AI/n8n for advanced recommendations in future version
+     */
+    public function nutriAssist(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+
+        // Authorization: only for ibu role
+        if (!$user->isIbu()) {
+            return response()->json([
+                'message' => 'Unauthorized. This endpoint is only for parents.',
+            ], 403);
+        }
+
+        // Get child and verify ownership
+        $child = Child::find($id);
+
+        if (!$child) {
+            return response()->json([
+                'message' => 'Child not found.',
+            ], 404);
+        }
+
+        // Authorization: check if child belongs to this parent
+        if ($child->parent_id !== $user->id) {
+            return response()->json([
+                'message' => 'Unauthorized. You can only get recommendations for your own children.',
+            ], 403);
+        }
+
+        // Validate input
+        $validated = $request->validate([
+            'ingredients' => ['required', 'array', 'min:1'],
+            'ingredients.*' => ['required', 'string'],
+            'date' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        // Calculate child age
+        $ageInMonths = $child->birth_date->diffInMonths(now());
+
+        // Get recommendations using NutritionService
+        // TODO: Integrate with AI/n8n for advanced recommendations in future version
+        $recommendations = $this->nutritionService->getRecommendations(
+            $child->id,
+            $validated['ingredients'],
+            $ageInMonths
+        );
+
+        return response()->json([
+            'data' => [
+                'child' => [
+                    'id' => $child->id,
+                    'full_name' => $child->full_name,
+                    'age_in_months' => $ageInMonths,
+                ],
+                'recommendations' => $recommendations,
+                'ingredients_submitted' => $validated['ingredients'],
+                'date' => $validated['date'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ],
         ], 200);
     }
