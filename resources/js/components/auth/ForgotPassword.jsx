@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 
 export default function ForgotPassword() {
@@ -33,14 +34,21 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="forgot-password-page" style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #FFFFFFFF 0%, #FFFFFFFF 100%)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+    <motion.div 
+      className="forgot-password-page" 
+      style={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #FFFFFFFF 0%, #FFFFFFFF 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       padding: '20px'
-    }}>
+    }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
@@ -345,6 +353,6 @@ export default function ForgotPassword() {
           onCancel={handleCancel}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
