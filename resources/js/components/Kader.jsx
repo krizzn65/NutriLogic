@@ -22,7 +22,7 @@ export default function Kader() {
   );
 }
 
-// Placeholder pages - akan diganti dengan komponen sebenarnya nanti
+
 const DataAnakPage = () => (
   <div className="p-4 md:p-10 w-full h-full bg-gray-50">
     <h1 className="text-3xl font-bold text-gray-800">Data Anak</h1>

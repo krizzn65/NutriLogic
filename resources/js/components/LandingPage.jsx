@@ -8,7 +8,7 @@ import Footer from './landing-page/Footer'
 
 const LandingPage = () => {
   return (
-    <div className='w-full overflow-hidden'>
+    <div className='w-full min-h-screen'>
       <Header />
       <Problem />
       <Fitur />
