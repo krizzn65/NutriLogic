@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
+import GenericListSkeleton from "../loading/GenericListSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function DataAnakList() {
   const [loading, setLoading] = useState(true);
@@ -10,6 +12,7 @@ export default function DataAnakList() {
   const [successMessage, setSuccessMessage] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { getCachedData, setCachedData, invalidateCache } = useDataCache();
 
   useEffect(() => {
     fetchChildren();
@@ -24,6 +27,10 @@ export default function DataAnakList() {
       setTimeout(() => {
         setSuccessMessage(null);
       }, 5000);
+
+      // Invalidate cache when coming back with success message (data was modified)
+      invalidateCache('children');
+      invalidateCache('dashboard');
     }
   }, [location]);
 
@@ -32,8 +39,19 @@ export default function DataAnakList() {
       setLoading(true);
       setError(null);
 
+      // Check cache first
+      const cachedData = getCachedData('children');
+      if (cachedData) {
+        setChildren(cachedData);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const response = await api.get('/parent/children');
-      setChildren(response.data.data);
+      const data = response.data.data;
+      setChildren(data);
+      setCachedData('children', data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
       setError(errorMessage);
@@ -45,18 +63,7 @@ export default function DataAnakList() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data anak...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GenericListSkeleton itemCount={6} />;
   }
 
   // Error state

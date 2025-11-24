@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Icon } from '@iconify/react'
 import Navbar from './Navbar'
 import { assets } from '../../assets/assets'
 
@@ -209,9 +210,7 @@ const Header = () => {
               {/* Stat 4 */}
               <div className='text-center text-white'>
                 <div className='flex justify-center mb-2'>
-                  <svg className='w-10 h-10 md:w-12 md:h-12' fill='currentColor' viewBox='0 0 24 24'>
-                    <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' />
-                  </svg>
+                  <Icon icon="bxs:chart" className='w-10 h-10 md:w-12 md:h-12' />
                 </div>
                 <p className='font-poppins text-sm md:text-base font-medium opacity-90'>Monitoring</p>
               </div>

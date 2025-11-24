@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { getUser } from "../../lib/auth";
 import { getStatusColor, getStatusLabel, formatAge } from "../../lib/utils";
+import DashboardOrangTuaSkeleton from "../loading/DashboardOrangTuaSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function DashboardOrangTuaContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const { getCachedData, setCachedData } = useDataCache();
 
   useEffect(() => {
     fetchDashboard();
@@ -16,9 +19,20 @@ export default function DashboardOrangTuaContent() {
     try {
       setLoading(true);
       setError(null);
-      
+
+      // Check cache first
+      const cachedData = getCachedData('dashboard');
+      if (cachedData) {
+        setDashboardData(cachedData);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const response = await api.get('/parent/dashboard');
-      setDashboardData(response.data.data);
+      const data = response.data.data;
+      setDashboardData(data);
+      setCachedData('dashboard', data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data dashboard. Silakan coba lagi.';
       setError(errorMessage);
@@ -30,18 +44,7 @@ export default function DashboardOrangTuaContent() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <DashboardOrangTuaSkeleton />;
   }
 
   // Error state
@@ -103,22 +106,19 @@ export default function DashboardOrangTuaContent() {
             <p className="text-2xl font-bold text-gray-800 mt-1">{summary.total_children}</p>
           </div>
 
-          <div className={`bg-white rounded-lg p-6 shadow-sm border ${
-            summary.at_risk_count > 0 
-              ? 'border-yellow-300 bg-yellow-50' 
-              : 'border-gray-200'
-          }`}>
-            <div className={`w-12 h-12 rounded-lg mb-4 flex items-center justify-center ${
-              summary.at_risk_count > 0 ? 'bg-yellow-500' : 'bg-green-500'
+          <div className={`bg-white rounded-lg p-6 shadow-sm border ${summary.at_risk_count > 0
+            ? 'border-yellow-300 bg-yellow-50'
+            : 'border-gray-200'
             }`}>
+            <div className={`w-12 h-12 rounded-lg mb-4 flex items-center justify-center ${summary.at_risk_count > 0 ? 'bg-yellow-500' : 'bg-green-500'
+              }`}>
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <h3 className="text-gray-600 text-sm font-medium">Anak Berisiko</h3>
-            <p className={`text-2xl font-bold mt-1 ${
-              summary.at_risk_count > 0 ? 'text-yellow-800' : 'text-gray-800'
-            }`}>
+            <p className={`text-2xl font-bold mt-1 ${summary.at_risk_count > 0 ? 'text-yellow-800' : 'text-gray-800'
+              }`}>
               {summary.at_risk_count}
             </p>
             {summary.at_risk_count > 0 && (
@@ -154,15 +154,14 @@ export default function DashboardOrangTuaContent() {
               {children.map((child) => {
                 const status = child.latest_nutritional_status;
                 const isAtRisk = status.is_at_risk;
-                
+
                 return (
                   <div
                     key={child.id}
-                    className={`bg-white rounded-lg p-6 shadow-sm border ${
-                      isAtRisk 
-                        ? 'border-yellow-300 bg-yellow-50' 
-                        : 'border-gray-200'
-                    }`}
+                    className={`bg-white rounded-lg p-6 shadow-sm border ${isAtRisk
+                      ? 'border-yellow-300 bg-yellow-50'
+                      : 'border-gray-200'
+                      }`}
                   >
                     {isAtRisk && (
                       <div className="mb-3 flex items-center gap-2">
@@ -172,7 +171,7 @@ export default function DashboardOrangTuaContent() {
                         <span className="text-sm font-medium text-yellow-800">Perlu Perhatian</span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-800">{child.full_name}</h3>
@@ -219,20 +218,17 @@ export default function DashboardOrangTuaContent() {
                 {upcoming_schedules.map((schedule) => (
                   <div
                     key={schedule.id}
-                    className={`flex items-center gap-3 p-4 rounded-lg border ${
-                      schedule.is_urgent
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-gray-50 border-gray-200'
-                    }`}
+                    className={`flex items-center gap-3 p-4 rounded-lg border ${schedule.is_urgent
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-gray-50 border-gray-200'
+                      }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      schedule.is_urgent
-                        ? 'bg-red-100'
-                        : 'bg-blue-100'
-                    }`}>
-                      <svg className={`w-6 h-6 ${
-                        schedule.is_urgent ? 'text-red-600' : 'text-blue-600'
-                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${schedule.is_urgent
+                      ? 'bg-red-100'
+                      : 'bg-blue-100'
+                      }`}>
+                      <svg className={`w-6 h-6 ${schedule.is_urgent ? 'text-red-600' : 'text-blue-600'
+                        }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
@@ -253,11 +249,11 @@ export default function DashboardOrangTuaContent() {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric'
-                        })} • {schedule.days_until === 0 
-                          ? 'Hari ini' 
-                          : schedule.days_until === 1 
-                          ? 'Besok' 
-                          : `${schedule.days_until} hari lagi`}
+                        })} • {schedule.days_until === 0
+                          ? 'Hari ini'
+                          : schedule.days_until === 1
+                            ? 'Besok'
+                            : `${schedule.days_until} hari lagi`}
                       </p>
                     </div>
                   </div>

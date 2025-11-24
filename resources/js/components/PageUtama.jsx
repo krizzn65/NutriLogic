@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import OrangTua from "./OrangTua";
 import Kader from "./Kader";
 import { getUser, isAuthenticated } from "../lib/auth";
+import DashboardOrangTuaSkeleton from "./loading/DashboardOrangTuaSkeleton";
+import DashboardKaderSkeleton from "./loading/DashboardKaderSkeleton";
+import SidebarOrangTua from "./sidebars/SidebarOrangTua";
+import SidebarKader from "./sidebars/SidebarKader";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -30,48 +33,23 @@ export default function Dashboard() {
 
   // Show loading state while checking auth
   if (loading) {
+    // Determine which skeleton to show based on stored user role
+    const userData = getUser();
+    const isKader = userData?.role === 'kader' || userData?.role === 'admin';
+
     return (
-      <motion.div 
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontSize: '1.2rem',
-          color: '#666'
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        Loading...
-      </motion.div>
+      <div className="flex flex-col md:flex-row bg-white w-full h-screen overflow-hidden">
+        {isKader ? <SidebarKader /> : <SidebarOrangTua />}
+        {isKader ? <DashboardKaderSkeleton /> : <DashboardOrangTuaSkeleton />}
+      </div>
     );
   }
 
   // Render based on user role
   if (user?.role === 'kader' || user?.role === 'admin') {
-    return (
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
-      >
-        <Kader />
-      </motion.div>
-    );
+    return <Kader />;
   }
-  
+
   // Default to OrangTua (for role 'ibu' or any other role)
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
-    >
-      <OrangTua />
-    </motion.div>
-  );
+  return <OrangTua />;
 }

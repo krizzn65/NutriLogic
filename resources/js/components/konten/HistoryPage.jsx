@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
+import GenericListSkeleton from "../loading/GenericListSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,7 @@ export default function HistoryPage() {
     end_date: "",
   });
   const [children, setChildren] = useState([]);
+  const { getCachedData, setCachedData } = useDataCache();
 
   useEffect(() => {
     fetchChildren();
@@ -27,8 +30,17 @@ export default function HistoryPage() {
 
   const fetchChildren = async () => {
     try {
+      // Reuse children cache
+      const cachedData = getCachedData('children');
+      if (cachedData) {
+        setChildren(cachedData);
+        return;
+      }
+
       const response = await api.get("/parent/children");
-      setChildren(response.data.data);
+      const data = response.data.data;
+      setChildren(data);
+      setCachedData('children', data);
     } catch (err) {
       console.error("Error fetching children:", err);
     }
@@ -57,9 +69,26 @@ export default function HistoryPage() {
         params.end_date = filters.end_date;
       }
 
+      // Create cache key based on params
+      const cacheKey = `history_${JSON.stringify(params)}`;
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        setHistoryData(cachedData.data);
+        setPagination(cachedData.meta);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const response = await api.get("/parent/history", { params });
       setHistoryData(response.data.data);
       setPagination(response.data.meta);
+
+      // Cache the result
+      setCachedData(cacheKey, {
+        data: response.data.data,
+        meta: response.data.meta,
+      });
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Gagal memuat riwayat. Silakan coba lagi.";
@@ -246,18 +275,7 @@ export default function HistoryPage() {
 
   // Loading state
   if (loading && historyData.length === 0) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat riwayat...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GenericListSkeleton itemCount={8} />;
   }
 
   // Error state
@@ -401,11 +419,10 @@ export default function HistoryPage() {
                         <span className="px-2 py-2">...</span>
                         <button
                           onClick={() => handlePageChange(page)}
-                          className={`px-4 py-2 border rounded-md ${
-                            pagination.current_page === page
-                              ? "bg-blue-600 text-white border-blue-600"
-                              : "border-gray-300 hover:bg-gray-50"
-                          }`}
+                          className={`px-4 py-2 border rounded-md ${pagination.current_page === page
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "border-gray-300 hover:bg-gray-50"
+                            }`}
                         >
                           {page}
                         </button>
@@ -416,11 +433,10 @@ export default function HistoryPage() {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 border rounded-md ${
-                        pagination.current_page === page
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-300 hover:bg-gray-50"
-                      }`}
+                      className={`px-4 py-2 border rounded-md ${pagination.current_page === page
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-gray-300 hover:bg-gray-50"
+                        }`}
                     >
                       {page}
                     </button>

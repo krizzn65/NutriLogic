@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { fetchMe } from "../../lib/auth";
+import GenericFormSkeleton from "../loading/GenericFormSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -21,6 +23,7 @@ export default function ProfilePage() {
     const [passwordError, setPasswordError] = useState(null);
     const [passwordSaving, setPasswordSaving] = useState(false);
     const [passwordSuccess, setPasswordSuccess] = useState(null);
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
 
     useEffect(() => {
         fetchProfile();
@@ -32,12 +35,23 @@ export default function ProfilePage() {
             setError(null);
             setSuccessMessage(null);
 
+            // Check cache first
+            const cachedData = getCachedData('profile');
+            if (cachedData) {
+                setProfileData(cachedData);
+                setLoading(false);
+                return;
+            }
+
+            // Fetch from API if no cache
             const user = await fetchMe();
-            setProfileData({
+            const data = {
                 name: user.name || "",
                 email: user.email || "",
                 phone: user.phone || "",
-            });
+            };
+            setProfileData(data);
+            setCachedData('profile', data);
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
@@ -66,7 +80,8 @@ export default function ProfilePage() {
             setSuccessMessage("Profil berhasil diperbarui!");
             setProfileData(response.data.data);
 
-            // Update user data in localStorage
+            // Update cache and localStorage
+            invalidateCache('profile');
             await fetchMe();
         } catch (err) {
             const errorMessage =
@@ -154,18 +169,7 @@ export default function ProfilePage() {
 
     // Loading state
     if (loading) {
-        return (
-            <div className="flex flex-1 w-full h-full overflow-auto">
-                <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                            <p className="text-gray-600">Memuat data profil...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <GenericFormSkeleton fieldCount={3} />;
     }
 
     return (

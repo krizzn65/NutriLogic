@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
+import GenericListSkeleton from "../loading/GenericListSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function ConsultationList() {
   const [loading, setLoading] = useState(true);
@@ -8,6 +10,7 @@ export default function ConsultationList() {
   const [consultations, setConsultations] = useState([]);
   const [filterStatus, setFilterStatus] = useState("all");
   const navigate = useNavigate();
+  const { getCachedData, setCachedData } = useDataCache();
 
   useEffect(() => {
     fetchConsultations(filterStatus);
@@ -17,10 +20,22 @@ export default function ConsultationList() {
     try {
       setLoading(true);
       setError(null);
-      
+
+      // Check cache first (cache key includes filter status)
+      const cacheKey = `consultations_${status}`;
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        setConsultations(cachedData);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const params = status !== "all" ? { status } : {};
       const response = await api.get('/parent/consultations', { params });
-      setConsultations(response.data.data);
+      const data = response.data.data;
+      setConsultations(data);
+      setCachedData(cacheKey, data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data konsultasi. Silakan coba lagi.';
       setError(errorMessage);
@@ -42,7 +57,7 @@ export default function ConsultationList() {
     if (diffMins < 60) return `${diffMins} menit yang lalu`;
     if (diffHours < 24) return `${diffHours} jam yang lalu`;
     if (diffDays < 7) return `${diffDays} hari yang lalu`;
-    
+
     return date.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'long',
@@ -52,18 +67,7 @@ export default function ConsultationList() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data konsultasi...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GenericListSkeleton itemCount={5} />;
   }
 
   return (
@@ -90,31 +94,28 @@ export default function ConsultationList() {
         <div className="flex gap-2 border-b border-gray-200">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              filterStatus === 'all'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
+            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'all'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800'
+              }`}
           >
             Semua
           </button>
           <button
             onClick={() => setFilterStatus('open')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              filterStatus === 'open'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
+            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'open'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800'
+              }`}
           >
             Aktif
           </button>
           <button
             onClick={() => setFilterStatus('closed')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              filterStatus === 'closed'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
+            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'closed'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800'
+              }`}
           >
             Selesai
           </button>
@@ -145,11 +146,11 @@ export default function ConsultationList() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <p className="text-gray-600 mb-4">
-              {filterStatus === 'all' 
-                ? 'Belum ada konsultasi' 
-                : filterStatus === 'open' 
-                ? 'Tidak ada konsultasi aktif' 
-                : 'Tidak ada konsultasi selesai'}
+              {filterStatus === 'all'
+                ? 'Belum ada konsultasi'
+                : filterStatus === 'open'
+                  ? 'Tidak ada konsultasi aktif'
+                  : 'Tidak ada konsultasi selesai'}
             </p>
             {filterStatus === 'all' && (
               <button
@@ -172,11 +173,10 @@ export default function ConsultationList() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">{consultation.title}</h3>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        consultation.status === 'open'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${consultation.status === 'open'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                        }`}>
                         {consultation.status === 'open' ? 'Aktif' : 'Selesai'}
                       </span>
                     </div>
@@ -200,7 +200,7 @@ export default function ConsultationList() {
                     </div>
                   </div>
                 </div>
-                
+
                 {consultation.last_message && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <p className="text-sm text-gray-600 line-clamp-2">

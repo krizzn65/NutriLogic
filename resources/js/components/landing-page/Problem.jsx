@@ -196,7 +196,7 @@ const Problem = () => {
   ]
 
   return (
-    <div ref={sectionRef} className='pb-16 pt-20 font-montserrat' style={{ backgroundColor: '#F3F4F6' }} id='Problem'>
+    <div ref={sectionRef} className='py-24 lg:py-32 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#F3F4F6' }} id='Problem'>
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -214,7 +214,7 @@ const Problem = () => {
           opacity: 0;
         }
       `}</style>
-      <div className="w-full px-6 md:px-8 lg:px-12 xl:px-16">
+      <div className="w-full">
         {/* Header */}
         <div className={`mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">

@@ -27,7 +27,7 @@ const Fitur = () => {
   }, []);
 
   return (
-    <div ref={sectionRef} className='py-16 font-montserrat' style={{ backgroundColor: '#F3F4F6' }} id='Fitur'>
+    <div ref={sectionRef} className='py-24 lg:py-32 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#F3F4F6' }} id='Fitur'>
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -45,7 +45,7 @@ const Fitur = () => {
           opacity: 0;
         }
       `}</style>
-      <div className='container mx-auto px-6 md:px-20 lg:px-32'>
+      <div className='w-full'>
         <div className='text-center mb-12'>
           <h2 className={`text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
             Fitur Unggulan

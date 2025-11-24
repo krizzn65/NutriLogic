@@ -8,19 +8,17 @@ import ForgotPassword from './auth/ForgotPassword';
 
 function App() {
     const location = useLocation();
-    
+
     return (
         <div className='w-full overflow-hidden font-montserrat'>
-            <AnimatePresence mode="wait">
-                <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/auth" element={<AuthSwitch />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/dashboard/*" element={<PageUtama />} />
-                </Routes>
-            </AnimatePresence>
+            <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<AuthSwitch />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/dashboard/*" element={<PageUtama />} />
+            </Routes>
         </div>
-        
+
     );
 }
 

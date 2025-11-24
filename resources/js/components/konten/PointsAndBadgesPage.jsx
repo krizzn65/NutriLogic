@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import PointsBadgesSkeleton from "../loading/PointsBadgesSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function PointsAndBadgesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pointsData, setPointsData] = useState(null);
+  const { getCachedData, setCachedData } = useDataCache();
 
   useEffect(() => {
     fetchPoints();
@@ -14,9 +17,20 @@ export default function PointsAndBadgesPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
+      // Check cache first
+      const cachedData = getCachedData('points');
+      if (cachedData) {
+        setPointsData(cachedData);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const response = await api.get('/parent/points');
-      setPointsData(response.data.data);
+      const data = response.data.data;
+      setPointsData(data);
+      setCachedData('points', data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data poin dan badge';
       setError(errorMessage);
@@ -27,13 +41,7 @@ export default function PointsAndBadgesPage() {
   };
 
   if (loading) {
-    return (
-      <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Memuat data...</div>
-        </div>
-      </div>
-    );
+    return <PointsBadgesSkeleton />;
   }
 
   if (error) {
@@ -125,11 +133,10 @@ export default function PointsAndBadgesPage() {
             {pointsData.badge_definitions.map((badge) => (
               <div
                 key={badge.code}
-                className={`bg-white rounded-lg p-6 shadow-md border-2 ${
-                  badge.is_earned
-                    ? 'border-green-500'
-                    : 'border-gray-200 opacity-60'
-                }`}
+                className={`bg-white rounded-lg p-6 shadow-md border-2 ${badge.is_earned
+                  ? 'border-green-500'
+                  : 'border-gray-200 opacity-60'
+                  }`}
               >
                 <div className="flex items-start space-x-4">
                   <div className="text-4xl">{badge.icon || '🏆'}</div>

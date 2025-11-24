@@ -25,63 +25,63 @@ export default function SidebarOrangTua() {
             label: "Dashboard",
             href: "/dashboard",
             icon: (
-                <Home className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <Home className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Data Anak",
             href: "/dashboard/anak",
             icon: (
-                <Baby className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <Baby className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Nutri-Assist",
             href: "/dashboard/nutri-assist",
             icon: (
-                <UtensilsCrossed className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <UtensilsCrossed className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Konsultasi",
             href: "/dashboard/konsultasi",
             icon: (
-                <MessageCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <MessageCircle className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Poin & Badge",
             href: "/dashboard/gamification",
             icon: (
-                <Award className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <Award className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Riwayat",
             href: "/dashboard/riwayat",
             icon: (
-                <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <FileText className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Profil",
             href: "/dashboard/profile",
             icon: (
-                <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <User className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Pengaturan",
             href: "/dashboard/settings",
             icon: (
-                <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <Settings className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {
             label: "Keluar",
             href: "#",
             icon: (
-                <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <LogOut className="text-white h-5 w-5 shrink-0" />
             ),
             onClick: () => {
                 setShowLogoutConfirm(true);
@@ -128,7 +128,7 @@ export default function SidebarOrangTua() {
 
             {/* Logout Confirmation Modal */}
             {showLogoutConfirm && (
-                <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}>
+                <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
                     <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
                         <h3 className="text-xl font-semibold text-gray-800 mb-4">
                             Konfirmasi Logout

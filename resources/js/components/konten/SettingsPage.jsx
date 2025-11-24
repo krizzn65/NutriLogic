@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import GenericFormSkeleton from "../loading/GenericFormSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -9,6 +11,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     notification_channel: "none",
   });
+  const { getCachedData, setCachedData, invalidateCache } = useDataCache();
 
   useEffect(() => {
     fetchSettings();
@@ -20,8 +23,19 @@ export default function SettingsPage() {
       setError(null);
       setSuccessMessage(null);
 
+      // Check cache first
+      const cachedData = getCachedData('settings');
+      if (cachedData) {
+        setSettings(cachedData);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const response = await api.get("/parent/settings");
-      setSettings(response.data.data);
+      const data = response.data.data;
+      setSettings(data);
+      setCachedData('settings', data);
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
@@ -35,7 +49,7 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setSaving(true);
       setError(null);
@@ -46,7 +60,11 @@ export default function SettingsPage() {
       });
 
       setSuccessMessage("Pengaturan berhasil disimpan!");
-      setSettings(response.data.data);
+      const data = response.data.data;
+      setSettings(data);
+
+      // Update cache
+      setCachedData('settings', data);
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
@@ -67,18 +85,7 @@ export default function SettingsPage() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat pengaturan...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GenericFormSkeleton fieldCount={1} />;
   }
 
   return (
