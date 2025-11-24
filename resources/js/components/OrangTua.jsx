@@ -18,18 +18,20 @@ import { DataCacheProvider } from "../contexts/DataCacheContext";
 
 export default function OrangTua() {
   return (
-    <div className="flex flex-col md:flex-row bg-white w-full h-screen overflow-hidden">
-      <SidebarOrangTua />
-      <div className="flex-1 overflow-auto">
-        <Routes>
-          <Route index element={<DashboardOrangTuaContent />} />
-          <Route path="anak" element={<DataAnakPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="riwayat" element={<RiwayatPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Routes>
+    <DataCacheProvider>
+      <div className="flex flex-col md:flex-row bg-white w-full h-screen overflow-hidden">
+        <SidebarOrangTua />
+        <div className="flex-1 overflow-auto">
+          <Routes>
+            <Route index element={<DashboardOrangTuaContent />} />
+            <Route path="anak" element={<DataAnakList />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="riwayat" element={<HistoryPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </DataCacheProvider>
   );
 }
 
