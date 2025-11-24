@@ -3,9 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from '@iconify/react'
+import { login, fetchMe } from '../../lib/auth';
 
 export default function AuthSwitch() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -457,19 +462,61 @@ export default function AuthSwitch() {
             <form 
               className="sign-in-form" 
               autoComplete="off"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                navigate('/dashboard');
+                setError('');
+                setLoading(true);
+
+                try {
+                  // Login user
+                  await login(email, password);
+                  
+                  // Fetch user data from API
+                  const user = await fetchMe();
+                  
+                  // Redirect based on role
+                  if (user.role === 'ibu') {
+                    navigate('/dashboard');
+                  } else if (user.role === 'kader' || user.role === 'admin') {
+                    navigate('/dashboard');
+                  } else {
+                    navigate('/dashboard');
+                  }
+                } catch (err) {
+                  // Handle error
+                  const errorMessage = err.response?.data?.message || 'Login gagal. Silakan coba lagi.';
+                  setError(errorMessage);
+                } finally {
+                  setLoading(false);
+                }
               }}
             >
               <h2 className="title">Sign in</h2>
+              {error && (
+                <div style={{
+                  color: '#dc3545',
+                  fontSize: '0.85rem',
+                  marginBottom: '10px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '8px',
+                  width: '100%',
+                  maxWidth: '380px',
+                  textAlign: 'center'
+                }}>
+                  {error}
+                </div>
+              )}
               <div className="input-field">
-                <i><Icon icon="fluent:phone-16-filled" /></i>
+                <i><Icon icon="mdi:email" /></i>
                 <input 
-                  type="phone" 
-                  placeholder="085xxxxxxx" 
-                  autoComplete="off"
-                  defaultValue=""
+                  type="email" 
+                  placeholder="Email" 
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
                 />
               </div>
               <div className="input-field">
@@ -477,15 +524,23 @@ export default function AuthSwitch() {
                 <input 
                   type="password" 
                   placeholder="Password" 
-                  autoComplete="new-password"
-                  defaultValue=""
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
                 />
               </div>
               <a href="#" className="forgot-password color" onClick={(e) => {
                 e.preventDefault();
                 navigate('/forgot-password');
               }}>Lupa Password?</a>
-              <input type="submit" value="Login" className="btn solid" />
+              <input 
+                type="submit" 
+                value={loading ? "Loading..." : "Login"} 
+                className="btn solid" 
+                disabled={loading}
+              />
             </form>
 
             {/* Sign Up Form */}
