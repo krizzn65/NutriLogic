@@ -21,7 +21,7 @@ export function getStatusColor(status) {
     'lebih': 'bg-blue-100 text-blue-800 border-blue-200',
     'gemuk': 'bg-blue-100 text-blue-800 border-blue-200',
   };
-  
+
   return statusColors[status] || statusColors['tidak_diketahui'];
 }
 
@@ -41,7 +41,7 @@ export function getStatusLabel(status) {
     'lebih': 'Lebih',
     'gemuk': 'Gemuk',
   };
-  
+
   return statusLabels[status] || 'Belum Diketahui';
 }
 
@@ -52,10 +52,10 @@ export function formatAge(ageInMonths) {
   if (ageInMonths < 1) {
     return 'Kurang dari 1 bulan';
   } else if (ageInMonths < 12) {
-    return `${ageInMonths} bulan`;
+    return `${Math.floor(ageInMonths)} bulan`;
   } else {
     const years = Math.floor(ageInMonths / 12);
-    const months = ageInMonths % 12;
+    const months = Math.floor(ageInMonths % 12);
     if (months === 0) {
       return `${years} tahun`;
     } else {

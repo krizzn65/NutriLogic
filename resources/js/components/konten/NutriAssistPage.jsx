@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { formatAge } from "../../lib/utils";
 
 // TODO: Integrate with AI/n8n for advanced recommendations in future version
 
@@ -22,10 +23,10 @@ export default function NutriAssistPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await api.get('/parent/children');
       setChildren(response.data.data);
-      
+
       // Auto-select first child if available
       if (response.data.data.length > 0) {
         setSelectedChildId(response.data.data[0].id.toString());
@@ -41,7 +42,7 @@ export default function NutriAssistPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!selectedChildId) {
       setError('Silakan pilih anak terlebih dahulu.');
@@ -177,7 +178,7 @@ export default function NutriAssistPage() {
                     <option value="">-- Pilih Anak --</option>
                     {children.map((child) => (
                       <option key={child.id} value={child.id}>
-                        {child.full_name} ({child.age_in_months} bulan)
+                        {child.full_name} ({formatAge(child.age_in_months)})
                       </option>
                     ))}
                   </select>
@@ -263,7 +264,7 @@ export default function NutriAssistPage() {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   Rekomendasi Menu untuk {recommendations.child.full_name}
                 </h2>
-                
+
                 {recommendations.recommendations.length === 0 ? (
                   <div className="text-center py-8">
                     <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,15 +277,14 @@ export default function NutriAssistPage() {
                   <div className="space-y-4">
                     {recommendations.recommendations.map((rec, index) => {
                       const isBest = index === 0 && rec.match_percentage >= 50;
-                      
+
                       return (
                         <div
                           key={index}
-                          className={`p-5 rounded-lg border-2 ${
-                            isBest
-                              ? 'bg-blue-50 border-blue-300'
-                              : 'bg-gray-50 border-gray-200'
-                          }`}
+                          className={`p-5 rounded-lg border-2 ${isBest
+                            ? 'bg-blue-50 border-blue-300'
+                            : 'bg-gray-50 border-gray-200'
+                            }`}
                         >
                           {isBest && (
                             <div className="flex items-center gap-2 mb-3">
@@ -294,27 +294,26 @@ export default function NutriAssistPage() {
                               <span className="text-sm font-semibold text-blue-800">Rekomendasi Terbaik</span>
                             </div>
                           )}
-                          
+
                           <div className="flex items-start justify-between mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">{rec.menu.name}</h3>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              rec.match_percentage >= 70
-                                ? 'bg-green-100 text-green-800'
-                                : rec.match_percentage >= 50
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${rec.match_percentage >= 70
+                              ? 'bg-green-100 text-green-800'
+                              : rec.match_percentage >= 50
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-gray-100 text-gray-800'
-                            }`}>
+                              }`}>
                               {rec.match_percentage.toFixed(1)}% Cocok
                             </span>
                           </div>
-                          
+
                           <p className="text-gray-700 mb-3">{rec.menu.description}</p>
-                          
+
                           <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                             <span>Kalori: {rec.menu.calories} kcal</span>
                             <span>Protein: {rec.menu.protein} g</span>
                           </div>
-                          
+
                           {rec.matched_ingredients && rec.matched_ingredients.length > 0 && (
                             <div>
                               <p className="text-sm font-medium text-gray-700 mb-2">Bahan yang Cocok:</p>

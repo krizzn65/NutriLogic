@@ -4,6 +4,8 @@ import SidebarOrangTua from "./sidebars/SidebarOrangTua";
 import DashboardOrangTuaContent from "./konten/DashboardOrangTua";
 import DataAnakList from "./konten/DataAnakList";
 import DataAnakDetail from "./konten/DataAnakDetail";
+import TambahAnakForm from "./konten/TambahAnakForm";
+import EditAnakForm from "./konten/EditAnakForm";
 import NutriAssistPage from "./konten/NutriAssistPage";
 import ConsultationList from "./konten/ConsultationList";
 import ConsultationDetail from "./konten/ConsultationDetail";
@@ -21,6 +23,8 @@ export default function OrangTua() {
                 <Routes>
                     <Route index element={<DashboardOrangTuaContent />} />
                     <Route path="anak" element={<DataAnakList />} />
+                    <Route path="anak/tambah" element={<TambahAnakForm />} />
+                    <Route path="anak/edit/:id" element={<EditAnakForm />} />
                     <Route path="anak/:id" element={<DataAnakDetail />} />
                     <Route path="nutri-assist" element={<NutriAssistPage />} />
                     <Route path="konsultasi" element={<ConsultationList />} />
