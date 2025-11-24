@@ -13,18 +13,23 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('phone')->unique();
-            $table->timestamp('phone_verified_at')->nullable();
+            $table->string('name', 100);
+            $table->string('email', 191)->nullable()->unique();
+            $table->string('phone', 20)->nullable();
             $table->string('password');
-            $table->enum('role', ['Orang Tua', 'Kader'])->default('Orang Tua');
-            $table->string('location');
+            $table->enum('role', ['admin', 'kader', 'ibu'])->default('ibu');
+            $table->unsignedBigInteger('posyandu_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
+            $table->foreign('posyandu_id')
+                ->references('id')
+                ->on('posyandus')
+                ->onDelete('set null');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('phone')->primary();
+            $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });

@@ -2,10 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Icon } from '@iconify/react'
+import { login, fetchMe } from '../../lib/auth';
 
 export default function AuthSwitch() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,14 +22,22 @@ export default function AuthSwitch() {
   }, [isSignUp]);
 
   return (
-    <div className="auth-page" style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #FFFFFFFF 0%, #FFFFFFFF 100%)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '20px'
-    }}>
+    <motion.div 
+      className="auth-page" 
+      style={{ 
+        minHeight: '100vh',
+        width: '100%',
+        background: 'linear-gradient(135deg, #FFFFFFFF 0%, #FFFFFFFF 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '10px'
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+    >
       <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
@@ -40,8 +54,8 @@ export default function AuthSwitch() {
           left: 20px;
           z-index: 1000;
           background: white;
-          color: #667eea;
-          border: 2px solid #667eea;
+          color: #00BFEF;
+          border: 2px solid #00BFEF;
           padding: 10px 20px;
           border-radius: 50px;
           font-weight: 600;
@@ -50,12 +64,14 @@ export default function AuthSwitch() {
           display: flex;
           align-items: center;
           gap: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .back-button:hover {
-          background: #667eea;
+          background: #00BFEF;
           color: white;
           transform: translateX(-5px);
+          box-shadow: 0 4px 12px rgba(0, 191, 239, 0.3);
         }
 
         .auth-container {
@@ -67,6 +83,23 @@ export default function AuthSwitch() {
           border-radius: 20px;
           box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
           overflow: hidden;
+        }
+        
+        @media (max-width: 870px) {
+          .auth-container {
+            height: auto;
+            min-height: 550px;
+            max-height: none;
+          }
+        }
+        
+        @media (max-width: 570px) {
+          .auth-container {
+            height: auto;
+            min-height: auto;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+          }
         }
 
         .forms-container {
@@ -357,10 +390,14 @@ export default function AuthSwitch() {
         }
 
         @media (max-width: 870px) {
-          .auth-container {
-            min-height: 800px;
-            height: 100vh;
+          .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
           }
+          
           .signin-signup {
             width: 100%;
             top: 95%;
@@ -371,6 +408,16 @@ export default function AuthSwitch() {
           .auth-container.sign-up-mode .signin-signup {
             left: 50%;
           }
+          
+          form {
+            padding: 0 2rem;
+          }
+          
+          .title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+          }
+          
           .panels-container {
             grid-template-columns: 1fr;
             grid-template-rows: 1fr 2fr 1fr;
@@ -379,7 +426,7 @@ export default function AuthSwitch() {
             flex-direction: row;
             justify-content: space-around;
             align-items: center;
-            padding: 2.5rem 8%;
+            padding: 2rem 6%;
             grid-column: 1 / 2;
           }
           .right-panel {
@@ -389,20 +436,20 @@ export default function AuthSwitch() {
             grid-row: 1 / 2;
           }
           .panel .content {
-            padding-right: 15%;
+            padding-right: 10%;
             transition: transform 0.9s ease-in-out;
             transition-delay: 0.8s;
           }
           .panel h3 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
           }
           .panel p {
             font-size: 0.7rem;
-            padding: 0.5rem 0;
+            padding: 0.4rem 0;
           }
           .btn.transparent {
-            width: 110px;
-            height: 35px;
+            width: 100px;
+            height: 38px;
             font-size: 0.7rem;
           }
           .auth-container:before {
@@ -436,40 +483,151 @@ export default function AuthSwitch() {
         }
 
         @media (max-width: 570px) {
-          form {
-            padding: 0 1.5rem;
+          .back-button {
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            top: 8px;
+            left: 8px;
           }
+          
+          form {
+            padding: 0 1.2rem;
+          }
+          
+          .title {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+          }
+          
+          .input-field {
+            height: 50px;
+            margin: 7px 0;
+          }
+          
+          .input-field input {
+            font-size: 0.9rem;
+          }
+          
+          .btn {
+            height: 45px;
+            width: 130px;
+            font-size: 0.85rem;
+            margin: 8px 0;
+          }
+          
+          .panel {
+            padding: 1.5rem 5%;
+          }
+          
           .panel .content {
-            padding: 0.5rem 1rem;
+            padding: 0.3rem 0.5rem;
+            padding-right: 5%;
+          }
+          
+          .panel h3 {
+            font-size: 0.95rem;
+            margin-bottom: 5px;
+          }
+          
+          .panel p {
+            font-size: 0.6rem;
+            padding: 0.25rem 0;
+            line-height: 1.3;
+          }
+          
+          .btn.transparent {
+            width: 90px;
+            height: 32px;
+            font-size: 0.65rem;
+          }
+          
+          .forgot-password {
+            font-size: 0.8rem;
+            margin: 8px 0 12px;
           }
         }
       `}</style>
 
-      <button onClick={() => navigate('/')} className="back-button">
+      <motion.button 
+        onClick={() => navigate('/')} 
+        className="back-button"
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
         <span>←</span>
         <span>Kembali</span>
-      </button>
+      </motion.button>
 
-      <div className="auth-container">
+      <motion.div 
+        className="auth-container"
+        initial={{ scale: 0.8, opacity: 0, y: 50 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.3, ease: [0.43, 0.13, 0.23, 0.96] }}
+      >
         <div className="forms-container">
           <div className="signin-signup">
             {/* Sign In Form */}
             <form 
               className="sign-in-form" 
               autoComplete="off"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                navigate('/dashboard');
+                setError('');
+                setLoading(true);
+
+                try {
+                  // Login user
+                  await login(email, password);
+                  
+                  // Fetch user data from API
+                  const user = await fetchMe();
+                  
+                  // Redirect based on role
+                  if (user.role === 'ibu') {
+                    navigate('/dashboard');
+                  } else if (user.role === 'kader' || user.role === 'admin') {
+                    navigate('/dashboard');
+                  } else {
+                    navigate('/dashboard');
+                  }
+                } catch (err) {
+                  // Handle error
+                  const errorMessage = err.response?.data?.message || 'Login gagal. Silakan coba lagi.';
+                  setError(errorMessage);
+                } finally {
+                  setLoading(false);
+                }
               }}
             >
               <h2 className="title">Sign in</h2>
+              {error && (
+                <div style={{
+                  color: '#dc3545',
+                  fontSize: '0.85rem',
+                  marginBottom: '10px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '8px',
+                  width: '100%',
+                  maxWidth: '380px',
+                  textAlign: 'center'
+                }}>
+                  {error}
+                </div>
+              )}
               <div className="input-field">
-                <i><Icon icon="fluent:phone-16-filled" /></i>
+                <i><Icon icon="mdi:email" /></i>
                 <input 
-                  type="phone" 
-                  placeholder="085xxxxxxx" 
-                  autoComplete="off"
-                  defaultValue=""
+                  type="email" 
+                  placeholder="Email" 
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
                 />
               </div>
               <div className="input-field">
@@ -477,15 +635,23 @@ export default function AuthSwitch() {
                 <input 
                   type="password" 
                   placeholder="Password" 
-                  autoComplete="new-password"
-                  defaultValue=""
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
                 />
               </div>
               <a href="#" className="forgot-password color" onClick={(e) => {
                 e.preventDefault();
                 navigate('/forgot-password');
               }}>Lupa Password?</a>
-              <input type="submit" value="Login" className="btn solid" />
+              <input 
+                type="submit" 
+                value={loading ? "Loading..." : "Login"} 
+                className="btn solid" 
+                disabled={loading}
+              />
             </form>
 
             {/* Sign Up Form */}
@@ -565,7 +731,7 @@ export default function AuthSwitch() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

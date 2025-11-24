@@ -1,4 +1,5 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import Header from './landing-page/Header'
 import AboutUs from './landing-page/AboutUs'
 import Problem from './landing-page/Problem'
@@ -9,7 +10,13 @@ import Footer from './landing-page/Footer'
 
 const LandingPage = () => {
   return (
-    <div className='w-full min-h-screen font-montserrat'>
+    <motion.div 
+      className='w-full min-h-screen font-montserrat'
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+    >
       <Header />
       <AboutUs />
       <Problem />
@@ -17,7 +24,7 @@ const LandingPage = () => {
       <Penggunaan />
       <Testimonial />
       <Footer />
-    </div>
+    </motion.div>
   )
 }
 

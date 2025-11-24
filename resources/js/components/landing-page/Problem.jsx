@@ -225,13 +225,13 @@ const Problem = () => {
             <span className="text-sm md:text-base font-medium uppercase tracking-wide">Ringkasan Wilayah</span>
           </div>
         </div>
-        
+
         {/* Chart Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6 mb-8">
           {stuntingData.map((stat, index) => (
-            <div 
-              key={index} 
-              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} 
+            <div
+              key={index}
+              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
               style={{ animationDelay: `${200 + index * 100}ms` }}
             >
               <ActivityChartCard
@@ -254,11 +254,11 @@ const Problem = () => {
             </p>
           </div>
         </div>
-        
+
         {/* Map and CTA Section */}
         <div className={`flex flex-col lg:flex-row gap-6 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '700ms' }}>
           {/* Map - 60% */}
-          <div 
+          <div
             className="w-full lg:w-[60%] h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative"
             onWheel={(e) => e.stopPropagation()}
           >
@@ -294,7 +294,7 @@ const Problem = () => {
               keyboard={false}
               tap={false}
               trackResize={false}
-              onMapClick={() => {}}
+              onMapClick={() => { }}
               style={{ height: '100%', width: '100%' }}
             />
           </div>
