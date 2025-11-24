@@ -24,6 +24,7 @@ export const ActivityChartCard = ({
 }) => {
   const ref = React.useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [hoveredIndex, setHoveredIndex] = React.useState(null);
   
   // Extract numeric value for animation
   const numericValue = React.useMemo(() => {
@@ -52,10 +53,25 @@ export const ActivityChartCard = ({
     return unsubscribe;
   }, [springValue]);
 
-  // Find the maximum value in the data to normalize bar heights
-  const maxValue = React.useMemo(() => {
-    return data.reduce((max, item) => (item.value > max ? item.value : max), 0);
+  // Find the minimum and maximum value to create better visual contrast
+  const { minValue, maxValue } = React.useMemo(() => {
+    const values = data.map(item => item.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    // Create a range that emphasizes differences
+    // Use 25% of min value as baseline for extreme visual contrast
+    const baselineMin = min * 0.25;
+    return { minValue: baselineMin, maxValue: max };
   }, [data]);
+
+  // Calculate height with maximum contrast
+  const calculateHeight = (value) => {
+    const range = maxValue - minValue;
+    if (range === 0) return 100;
+    // Map value to 15-100% range for extreme visual differentiation
+    const normalized = ((value - minValue) / range);
+    return 15 + (normalized * 85);
+  };
 
   // Framer Motion variants for animations
   const chartVariants = {
@@ -90,9 +106,10 @@ export const ActivityChartCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="font-montserrat w-full"
     >
       <Card
-        className={cn("w-full max-w-md border-0 shadow-md hover:shadow-xl transition-shadow duration-300", className)}
+        className={cn("w-full border-0 shadow-md hover:shadow-xl transition-shadow duration-300", className)}
         aria-labelledby="activity-card-title">
         <CardHeader>
           <CardTitle id="activity-card-title">{title}</CardTitle>
@@ -113,28 +130,88 @@ export const ActivityChartCard = ({
 
           {/* Bar Chart */}
           <motion.div
-            className="flex h-28 w-full items-end justify-between gap-2"
+            className="flex h-36 w-full items-end justify-between gap-3"
             variants={chartVariants}
             initial="hidden"
             animate="visible"
             aria-label="Activity chart">
-            {data.map((item, index) => (
-              <div
-                key={index}
-                className="flex h-full w-full flex-col items-center justify-end gap-2"
-                role="presentation">
-                <motion.div
-                  className="w-full rounded-md bg-blue-500"
-                  style={{
-                    height: `${maxValue > 0 ? (item.value / maxValue) * 100 : 0}%`,
-                  }}
-                  variants={barVariants}
-                  aria-label={`${item.day}: ${item.value} hours`} />
-                <span className="text-xs text-muted-foreground">
-                  {item.day}
-                </span>
-              </div>
-            ))}
+            {data.map((item, index) => {
+              const heightPercentage = calculateHeight(item.value);
+              const isHovered = hoveredIndex === index;
+              
+              return (
+                <div
+                  key={index}
+                  className="flex h-full w-full flex-col items-center justify-end gap-2 relative"
+                  role="presentation"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}>
+                  
+                  {/* Tooltip yang muncul saat hover */}
+                  {isHovered && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 5, scale: 0.8 }}
+                      className="absolute -top-12 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-xl z-10 whitespace-nowrap">
+                      {item.value}{suffix}
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45" />
+                    </motion.div>
+                  )}
+                  
+                  <motion.div
+                    className="w-full rounded-t-xl cursor-pointer relative overflow-hidden"
+                    style={{
+                      height: `${heightPercentage}%`,
+                      filter: isHovered 
+                        ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) drop-shadow(0 0 24px rgba(59, 130, 246, 0.6))'
+                        : 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5)) drop-shadow(0 0 16px rgba(59, 130, 246, 0.3))',
+                    }}
+                    variants={barVariants}
+                    whileHover={{ 
+                      scale: 1.15,
+                      y: -4,
+                      transition: { duration: 0.25, type: "spring", stiffness: 400, damping: 20 }
+                    }}
+                    aria-label={`${item.day}: ${item.value}`}>
+                    {/* Gradient background with glow */}
+                    <div 
+                      className="absolute inset-0 transition-all duration-300"
+                      style={{
+                        background: isHovered 
+                          ? 'linear-gradient(to top, #1e40af 0%, #2563eb 30%, #3b82f6 60%, #60a5fa 100%)'
+                          : 'linear-gradient(to top, #2563eb 0%, #3b82f6 40%, #60a5fa 80%, #93c5fd 100%)',
+                        boxShadow: isHovered
+                          ? 'inset 0 0 20px rgba(147, 197, 253, 0.4), inset 0 -2px 10px rgba(30, 64, 175, 0.6)'
+                          : 'inset 0 0 15px rgba(147, 197, 253, 0.3), inset 0 -2px 8px rgba(37, 99, 235, 0.4)',
+                      }}
+                    />
+                    {/* Inner glow effect */}
+                    <div 
+                      className="absolute inset-0 opacity-40 blur-sm"
+                      style={{
+                        background: 'linear-gradient(to top, transparent 0%, rgba(147, 197, 253, 0.8) 100%)',
+                      }}
+                    />
+                    {/* Shine effect on hover */}
+                    {isHovered && (
+                      <motion.div
+                        initial={{ y: '100%' }}
+                        animate={{ y: '-100%' }}
+                        transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.5 }}
+                        className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent"
+                      />
+                    )}
+                  </motion.div>
+                  
+                  <span className={`text-xs font-medium transition-all duration-200 ${
+                    isHovered ? 'text-foreground font-bold scale-110' : 'text-muted-foreground'
+                  }`}>
+                    {item.day}
+                  </span>
+                </div>
+              );
+            })}
           </motion.div>
         </div>
       </CardContent>

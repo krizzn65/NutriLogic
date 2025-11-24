@@ -2,7 +2,7 @@ import React from "react";
 
 export default function DashboardKaderContent() {
   return (
-    <div className="flex flex-1 w-full h-full overflow-auto">
+    <div className="flex flex-1 w-full h-full overflow-auto font-montserrat">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
         {/* Header */}
         <div className="mb-6">

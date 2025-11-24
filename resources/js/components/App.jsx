@@ -7,7 +7,7 @@ import ForgotPassword from './auth/ForgotPassword';
 
 function App() {
     return (
-        <div className='w-full overflow-hidden'>
+        <div className='w-full overflow-hidden font-montserrat'>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthSwitch />} />

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Test Image Loading</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                background: #f0f0f0;
+            }
+            .test-container {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+            }
+            img {
+                max-width: 100%;
+                height: auto;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+            }
+            .status {
+                margin-top: 10px;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            .success {
+                background: #d4edda;
+                color: #155724;
+            }
+            .error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🔍 Test Image Loading - NutriLogic</h1>
+
+        <div class="test-container">
+            <h2>Test 1: gmb_1.png (Relative Path)</h2>
+            <img src="/gmb_1.png" alt="Test Image 1" id="img1" />
+            <div id="status1" class="status"></div>
+        </div>
+
+        <div class="test-container">
+            <h2>Test 2: header_img.png (Relative Path)</h2>
+            <img src="/header_img.png" alt="Test Image 2" id="img2" />
+            <div id="status2" class="status"></div>
+        </div>
+
+        <div class="test-container">
+            <h2>Test 3: gmb_1.png (Direct Path)</h2>
+            <img src="gmb_1.png" alt="Test Image 3" id="img3" />
+            <div id="status3" class="status"></div>
+        </div>
+
+        <script>
+            function setupImageTest(imgId, statusId) {
+                const img = document.getElementById(imgId);
+                const status = document.getElementById(statusId);
+
+                img.onload = function () {
+                    status.className = "status success";
+                    status.innerHTML = `✅ SUCCESS - Image loaded!<br>Size: ${this.naturalWidth}x${this.naturalHeight}px<br>Path: ${this.src}`;
+                };
+
+                img.onerror = function () {
+                    status.className = "status error";
+                    status.innerHTML = `❌ FAILED - Image could not load!<br>Attempted path: ${this.src}`;
+                };
+            }
+
+            setupImageTest("img1", "status1");
+            setupImageTest("img2", "status2");
+            setupImageTest("img3", "status3");
+        </script>
+    </body>
+</html>
