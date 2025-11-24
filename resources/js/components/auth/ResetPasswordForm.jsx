@@ -71,10 +71,10 @@ export const ResetPasswordForm = ({
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
-    
+
     // Trigger verification if all digits are filled
     if (newOtpString.length === 6) {
-        handleVerifyCode(newOtpString);
+      handleVerifyCode(newOtpString);
     }
   };
 
@@ -86,13 +86,13 @@ export const ResetPasswordForm = ({
   };
 
   const handlePaste = (e) => {
-      e.preventDefault();
-      const pasteData = e.clipboardData.getData('text').slice(0, 6);
-      if (/^\d{6}$/.test(pasteData)) {
-          setOtp(pasteData);
-          inputRefs.current[5]?.focus();
-          handleVerifyCode(pasteData);
-      }
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text').slice(0, 6);
+    if (/^\d{6}$/.test(pasteData)) {
+      setOtp(pasteData);
+      inputRefs.current[5]?.focus();
+      handleVerifyCode(pasteData);
+    }
   };
   // --- CUSTOM OTP LOGIC END ---
 
@@ -157,7 +157,7 @@ export const ResetPasswordForm = ({
             )}
           </div>
 
-          <hr className="border-border" />
+          <hr className="border-gray-200" />
 
           {/* New Password Section with Animation */}
           <AnimatePresence>

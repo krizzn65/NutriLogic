@@ -75,7 +75,7 @@ export default function Navbar() {
   const navLinksData = [
     { label: 'Home', id: 'Home' },
     { label: 'About', id: 'About' },
-    { label: 'Problem', id: 'Problem' },
+    { label: 'Data', id: 'Problem' },
     { label: 'Fitur', id: 'Fitur' },
     { label: 'Penggunaan', id: 'Penggunaan' },
     { label: 'Testimonial', id: 'Testimonial' },

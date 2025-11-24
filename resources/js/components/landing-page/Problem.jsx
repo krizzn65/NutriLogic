@@ -1,6 +1,7 @@
 import React from 'react'
 import { AdvancedMap } from '../interactive-map'
 import { ActivityChartCard } from '../activity-chart-card'
+import { RoadmapCard } from '../roadmap-card'
 import { cn } from "@/lib/utils"
 import { Icon } from '@iconify/react'
 
@@ -299,20 +300,59 @@ const Problem = () => {
             />
           </div>
 
-          {/* CTA Box - 40% */}
-          <div className="w-full lg:w-[40%] bg-white rounded-2xl shadow-lg p-8 md:p-10 flex flex-col justify-center">
-            <div className="text-center lg:text-left">
-              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-6">
-                ISI DENGAN SOLUSI KAMI<br />
-                ISI NYA TENTANG NUTRILOGIC
+          {/* CTA Box - 40% - Split into 2 cards */}
+          <div className="w-full lg:w-[40%] h-[400px] md:h-[500px] lg:h-[600px] flex flex-col gap-4">
+            {/* Card 1: Data Sebagai Bukti */}
+            <div className="flex-1 bg-gradient-to-br from-[#00BFEF] to-[#0088c2] rounded-2xl shadow-lg p-6 md:p-8 flex flex-col justify-center">
+              <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight mb-4">
+                Data Sebagai Bukti<br />
+                Urgensi Penanganan Stunting
               </h3>
-              <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-8">
-                Platform digital terintegrasi untuk monitoring dan pencegahan stunting di Kecamatan Rambipuji dengan data real-time dan analisis mendalam.
+              <p className="text-sm md:text-base lg:text-lg text-white/90 leading-relaxed">
+                Data stunting yang tersaji menjadi bukti nyata bahwa masalah ini memerlukan penanganan serius dan terstruktur. Dengan 765 kasus stunting di Kecamatan Rambipuji, diperlukan solusi digital yang tepat untuk monitoring, analisis mendalam, dan intervensi cepat.
               </p>
-              <button className="w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
-                <span>Pelajari Lebih Lanjut</span>
-                <Icon icon="mdi:arrow-right" className="w-5 h-5" />
-              </button>
+            </div>
+
+            {/* Card 2: Target Penurunan Stunting dengan Roadmap */}
+            <div className="flex-1 bg-gradient-to-br from-[#0088c2] to-[#006aa6] rounded-2xl shadow-lg p-6 md:p-8 flex flex-col">
+              <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight mb-4">
+                Target Penurunan Stunting
+              </h3>
+              <p className="text-sm md:text-base text-white/90 leading-relaxed mb-4">
+                Roadmap penurunan prevalensi stunting dengan dukungan NutriLogic
+              </p>
+              <div className="flex-1 flex items-center">
+                <RoadmapCard
+                  title=""
+                  description=""
+                  items={[
+                    {
+                      quarter: "2023",
+                      title: "21.5%",
+                      description: "Selesai",
+                      status: "done"
+                    },
+                    {
+                      quarter: "2024",
+                      title: "19.8%",
+                      description: "Selesai",
+                      status: "done"
+                    },
+                    {
+                      quarter: "2025",
+                      title: "16%",
+                      description: "Progress",
+                      status: "in-progress"
+                    },
+                    {
+                      quarter: "2026",
+                      title: "14%",
+                      description: "Goal",
+                      status: "upcoming"
+                    }
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </div>
