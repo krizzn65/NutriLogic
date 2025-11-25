@@ -116,4 +116,76 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/profile', [ParentProfileController::class, 'update']);
         Route::put('/profile/password', [ParentProfileController::class, 'updatePassword']);
     });
+
+    // Kader/Admin routes (protected by kader middleware)
+    Route::prefix('kader')->middleware('kader')->group(function () {
+        // Test endpoint to verify middleware is working
+        Route::get('/test', function () {
+            return response()->json([
+                'message' => 'Kader middleware is working!',
+                'user' => auth()->user()->only(['id', 'name', 'role', 'posyandu_id']),
+            ]);
+        });
+
+        // Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\KaderDashboardController::class, 'dashboard']);
+
+        // Children Management
+        Route::prefix('children')->group(function () {
+            Route::get('/', [App\Http\Controllers\KaderChildController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\KaderChildController::class, 'store']);
+            
+            // Priority Children - must be before {id} routes
+            Route::get('/priorities', [App\Http\Controllers\KaderPriorityController::class, 'index']);
+            
+            Route::get('/{id}', [App\Http\Controllers\KaderChildController::class, 'show']);
+            Route::put('/{id}', [App\Http\Controllers\KaderChildController::class, 'update']);
+            Route::delete('/{id}', [App\Http\Controllers\KaderChildController::class, 'destroy']);
+            Route::get('/{id}/weighings', [App\Http\Controllers\KaderWeighingController::class, 'childHistory']);
+        });
+
+        // Weighing Management
+        Route::prefix('weighings')->group(function () {
+            Route::get('/today', [App\Http\Controllers\KaderWeighingController::class, 'todayList']);
+            Route::post('/bulk', [App\Http\Controllers\KaderWeighingController::class, 'bulkStore']);
+        });
+
+        // Schedule Management
+        Route::prefix('schedules')->group(function () {
+            Route::get('/', [App\Http\Controllers\KaderScheduleController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\KaderScheduleController::class, 'store']);
+            Route::put('/{id}', [App\Http\Controllers\KaderScheduleController::class, 'update']);
+            Route::delete('/{id}', [App\Http\Controllers\KaderScheduleController::class, 'destroy']);
+        });
+
+        // Consultation Management
+        Route::prefix('consultations')->group(function () {
+            Route::get('/', [App\Http\Controllers\KaderConsultationController::class, 'index']);
+            Route::get('/{id}', [App\Http\Controllers\KaderConsultationController::class, 'show']);
+            Route::post('/{id}/messages', [App\Http\Controllers\KaderConsultationController::class, 'storeMessage']);
+            Route::put('/{id}/close', [App\Http\Controllers\KaderConsultationController::class, 'close']);
+        });
+
+        // Report & Export
+        Route::prefix('report')->group(function () {
+            Route::get('/summary', [App\Http\Controllers\KaderReportController::class, 'summary']);
+            Route::get('/export/children', [App\Http\Controllers\KaderReportController::class, 'exportChildren']);
+            Route::get('/export/weighings', [App\Http\Controllers\KaderReportController::class, 'exportWeighings']);
+        });
+
+        // Broadcast Management
+        Route::prefix('broadcast')->group(function () {
+            Route::post('/', [App\Http\Controllers\KaderBroadcastController::class, 'store']);
+            Route::get('/', [App\Http\Controllers\KaderBroadcastController::class, 'index']);
+        });
+
+        // Profile Management
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [App\Http\Controllers\KaderProfileController::class, 'show']);
+            Route::put('/', [App\Http\Controllers\KaderProfileController::class, 'update']);
+            Route::put('/password', [App\Http\Controllers\KaderProfileController::class, 'updatePassword']);
+        });
+
+        // Actual kader endpoints will be added here in next menus
+    });
 });

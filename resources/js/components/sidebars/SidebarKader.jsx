@@ -8,6 +8,11 @@ import {
   BarChart,
   Users,
   ClipboardList,
+  Scale,
+  AlertTriangle,
+  Calendar,
+  MessageSquare,
+  Megaphone,
   LogOut,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -33,24 +38,45 @@ export default function SidebarKader() {
       ),
     },
     {
-      label: "Input Data",
-      href: "/dashboard/input-data",
+      label: "Penimbangan",
+      href: "/dashboard/penimbangan",
       icon: (
-        <ClipboardList className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+        <Scale className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Anak Prioritas",
+      href: "/dashboard/anak-prioritas",
+      icon: (
+        <AlertTriangle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Jadwal",
+      href: "/dashboard/jadwal",
+      icon: (
+        <Calendar className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Konsultasi",
+      href: "/dashboard/konsultasi",
+      icon: (
+        <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Broadcast",
+      href: "/dashboard/broadcast",
+      icon: (
+        <Megaphone className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
       label: "Laporan",
-      href: "/dashboard/reports",
+      href: "/dashboard/laporan",
       icon: (
         <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Statistik",
-      href: "/dashboard/statistics",
-      icon: (
-        <BarChart className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
@@ -61,21 +87,35 @@ export default function SidebarKader() {
       ),
     },
     {
-      label: "Pengaturan",
-      href: "/dashboard/settings",
-      icon: (
-        <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
-      ),
-    },
-    {
       label: "Keluar",
       href: "#",
       icon: (
         <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
-      onClick: () => {
-        // TODO: Clear authentication/localStorage
-        navigate("/");
+      onClick: async () => {
+        if (window.confirm('Apakah Anda yakin ingin keluar?')) {
+          try {
+            // Call logout API
+            const token = localStorage.getItem('token');
+            if (token) {
+              await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+            }
+          } catch (error) {
+            console.error('Logout error:', error);
+          } finally {
+            // Clear token and user data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Redirect to login
+            navigate("/");
+          }
+        }
       },
     },
   ];
