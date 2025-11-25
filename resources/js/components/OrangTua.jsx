@@ -25,6 +25,14 @@ export default function OrangTua() {
           <Routes>
             <Route index element={<DashboardOrangTuaContent />} />
             <Route path="anak" element={<DataAnakList />} />
+            <Route path="anak/tambah" element={<TambahAnakForm />} />
+            <Route path="anak/edit/:id" element={<EditAnakForm />} />
+            <Route path="anak/:id" element={<DataAnakDetail />} />
+            <Route path="nutri-assist" element={<NutriAssistPage />} />
+            <Route path="konsultasi" element={<ConsultationList />} />
+            <Route path="konsultasi/create" element={<CreateConsultation />} />
+            <Route path="konsultasi/:id" element={<ConsultationDetail />} />
+            <Route path="gamification" element={<PointsAndBadgesPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="riwayat" element={<HistoryPage />} />
             <Route path="settings" element={<SettingsPage />} />
