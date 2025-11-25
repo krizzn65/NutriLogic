@@ -80,7 +80,7 @@ export default function ConsultationList() {
             <p className="text-gray-600 mt-2">Komunikasi dengan kader seputar gizi dan kesehatan anak</p>
           </div>
           <button
-            onClick={() => navigate('/dashboard/konsultasi/new')}
+            onClick={() => navigate('/dashboard/konsultasi/create')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +154,7 @@ export default function ConsultationList() {
             </p>
             {filterStatus === 'all' && (
               <button
-                onClick={() => navigate('/dashboard/konsultasi/new')}
+                onClick={() => navigate('/dashboard/konsultasi/create')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Buat Konsultasi Pertama

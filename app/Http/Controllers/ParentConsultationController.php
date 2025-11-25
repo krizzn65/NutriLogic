@@ -139,7 +139,7 @@ class ParentConsultationController extends Controller
     /**
      * Get consultation detail with all messages
      */
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
         $user = $request->user();
 
@@ -209,7 +209,7 @@ class ParentConsultationController extends Controller
     /**
      * Send a new message in consultation
      */
-    public function sendMessage(Request $request, int $id): JsonResponse
+    public function sendMessage(Request $request, $id): JsonResponse
     {
         $user = $request->user();
 
