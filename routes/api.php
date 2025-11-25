@@ -188,4 +188,54 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Actual kader endpoints will be added here in next menus
     });
+
+    // ============================================
+    // SUPERADMIN ROUTES (role = 'admin')
+    // ============================================
+    Route::prefix('admin')->middleware('admin')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\AdminDashboardController::class, 'index']);
+        
+        // Posyandu Management
+        Route::prefix('posyandus')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminPosyanduController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\AdminPosyanduController::class, 'store']);
+            Route::put('/{id}', [App\Http\Controllers\AdminPosyanduController::class, 'update']);
+            Route::patch('/{id}/toggle-active', [App\Http\Controllers\AdminPosyanduController::class, 'toggleActive']);
+        });
+        
+        // User Management
+        Route::prefix('users')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminUserController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\AdminUserController::class, 'store']);
+            Route::put('/{id}', [App\Http\Controllers\AdminUserController::class, 'update']);
+            Route::patch('/{id}/toggle-active', [App\Http\Controllers\AdminUserController::class, 'toggleActive']);
+            Route::post('/{id}/reset-password', [App\Http\Controllers\AdminUserController::class, 'resetPassword']);
+        });
+        
+        // Children Monitoring (Read-Only)
+        Route::prefix('children')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminChildrenController::class, 'index']);
+            Route::get('/{id}', [App\Http\Controllers\AdminChildrenController::class, 'show']);
+        });
+        
+        // System Reports
+        Route::prefix('reports')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminReportController::class, 'index']);
+            Route::get('/export', [App\Http\Controllers\AdminReportController::class, 'export']);
+        });
+        
+        // Content Management (Articles)
+        Route::prefix('articles')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminArticleController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\AdminArticleController::class, 'store']);
+            Route::get('/{id}', [App\Http\Controllers\AdminArticleController::class, 'show']);
+            Route::put('/{id}', [App\Http\Controllers\AdminArticleController::class, 'update']);
+            Route::delete('/{id}', [App\Http\Controllers\AdminArticleController::class, 'destroy']);
+            Route::patch('/{id}/toggle-publish', [App\Http\Controllers\AdminArticleController::class, 'togglePublish']);
+        });
+        
+        // Activity Logs
+        Route::get('/activity-logs', [App\Http\Controllers\AdminActivityLogController::class, 'index']);
+    });
 });

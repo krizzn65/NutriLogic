@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
+import { logoutWithApi } from "../../lib/auth";
 
 export default function SidebarKader() {
   const navigate = useNavigate();
@@ -94,27 +95,8 @@ export default function SidebarKader() {
       ),
       onClick: async () => {
         if (window.confirm('Apakah Anda yakin ingin keluar?')) {
-          try {
-            // Call logout API
-            const token = localStorage.getItem('token');
-            if (token) {
-              await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
-              });
-            }
-          } catch (error) {
-            console.error('Logout error:', error);
-          } finally {
-            // Clear token and user data
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            // Redirect to login
-            navigate("/");
-          }
+          await logoutWithApi();
+          navigate("/auth");
         }
       },
     },
