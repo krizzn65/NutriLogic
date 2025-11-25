@@ -5,6 +5,8 @@ import LandingPage from './LandingPage';
 import AuthSwitch from './auth/AuthSwitch';
 import PageUtama from './PageUtama';
 import ForgotPassword from './auth/ForgotPassword';
+import { NotFoundPage } from './ui/404-page-not-found';
+import { ServerErrorPage } from './ui/500-server-error';
 
 function App() {
     const location = useLocation();
@@ -16,6 +18,8 @@ function App() {
                 <Route path="/auth" element={<AuthSwitch />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/dashboard/*" element={<PageUtama />} />
+                <Route path="*" element={<NotFoundPage />} />
+                <Route path="/500" element={<ServerErrorPage />} />
             </Routes>
         </div>
 

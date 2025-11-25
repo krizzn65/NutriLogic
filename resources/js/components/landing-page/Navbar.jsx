@@ -78,7 +78,7 @@ export default function Navbar() {
     { label: 'Data', id: 'Problem' },
     { label: 'Fitur', id: 'Fitur' },
     { label: 'Penggunaan', id: 'Penggunaan' },
-    { label: 'Testimonial', id: 'Testimonial' },
+    { label: 'Contact', id: 'Contact' },
   ];
 
   const handleNavClick = (id) => {

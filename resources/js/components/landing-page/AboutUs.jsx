@@ -6,7 +6,7 @@ const AboutUs = () => {
   const [sectionRef, isVisible] = useIntersectionObserver({ threshold: 0.1 })
 
   return (
-    <div className='font-poppins min-h-screen flex items-center w-full bg-white overflow-hidden' id='About'>
+    <div className='font-poppins min-h-screen flex items-center w-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden' id='About'>
       <style>{`
         @keyframes float-slow {
           0%, 100% { transform: translateY(0px); }

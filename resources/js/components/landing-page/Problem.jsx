@@ -197,7 +197,7 @@ const Problem = () => {
   ]
 
   return (
-    <div ref={sectionRef} className='py-24 lg:py-32 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#F3F4F6' }} id='Problem'>
+    <div ref={sectionRef} className='py-24 lg:py-32 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#FFFFFF' }} id='Problem'>
       <style>{`
         @keyframes fadeInUp {
           from {
