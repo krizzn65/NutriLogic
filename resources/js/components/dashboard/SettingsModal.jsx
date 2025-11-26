@@ -6,23 +6,40 @@ import {
     DialogContent,
 } from "../ui/dialog";
 import { Switch } from "../ui/switch";
-import { Select, SelectItem } from "../ui/select";
-import { X, Loader2, Bell, Mail, Smartphone, Megaphone } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+    X,
+    Loader2,
+    Bell,
+    Lock,
+    Settings as SettingsIcon
+} from "lucide-react";
 
 export default function SettingsModal({ isOpen, onClose }) {
+    const [activeTab, setActiveTab] = useState('notifications');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
     const [successMessage, setSuccessMessage] = useState(null);
+
+    // Notification Settings State
     const [settings, setSettings] = useState({
         email_notifications: false,
         push_notifications: false,
         sms_notifications: false,
         marketing_emails: false,
-        notification_frequency: "instant",
     });
-    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
+    // Password Form State
+    const [passwordForm, setPasswordForm] = useState({
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+    });
+    const [passwordError, setPasswordError] = useState(null);
+    const [passwordSaving, setPasswordSaving] = useState(false);
+    const [passwordSuccess, setPasswordSuccess] = useState(null);
+
+    const { getCachedData, setCachedData } = useDataCache();
 
     const fetchSettings = useCallback(async () => {
         try {
@@ -55,10 +72,18 @@ export default function SettingsModal({ isOpen, onClose }) {
     useEffect(() => {
         if (isOpen) {
             fetchSettings();
+            setActiveTab('notifications');
+            setPasswordForm({
+                current_password: "",
+                new_password: "",
+                new_password_confirmation: "",
+            });
+            setPasswordError(null);
+            setPasswordSuccess(null);
         }
     }, [isOpen, fetchSettings]);
 
-    const handleSubmit = async (e) => {
+    const handleSettingsSubmit = async (e) => {
         e.preventDefault();
 
         try {
@@ -89,6 +114,43 @@ export default function SettingsModal({ isOpen, onClose }) {
         }
     };
 
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            setPasswordSaving(true);
+            setPasswordError(null);
+            setPasswordSuccess(null);
+
+            await api.put("/parent/profile/password", {
+                current_password: passwordForm.current_password,
+                new_password: passwordForm.new_password,
+                new_password_confirmation: passwordForm.new_password_confirmation,
+            });
+
+            setPasswordSuccess("Password berhasil diubah!");
+            setPasswordForm({
+                current_password: "",
+                new_password: "",
+                new_password_confirmation: "",
+            });
+
+            setTimeout(() => {
+                setPasswordSuccess(null);
+                onClose();
+            }, 1500);
+
+        } catch (err) {
+            const errorMessage =
+                err.response?.data?.message ||
+                "Gagal mengubah password. Silakan coba lagi.";
+            setPasswordError(errorMessage);
+            console.error("Error updating password:", err);
+        } finally {
+            setPasswordSaving(false);
+        }
+    };
+
     const handleToggle = (key) => {
         setSettings((prev) => ({
             ...prev,
@@ -96,72 +158,99 @@ export default function SettingsModal({ isOpen, onClose }) {
         }));
     };
 
-    const handleFrequencyChange = (e) => {
-        setSettings((prev) => ({
+
+
+    const handlePasswordInputChange = (field, value) => {
+        setPasswordForm((prev) => ({
             ...prev,
-            notification_frequency: e.target.value,
+            [field]: value,
         }));
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent hideClose={true} className="sm:max-w-[500px] p-0 overflow-hidden bg-white border-none shadow-2xl rounded-3xl">
-                {/* Fixed Blue Gradient Banner */}
-                <div className="h-32 bg-gradient-to-r from-[#4481EB] to-[#04BEFE] w-full relative flex items-center justify-center shrink-0">
+            <DialogContent hideClose={true} className="w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-3xl md:rounded-[40px] overflow-hidden">
+                {/* Header */}
+                <div className="px-8 py-6 bg-white flex items-start gap-4 border-b border-gray-100">
+                    <div className="p-3 bg-blue-50 rounded-xl">
+                        <SettingsIcon className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">Pengaturan</h2>
+                        <p className="text-sm text-gray-500 mt-1">Kelola preferensi dan keamanan akun Anda</p>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="absolute right-4 top-4 p-2 bg-black/20 hover:bg-black/30 rounded-full text-white transition-colors backdrop-blur-sm"
+                        className="ml-auto p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                     </button>
+                </div>
 
-                    <div className="text-center text-white">
-                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                            <Bell className="w-8 h-8 text-white" />
-                        </div>
-                        <h2 className="text-xl font-bold">Pengaturan</h2>
-                        <p className="text-blue-100 text-sm">Kelola notifikasi Anda</p>
+                {/* Tabs */}
+                <div className="border-b border-gray-100 px-8">
+                    <div className="flex gap-6">
+                        <button
+                            onClick={() => setActiveTab('notifications')}
+                            className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${activeTab === 'notifications'
+                                ? 'border-blue-600 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Bell className="w-4 h-4" />
+                                Notifikasi
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('security')}
+                            className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${activeTab === 'security'
+                                ? 'border-blue-600 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Lock className="w-4 h-4" />
+                                Keamanan
+                            </div>
+                        </button>
                     </div>
                 </div>
 
-                <div className="flex flex-col bg-white">
+                {/* Content */}
+                <div className="p-8 max-h-[60vh] overflow-y-auto">
                     {loading ? (
                         <div className="py-12 flex justify-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                            <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="flex flex-col">
-                            <div className="px-6 py-6 overflow-y-auto max-h-[50vh] space-y-6">
-                                {successMessage && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="p-3 bg-green-50 text-green-700 rounded-xl text-sm font-medium text-center flex items-center justify-center gap-2"
-                                    >
-                                        <span>✓</span> {successMessage}
-                                    </motion.div>
-                                )}
-                                {error && (
-                                    <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm font-medium text-center">
-                                        {error}
-                                    </div>
-                                )}
-
-                                {/* Notification Preferences Section */}
-                                <div className="space-y-4">
+                        <>
+                            {/* Notifications Tab */}
+                            {activeTab === 'notifications' && (
+                                <form onSubmit={handleSettingsSubmit} className="space-y-6">
                                     <div>
-                                        <h3 className="text-base font-semibold text-gray-900">Notification Preferences</h3>
-                                        <p className="text-sm text-gray-500">Choose how you want to be notified</p>
+                                        <h3 className="text-lg font-bold text-gray-900 mb-1">Preferensi Notifikasi</h3>
+                                        <p className="text-sm text-gray-500">Pilih cara Anda ingin menerima pemberitahuan</p>
                                     </div>
 
-                                    <div className="space-y-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-start gap-3">
-                                                <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-900">Email Notifications</div>
-                                                    <div className="text-xs text-gray-500">Receive notifications via email</div>
-                                                </div>
+                                    {successMessage && (
+                                        <div className="p-4 bg-green-50 text-green-700 rounded-xl text-sm font-medium flex items-center gap-2">
+                                            <span>✓</span> {successMessage}
+                                        </div>
+                                    )}
+
+                                    {error && (
+                                        <div className="p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium">
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        {/* Email Notifications */}
+                                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div>
+                                                <div className="font-semibold text-gray-900 text-sm">Email Notifications</div>
+                                                <div className="text-xs text-gray-500 mt-0.5">Terima notifikasi penting via email</div>
                                             </div>
                                             <Switch
                                                 checked={settings.email_notifications}
@@ -169,13 +258,11 @@ export default function SettingsModal({ isOpen, onClose }) {
                                             />
                                         </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-start gap-3">
-                                                <Bell className="w-5 h-5 text-gray-400 mt-0.5" />
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-900">Push Notifications</div>
-                                                    <div className="text-xs text-gray-500">Receive push notifications on your devices</div>
-                                                </div>
+                                        {/* Push Notifications */}
+                                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div>
+                                                <div className="font-semibold text-gray-900 text-sm">Push Notifications</div>
+                                                <div className="text-xs text-gray-500 mt-0.5">Terima notifikasi push di perangkat Anda</div>
                                             </div>
                                             <Switch
                                                 checked={settings.push_notifications}
@@ -183,74 +270,109 @@ export default function SettingsModal({ isOpen, onClose }) {
                                             />
                                         </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-start gap-3">
-                                                <Smartphone className="w-5 h-5 text-gray-400 mt-0.5" />
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-900">SMS Notifications</div>
-                                                    <div className="text-xs text-gray-500">Receive notifications via text message</div>
-                                                </div>
+                                        {/* SMS Notifications */}
+                                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div>
+                                                <div className="font-semibold text-gray-900 text-sm">SMS Notifications</div>
+                                                <div className="text-xs text-gray-500 mt-0.5">Terima notifikasi via pesan teks</div>
                                             </div>
                                             <Switch
                                                 checked={settings.sms_notifications}
                                                 onCheckedChange={() => handleToggle('sms_notifications')}
                                             />
                                         </div>
+                                    </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-start gap-3">
-                                                <Megaphone className="w-5 h-5 text-gray-400 mt-0.5" />
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-900">Marketing Emails</div>
-                                                    <div className="text-xs text-gray-500">Receive emails about new features and updates</div>
-                                                </div>
-                                            </div>
-                                            <Switch
-                                                checked={settings.marketing_emails}
-                                                onCheckedChange={() => handleToggle('marketing_emails')}
+
+                                    {/* Save Button */}
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="w-full px-6 py-3 bg-gradient-to-r from-[#4481EB] to-[#04BEFE] text-white rounded-xl font-semibold hover:opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg shadow-blue-500/30"
+                                    >
+                                        {saving ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...
+                                            </span>
+                                        ) : "Simpan Pengaturan"}
+                                    </button>
+                                </form>
+                            )}
+
+                            {/* Security Tab */}
+                            {activeTab === 'security' && (
+                                <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900 mb-1">Ubah Password</h3>
+                                        <p className="text-sm text-gray-500">Perbarui password akun Anda</p>
+                                    </div>
+
+                                    {passwordSuccess && (
+                                        <div className="p-4 bg-green-50 text-green-700 rounded-xl text-sm font-medium flex items-center gap-2">
+                                            <span>✓</span> {passwordSuccess}
+                                        </div>
+                                    )}
+
+                                    {passwordError && (
+                                        <div className="p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium">
+                                            {passwordError}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-gray-900">Password Saat Ini</label>
+                                            <input
+                                                type="password"
+                                                value={passwordForm.current_password}
+                                                onChange={(e) => handlePasswordInputChange("current_password", e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
+                                                placeholder="Masukkan password saat ini"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-gray-900">Password Baru</label>
+                                            <input
+                                                type="password"
+                                                value={passwordForm.new_password}
+                                                onChange={(e) => handlePasswordInputChange("new_password", e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
+                                                placeholder="Minimal 8 karakter"
+                                                required
+                                                minLength={8}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-gray-900">Konfirmasi Password Baru</label>
+                                            <input
+                                                type="password"
+                                                value={passwordForm.new_password_confirmation}
+                                                onChange={(e) => handlePasswordInputChange("new_password_confirmation", e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
+                                                placeholder="Ulangi password baru"
+                                                required
+                                                minLength={8}
                                             />
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="h-px bg-gray-100 w-full" />
-
-                                {/* Notification Settings Section */}
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="text-base font-semibold text-gray-900">Notification Settings</h3>
-                                        <p className="text-sm text-gray-500">Configure when and how often you receive notifications</p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-900">Notification Frequency</label>
-                                        <Select
-                                            value={settings.notification_frequency}
-                                            onChange={handleFrequencyChange}
-                                        >
-                                            <SelectItem value="instant">Instant</SelectItem>
-                                            <SelectItem value="daily">Daily Digest</SelectItem>
-                                            <SelectItem value="weekly">Weekly Summary</SelectItem>
-                                        </Select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Fixed Footer */}
-                            <div className="p-6 border-t border-gray-100 bg-gray-50/50">
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all font-semibold shadow-lg shadow-blue-200 active:scale-[0.98]"
-                                >
-                                    {saving ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...
-                                        </span>
-                                    ) : "Simpan Pengaturan"}
-                                </button>
-                            </div>
-                        </form>
+                                    <button
+                                        type="submit"
+                                        disabled={passwordSaving}
+                                        className="w-full px-6 py-3 bg-gradient-to-r from-[#4481EB] to-[#04BEFE] text-white rounded-xl font-semibold hover:opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg shadow-blue-500/30"
+                                    >
+                                        {passwordSaving ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <Loader2 className="w-4 h-4 animate-spin" /> Memproses...
+                                            </span>
+                                        ) : "Update Password"}
+                                    </button>
+                                </form>
+                            )}
+                        </>
                     )}
                 </div>
             </DialogContent>

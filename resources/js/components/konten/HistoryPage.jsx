@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
@@ -300,13 +301,9 @@ export default function HistoryPage() {
   return (
     <div className="flex flex-1 w-full h-full overflow-auto">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50">
+
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Riwayat</h1>
-          <p className="text-gray-600 mt-2">
-            Lihat riwayat penimbangan, log makanan, dan imunisasi anak Anda
-          </p>
-        </div>
+        <PageHeader title="Riwayat" subtitle="Portal Orang Tua" />
 
         {/* Filter Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">

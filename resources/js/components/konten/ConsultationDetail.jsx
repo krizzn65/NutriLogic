@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import GenericDetailSkeleton from "../loading/GenericDetailSkeleton";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function ConsultationDetail() {
   const { id } = useParams();
@@ -162,7 +163,7 @@ export default function ConsultationDetail() {
     <div className="flex flex-1 w-full h-full overflow-hidden flex-col bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4 md:p-6">
-        <div className="flex items-center gap-4 mb-4">
+        <PageHeader title={consultation.title} subtitle="Portal Orang Tua">
           <button
             onClick={() => navigate('/dashboard/konsultasi')}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -171,10 +172,7 @@ export default function ConsultationDetail() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-800">{consultation.title}</h1>
-          </div>
-        </div>
+        </PageHeader>
 
         {/* Info Bar */}
         <div className="flex items-center gap-4 text-sm">
@@ -195,8 +193,8 @@ export default function ConsultationDetail() {
             </div>
           )}
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${consultation.status === 'open'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-800'
             }`}>
             {consultation.status === 'open' ? 'Aktif' : 'Selesai'}
           </span>
@@ -251,8 +249,8 @@ export default function ConsultationDetail() {
                   {/* Message Bubble */}
                   <div className="flex flex-col">
                     <div className={`px-4 py-2 rounded-lg ${isParent
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-900'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-900'
                       }`}>
                       <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
                     </div>

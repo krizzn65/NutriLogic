@@ -42,16 +42,16 @@ const Penggunaan = () => {
       title: "1. Registrasi & Login",
       content: (
         <div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base font-normal mb-8">
+          <p className="text-gray-600 dark:text-gray-300 text-xs md:text-sm font-normal mb-6">
             Mulai perjalanan Anda dengan membuat akun. Pilih peran sebagai <strong>Orang Tua</strong> untuk memantau anak Anda, atau <strong>Kader</strong> untuk mengelola data posyandu.
           </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <h4 className="font-semibold text-[#00BFEF] mb-2">Orang Tua</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <h4 className="font-semibold text-[#00BFEF] mb-1.5 text-sm">Orang Tua</h4>
               <p className="text-xs text-gray-500">Akses riwayat kesehatan anak dan rekomendasi gizi personal.</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <h4 className="font-semibold text-[#00BFEF] mb-2">Kader Posyandu</h4>
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <h4 className="font-semibold text-[#00BFEF] mb-1.5 text-sm">Kader Posyandu</h4>
               <p className="text-xs text-gray-500">Kelola data balita dan jadwal kegiatan dengan efisien.</p>
             </div>
           </div>
@@ -62,11 +62,11 @@ const Penggunaan = () => {
       title: "2. Dashboard Utama",
       content: (
         <div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base font-normal mb-8">
+          <p className="text-gray-600 dark:text-gray-300 text-xs md:text-sm font-normal mb-6">
             Setelah login, Anda akan disambut oleh Dashboard interaktif. Lihat ringkasan status gizi, jadwal imunisasi, dan notifikasi penting dalam satu tampilan.
           </p>
-          <div className="bg-gradient-to-br from-[#00BFEF]/10 to-white p-6 rounded-xl border border-[#00BFEF]/20">
-            <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
+          <div className="bg-gradient-to-br from-[#00BFEF]/10 to-white p-4 rounded-xl border border-[#00BFEF]/20">
+            <ul className="list-disc list-inside text-xs text-gray-600 space-y-1.5">
               <li>Grafik pertumbuhan real-time</li>
               <li>Status gizi terkini (Normal, Stunting, dll)</li>
               <li>Pengingat jadwal posyandu terdekat</li>
@@ -79,13 +79,13 @@ const Penggunaan = () => {
       title: "3. Pencatatan Data",
       content: (
         <div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base font-normal mb-8">
+          <p className="text-gray-600 dark:text-gray-300 text-xs md:text-sm font-normal mb-6">
             Input data pertumbuhan anak secara berkala. Masukkan berat badan, tinggi badan, dan lingkar kepala untuk mendapatkan analisis yang akurat.
           </p>
-          <div className="flex gap-2 mb-4">
-            <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">Berat Badan</span>
-            <span className="px-3 py-1 bg-green-100 text-green-600 rounded-full text-xs font-medium">Tinggi Badan</span>
-            <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">Lingkar Kepala</span>
+          <div className="flex gap-2 mb-3">
+            <span className="px-2.5 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">Berat Badan</span>
+            <span className="px-2.5 py-1 bg-green-100 text-green-600 rounded-full text-xs font-medium">Tinggi Badan</span>
+            <span className="px-2.5 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">Lingkar Kepala</span>
           </div>
           <p className="text-xs text-gray-500 italic">
             *Data dapat diinput oleh Kader saat posyandu atau Orang Tua secara mandiri.
@@ -97,15 +97,15 @@ const Penggunaan = () => {
       title: "4. Analisis AI & Rekomendasi",
       content: (
         <div>
-          <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base font-normal mb-8">
+          <p className="text-gray-600 dark:text-gray-300 text-xs md:text-sm font-normal mb-6">
             Teknologi AI kami akan menganalisis data yang masuk dan memberikan rekomendasi menu makanan serta aktivitas yang sesuai dengan kebutuhan anak.
           </p>
-          <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-[#00BFEF] flex items-center justify-center text-white font-bold">AI</div>
-              <div className="text-sm font-semibold text-gray-700">Rekomendasi Hari Ini</div>
+          <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-3">
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-7 h-7 rounded-full bg-[#00BFEF] flex items-center justify-center text-white font-bold text-xs">AI</div>
+              <div className="text-xs font-semibold text-gray-700">Rekomendasi Hari Ini</div>
             </div>
-            <p className="text-sm text-gray-600">"Berdasarkan data terakhir, disarankan meningkatkan asupan protein. Coba menu: Sup Ikan Gabus."</p>
+            <p className="text-xs text-gray-600">"Berdasarkan data terakhir, disarankan meningkatkan asupan protein. Coba menu: Sup Ikan Gabus."</p>
           </div>
         </div>
       ),
@@ -113,7 +113,7 @@ const Penggunaan = () => {
   ];
 
   return (
-    <div ref={sectionRef} className='py-24 lg:py-32 font-montserrat px-6 md:px-[150px] lg:px-[230px] relative overflow-hidden' style={{ backgroundColor: '#ffffffff' }} id='Penggunaan'>
+    <div ref={sectionRef} className='py-16 lg:py-24 font-montserrat px-6 md:px-[150px] lg:px-[230px] relative overflow-hidden' style={{ backgroundColor: '#ffffffff' }} id='Penggunaan'>
       {/* Parallax Background Elements */}
       <motion.div
         className="absolute top-0 left-0 w-64 h-64 bg-[#00BFEF]/5 rounded-full blur-3xl"
@@ -144,13 +144,13 @@ const Penggunaan = () => {
 
       <div className='w-full relative z-10'>
         <motion.div
-          className='text-center mb-12'
+          className='text-center mb-8'
           style={{ y: headerY, opacity: headerOpacity }}
         >
-          <h2 className={`text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
             Cara Penggunaan
           </h2>
-          <p className={`text-gray-600 max-w-2xl mx-auto text-lg ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '300ms' }}>
+          <p className={`text-gray-600 max-w-2xl mx-auto text-sm md:text-base ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '300ms' }}>
             Panduan langkah demi langkah menggunakan NutriLogic untuk pemantauan gizi optimal.
           </p>
         </motion.div>

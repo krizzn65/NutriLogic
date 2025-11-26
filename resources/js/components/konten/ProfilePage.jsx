@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import { fetchMe } from "../../lib/auth";
 import GenericFormSkeleton from "../loading/GenericFormSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -176,12 +177,10 @@ export default function ProfilePage() {
         <div className="flex flex-1 w-full h-full overflow-auto">
             <div className="p-4 md:p-10 w-full h-full bg-gray-50">
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800">Profil</h1>
-                    <p className="text-gray-600 mt-2">
-                        Kelola informasi profil dan akun Anda
-                    </p>
-                </div>
+                <PageHeader title="Profil" subtitle="Portal Orang Tua" />
+                <p className="text-gray-600 mt-2 mb-6">
+                    Kelola informasi profil dan akun Anda
+                </p>
 
                 {/* Success Message */}
                 {successMessage && (

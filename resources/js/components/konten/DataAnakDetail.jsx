@@ -20,7 +20,7 @@ export default function DataAnakDetail() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await api.get(`/parent/children/${childId}`);
       setChildData(response.data.data);
     } catch (err) {
@@ -97,22 +97,16 @@ export default function DataAnakDetail() {
     <div className="flex flex-1 w-full h-full overflow-auto">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/dashboard/anak')}
-              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">{childData.full_name}</h1>
-              <p className="text-gray-600 mt-1">Detail data anak</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader title={childData.full_name} subtitle="Portal Orang Tua">
+          <button
+            onClick={() => navigate('/dashboard/anak')}
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </PageHeader>
 
         {/* Identitas Anak Section */}
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
@@ -271,11 +265,10 @@ export default function DataAnakDetail() {
               {childData.immunization_schedules.map((schedule) => (
                 <div
                   key={schedule.id}
-                  className={`flex items-center gap-4 p-4 rounded-lg border ${
-                    schedule.completed_at
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
+                  className={`flex items-center gap-4 p-4 rounded-lg border ${schedule.completed_at
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-gray-50 border-gray-200'
+                    }`}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

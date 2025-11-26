@@ -119,7 +119,7 @@ const Contact = () => {
     return (
         <section
             id="Contact"
-            className="relative py-24 lg:py-32 bg-white text-gray-800 overflow-hidden font-montserrat px-6 md:px-[150px] lg:px-[230px]">
+            className="relative py-16 lg:py-24 bg-white text-gray-800 overflow-hidden font-montserrat px-6 md:px-[150px] lg:px-[230px]">
             {/* Enhanced Background Effects */}
             <div className="absolute inset-0">
                 {/* Animated gradient mesh */}
@@ -172,9 +172,9 @@ const Contact = () => {
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}>
                 {/* Header */}
-                <motion.div className="text-center mb-20" variants={fadeInUp}>
+                <motion.div className="text-center mb-12" variants={fadeInUp}>
                     <motion.h2
-                        className="text-4xl sm:text-5xl md:text-6xl font-bold mb-8 tracking-tight"
+                        className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 tracking-tight"
                         variants={fadeInUp}>
                         <span
                             className="bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600">
@@ -199,18 +199,18 @@ const Contact = () => {
                     </motion.h2>
 
                     <motion.p
-                        className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed"
+                        className="text-base sm:text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed"
                         variants={fadeInUp}>
                         Siap meningkatkan kualitas gizi balita di posyandu Anda? Mari diskusikan bagaimana NutriLogic dapat membantu.
                     </motion.p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Contact Form */}
-                    <motion.div className="space-y-8" variants={fadeInUp}>
+                    <motion.div className="space-y-6" variants={fadeInUp}>
                         <div>
-                            <h3 className="text-3xl font-bold text-gray-800 mb-4">Kirim Pesan</h3>
-                            <p className="text-gray-600 text-lg">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-3">Kirim Pesan</h3>
+                            <p className="text-gray-600 text-base">
                                 Ceritakan tentang kebutuhan Anda dan kami akan merespons dalam 24 jam.
                             </p>
                         </div>
@@ -224,16 +224,16 @@ const Contact = () => {
                                     initial={{ opacity: 1 }}
                                     exit={{ opacity: 0, y: -20 }}
                                     transition={{ duration: 0.3 }}>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="relative">
                                             <User
-                                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <input
                                                 type="text"
                                                 placeholder="Nama Anda"
                                                 value={formData.name}
                                                 onChange={(e) => handleInputChange('name', e.target.value)}
-                                                className={`w-full pl-10 pr-4 py-4 bg-white border rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all ${errors.name ? 'border-red-400' : 'border-gray-200'
+                                                className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all text-sm ${errors.name ? 'border-red-400' : 'border-gray-200'
                                                     }`} />
                                             {errors.name && (
                                                 <motion.p
@@ -247,13 +247,13 @@ const Contact = () => {
 
                                         <div className="relative">
                                             <Mail
-                                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <input
                                                 type="email"
                                                 placeholder="Alamat Email"
                                                 value={formData.email}
                                                 onChange={(e) => handleInputChange('email', e.target.value)}
-                                                className={`w-full pl-10 pr-4 py-4 bg-white border rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all ${errors.email ? 'border-red-400' : 'border-gray-200'
+                                                className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all text-sm ${errors.email ? 'border-red-400' : 'border-gray-200'
                                                     }`} />
                                             {errors.email && (
                                                 <motion.p
@@ -268,23 +268,23 @@ const Contact = () => {
 
                                     <div className="relative">
                                         <Building
-                                            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                         <input
                                             type="text"
                                             placeholder="Posyandu/Instansi (Opsional)"
                                             value={formData.company}
                                             onChange={(e) => handleInputChange('company', e.target.value)}
-                                            className="w-full pl-10 pr-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all" />
+                                            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all text-sm" />
                                     </div>
 
                                     <div className="relative">
-                                        <MessageSquare className="absolute left-3 top-4 h-5 w-5 text-gray-400" />
+                                        <MessageSquare className="absolute left-3 top-4 h-4 w-4 text-gray-400" />
                                         <textarea
                                             placeholder="Ceritakan kebutuhan Anda..."
-                                            rows={6}
+                                            rows={5}
                                             value={formData.message}
                                             onChange={(e) => handleInputChange('message', e.target.value)}
-                                            className={`w-full pl-10 pr-4 py-4 bg-white border rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all resize-none ${errors.message ? 'border-red-400' : 'border-gray-200'
+                                            className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00BFEF] focus:ring-2 focus:ring-[#00BFEF]/20 transition-all resize-none text-sm ${errors.message ? 'border-red-400' : 'border-gray-200'
                                                 }`} />
                                         {errors.message && (
                                             <motion.p
@@ -299,7 +299,7 @@ const Contact = () => {
                                     <motion.button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="w-full relative group overflow-hidden bg-gradient-to-r from-[#00BFEF] to-[#0088c2] hover:from-[#00a8d6] hover:to-[#006b9e] text-white font-medium py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#00BFEF]/30"
+                                        className="w-full relative group overflow-hidden bg-gradient-to-r from-[#00BFEF] to-[#0088c2] hover:from-[#00a8d6] hover:to-[#006b9e] text-white font-medium py-3 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#00BFEF]/30 text-sm"
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}>
                                         <motion.div
@@ -317,7 +317,7 @@ const Contact = () => {
                                                 <>
                                                     Kirim Pesan
                                                     <Send className="h-5 w-5" />
-                                                    
+
                                                 </>
                                             )}
                                         </span>
@@ -356,33 +356,33 @@ const Contact = () => {
                     </motion.div>
 
                     {/* Contact Methods */}
-                    <motion.div className="space-y-8" variants={fadeInUp}>
+                    <motion.div className="space-y-6" variants={fadeInUp}>
                         <div>
-                            <h3 className="text-3xl font-bold text-gray-800 mb-4">Cara Lain Menghubungi</h3>
-                            <p className="text-gray-600 text-lg">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-3">Cara Lain Menghubungi</h3>
+                            <p className="text-gray-600 text-base">
                                 Pilih metode yang paling nyaman untuk Anda.
                             </p>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {contactMethods.map((method, index) => (
                                 <motion.a
                                     key={index}
                                     href={method.link}
-                                    className="block p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200 hover:bg-white hover:shadow-md transition-all group"
+                                    className="block p-5 bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200 hover:bg-white hover:shadow-md transition-all group"
                                     variants={fadeInUp}
                                     whileHover={{ scale: 1.02, y: -2 }}>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-3">
                                         <motion.div
-                                            className={`w-14 h-14 rounded-xl bg-gradient-to-br ${method.gradient} border border-[#00BFEF]/30 flex items-center justify-center`}
+                                            className={`w-12 h-12 rounded-xl bg-gradient-to-br ${method.gradient} border border-[#00BFEF]/30 flex items-center justify-center`}
                                             whileHover={{ scale: 1.1, rotateY: 180 }}
                                             transition={{ duration: 0.6 }}>
-                                            <method.icon className="w-7 h-7 text-[#00BFEF]" />
+                                            <method.icon className="w-6 h-6 text-[#00BFEF]" />
                                         </motion.div>
                                         <div className="flex-1">
-                                            <h4 className="text-xl font-semibold text-gray-800 mb-1">{method.title}</h4>
-                                            <p className="text-gray-500 text-sm mb-2">{method.description}</p>
-                                            <p className="text-gray-800 font-medium">{method.value}</p>
+                                            <h4 className="text-lg font-semibold text-gray-800 mb-1">{method.title}</h4>
+                                            <p className="text-gray-500 text-xs mb-1">{method.description}</p>
+                                            <p className="text-gray-800 font-medium text-sm">{method.value}</p>
                                         </div>
                                         <ArrowRight
                                             className="w-5 h-5 text-gray-400 group-hover:text-[#00BFEF] group-hover:translate-x-1 transition-all" />
@@ -393,10 +393,10 @@ const Contact = () => {
 
                         {/* Additional Info */}
                         <motion.div
-                            className="p-6 bg-gradient-to-br from-[#00BFEF]/[0.08] to-[#0088c2]/[0.08] backdrop-blur-xl rounded-2xl border border-[#00BFEF]/30"
+                            className="p-5 bg-gradient-to-br from-[#00BFEF]/[0.08] to-[#0088c2]/[0.08] backdrop-blur-xl rounded-2xl border border-[#00BFEF]/30"
                             variants={fadeInUp}>
-                            <h4 className="text-lg font-semibold text-gray-800 mb-3">Garansi Respon Cepat</h4>
-                            <p className="text-gray-700 text-sm leading-relaxed">
+                            <h4 className="text-base font-semibold text-gray-800 mb-2">Garansi Respon Cepat</h4>
+                            <p className="text-gray-700 text-xs leading-relaxed">
                                 Kami berkomitmen untuk merespons dengan cepat. Semua pertanyaan biasanya dijawab dalam 24 jam,
                                 dan kami akan menjadwalkan panggilan untuk mendiskusikan kebutuhan Anda secara detail.
                             </p>

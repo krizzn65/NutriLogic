@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function DataAnakList() {
   const [loading, setLoading] = useState(true);
@@ -117,21 +118,17 @@ export default function DataAnakList() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Data Anak</h1>
-            <p className="text-gray-600 mt-2">Kelola data anak Anda</p>
-          </div>
+        <PageHeader title="Data Anak" subtitle="Portal Orang Tua">
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
             onClick={() => navigate('/dashboard/anak/tambah')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Tambah Anak
+            Tambah Data Anak
           </button>
-        </div>
+        </PageHeader>
 
         {/* Table/List View */}
         {children.length === 0 ? (

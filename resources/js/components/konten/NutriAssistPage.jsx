@@ -1,6 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { assets } from "../../assets/assets";
 import { formatAge } from "../../lib/utils";
+import PageHeader from "../dashboard/PageHeader";
 import NutriAssistSkeleton from "../loading/NutriAssistSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 
@@ -126,12 +129,10 @@ export default function NutriAssistPage() {
     <div className="flex flex-1 w-full h-full overflow-auto">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Nutri-Assist</h1>
-          <p className="text-gray-600 mt-2">
-            Input bahan makanan yang ada di rumah untuk mendapatkan rekomendasi menu MPASI yang sesuai gizi anak.
-          </p>
-        </div>
+        <PageHeader title="Nutri-Assist" subtitle="Portal Orang Tua" />
+        <p className="text-gray-600 mt-2 mb-6">
+          Asisten pintar untuk membantu memantau gizi dan kesehatan anak Anda.
+        </p>
 
         {/* Error State */}
         {error && (

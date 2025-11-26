@@ -184,7 +184,7 @@ const Fitur = () => {
   return (
     <div
       ref={sectionRef}
-      className='py-24 lg:py-32 font-montserrat px-6 md:px-[150px] lg:px-[230px] bg-gradient-to-br from-gray-50 to-gray-100'
+      className='py-16 lg:py-24 font-montserrat px-6 md:px-[150px] lg:px-[230px] bg-gradient-to-br from-gray-50 to-gray-100'
       id='Fitur'
     >
       <style>{`
@@ -239,24 +239,24 @@ const Fitur = () => {
 
       <div className="w-full">
         {/* Header */}
-        <div className={`mb-12 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
+        <div className={`mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
             Fitur Unggulan
           </h2>
           <div className="flex items-center gap-2 text-gray-500">
-            <Icon icon="mdi:star-circle-outline" className="w-5 h-5" />
-            <span className="text-sm md:text-base font-medium uppercase tracking-wide">
+            <Icon icon="mdi:star-circle-outline" className="w-4 h-4" />
+            <span className="text-xs md:text-sm font-medium uppercase tracking-wide">
               Teknologi Untuk Generasi Sehat
             </span>
           </div>
         </div>
 
         {/* Main Content: Timeline + Feature Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 lg:items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 lg:items-start">
           {/* Left: Radial Orbital Timeline */}
           <div className={`${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
             <div className="lg:sticky lg:top-24">
-              <div className="rounded-2xl overflow-hidden flex items-center justify-center h-[500px] lg:h-[882px]">
+              <div className="rounded-2xl overflow-hidden flex items-center justify-center h-[450px] lg:h-[700px]">
                 <RadialOrbitalTimeline timelineData={timelineData} />
               </div>
             </div>
@@ -264,14 +264,14 @@ const Fitur = () => {
 
           {/* Right: Feature Description */}
           <div className={`${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`} style={{ animationDelay: '300ms' }}>
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Feature Selector Tabs */}
               <div className="flex flex-wrap gap-2">
                 {features.map((feature, index) => (
                   <button
                     key={feature.id}
                     onClick={() => setSelectedFeature(index)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${selectedFeature === index
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${selectedFeature === index
                       ? 'bg-[#00BFEF] text-white shadow-lg'
                       : 'bg-white text-gray-700 hover:bg-gray-100'
                       }`}
@@ -282,18 +282,18 @@ const Fitur = () => {
               </div>
 
               {/* Feature Detail Card */}
-              <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6" style={{ minHeight: '700px' }}>
+              <div className="bg-white rounded-2xl shadow-xl p-6 space-y-5" style={{ minHeight: '600px' }}>
                 {/* Header */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#00BFEF] to-[#0088c2] flex items-center justify-center text-white">
-                      {React.createElement(currentFeature.icon, { size: 32 })}
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00BFEF] to-[#0088c2] flex items-center justify-center text-white">
+                      {React.createElement(currentFeature.icon, { size: 24 })}
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900">
+                      <h3 className="text-xl font-bold text-gray-900">
                         {currentFeature.title}
                       </h3>
-                      <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${currentFeature.status === 'completed'
+                      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentFeature.status === 'completed'
                         ? 'bg-green-100 text-green-700'
                         : 'bg-blue-100 text-blue-700'
                         }`}>
@@ -305,43 +305,43 @@ const Fitur = () => {
 
                 {/* Overview */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Overview</h4>
-                  <p className="text-gray-600 leading-relaxed">
+                  <h4 className="text-base font-semibold text-gray-900 mb-2">Overview</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">
                     {currentFeature.description.overview}
                   </p>
                 </div>
 
                 {/* Benefits */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">Manfaat Utama</h4>
+                  <h4 className="text-base font-semibold text-gray-900 mb-2">Manfaat Utama</h4>
                   <ul className="space-y-2">
                     {currentFeature.description.benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-3">
+                      <li key={index} className="flex items-start gap-2">
                         <Icon
                           icon="mdi:check-circle"
-                          className="w-5 h-5 text-[#00BFEF] flex-shrink-0 mt-0.5"
+                          className="w-4 h-4 text-[#00BFEF] flex-shrink-0 mt-0.5"
                         />
-                        <span className="text-gray-600">{benefit}</span>
+                        <span className="text-sm text-gray-600">{benefit}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Technical Details */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Icon icon="mdi:cog-outline" className="w-5 h-5" />
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h4 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Icon icon="mdi:cog-outline" className="w-4 h-4" />
                     Detail Teknis
                   </h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">
+                  <p className="text-xs text-gray-600 leading-relaxed">
                     {currentFeature.description.techDetails}
                   </p>
                 </div>
 
                 {/* User Impact */}
-                <div className="border-l-4 border-[#00BFEF] pl-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Dampak untuk Pengguna</h4>
-                  <p className="text-gray-600 leading-relaxed">
+                <div className="border-l-4 border-[#00BFEF] pl-4">
+                  <h4 className="text-base font-semibold text-gray-900 mb-2">Dampak untuk Pengguna</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">
                     {currentFeature.description.userImpact}
                   </p>
                 </div>

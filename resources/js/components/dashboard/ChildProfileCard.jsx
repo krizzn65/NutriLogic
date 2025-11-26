@@ -1,5 +1,6 @@
 import React from 'react';
 import { getStatusColor, formatAge } from "../../lib/utils";
+import { assets } from '../../assets/assets';
 
 export default function ChildProfileCard({ child }) {
     if (!child) return null;
@@ -19,8 +20,12 @@ export default function ChildProfileCard({ child }) {
                         <p className="text-blue-100 text-[10px] md:text-sm font-medium mb-0.5 md:mb-1">Status Anak</p>
                         <h3 className="text-lg md:text-2xl font-bold">{child.full_name}</h3>
                     </div>
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
-                        <span className="text-sm md:text-xl">👶</span>
+                    <div className="flex-shrink-0">
+                        <img
+                            src={assets.kepala_bayi}
+                            alt="Ibu dan Anak"
+                            className="w-20 h-20 md:w-28 md:h-28 object-contain drop-shadow-lg"
+                        />
                     </div>
                 </div>
 

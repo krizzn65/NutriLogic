@@ -127,11 +127,17 @@
 
 @layer base {
   * {
-    @apply border-gray-200 outline-gray-900/50;
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-white text-foreground;
+    margin: 0;
+    padding: 0;
   }
 }
 
@@ -143,15 +149,5 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground;
   }
 }

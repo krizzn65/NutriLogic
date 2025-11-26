@@ -83,20 +83,32 @@ export default function RadialOrbitalTimeline({
   }, []);
 
   useEffect(() => {
-    let rotationTimer;
+    let animationFrameId;
+    let lastTime = performance.now();
 
     if (autoRotate && viewMode === "orbital") {
-      rotationTimer = setInterval(() => {
+      const animate = (currentTime) => {
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+        // Rotate at ~18 degrees per second (0.3 degrees per 16.67ms at 60fps)
+        const rotationSpeed = 18; // degrees per second
+        const increment = (rotationSpeed * deltaTime) / 1000;
+
         setRotationAngle((prev) => {
-          const newAngle = (prev + 0.3) % 360;
+          const newAngle = (prev + increment) % 360;
           return Number(newAngle.toFixed(3));
         });
-      }, 50);
+
+        animationFrameId = requestAnimationFrame(animate);
+      };
+
+      animationFrameId = requestAnimationFrame(animate);
     }
 
     return () => {
-      if (rotationTimer) {
-        clearInterval(rotationTimer);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
     };
   }, [autoRotate, viewMode]);
@@ -176,7 +188,8 @@ export default function RadialOrbitalTimeline({
             className="absolute rounded-full border-2 border-gray-300 transition-all duration-500 ease-in-out"
             style={{
               width: `${radius * 2}px`,
-              height: `${radius * 2}px`
+              height: `${radius * 2}px`,
+              willChange: 'transform'
             }}></div>
 
           {timelineData.map((item, index) => {
@@ -196,8 +209,12 @@ export default function RadialOrbitalTimeline({
               <div
                 key={item.id}
                 ref={(el) => (nodeRefs.current[item.id] = el)}
-                className="absolute transition-all duration-700 cursor-pointer"
-                style={nodeStyle}
+                className="absolute cursor-pointer"
+                style={{
+                  ...nodeStyle,
+                  transition: 'transform 0.05s linear, opacity 0.3s ease-out, z-index 0s',
+                  willChange: 'transform, opacity'
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleItem(item.id);

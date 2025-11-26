@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function ConsultationList() {
   const [loading, setLoading] = useState(true);
@@ -73,12 +74,9 @@ export default function ConsultationList() {
   return (
     <div className="flex flex-1 w-full h-full overflow-auto">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Konsultasi</h1>
-            <p className="text-gray-600 mt-2">Komunikasi dengan kader seputar gizi dan kesehatan anak</p>
-          </div>
+        <PageHeader title="Konsultasi" subtitle="Portal Orang Tua">
           <button
             onClick={() => navigate('/dashboard/konsultasi/create')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -88,7 +86,7 @@ export default function ConsultationList() {
             </svg>
             Buat Konsultasi Baru
           </button>
-        </div>
+        </PageHeader>
 
         {/* Filter Tabs */}
         <div className="flex gap-2 border-b border-gray-200">

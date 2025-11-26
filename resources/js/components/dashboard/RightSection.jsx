@@ -9,6 +9,15 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
 import { Icon } from "@iconify/react";
 import { useNavigate } from 'react-router-dom';
 import { logoutWithApi } from '../../lib/auth';
@@ -23,7 +32,13 @@ export default function RightSection({ user, childrenData, schedules }) {
     // Get the first child or the one needing attention
     const featuredChild = childrenData?.find(c => c.latest_nutritional_status.is_at_risk) || childrenData?.[0];
 
-    const handleLogout = async () => {
+    const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+
+    const handleLogoutClick = () => {
+        setShowLogoutConfirm(true);
+    };
+
+    const confirmLogout = async () => {
         await logoutWithApi();
         navigate("/auth");
     };
@@ -58,7 +73,7 @@ export default function RightSection({ user, childrenData, schedules }) {
                             <span>Setting</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" onClick={handleLogout}>
+                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" onClick={handleLogoutClick}>
                             <Icon icon="lucide:log-out" className="mr-2 h-4 w-4" />
                             <span>Logout</span>
                         </DropdownMenuItem>
@@ -81,6 +96,33 @@ export default function RightSection({ user, childrenData, schedules }) {
             <div>
                 <Calendar />
             </div>
+
+            {/* Logout Confirmation Dialog */}
+            <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+                <DialogContent className="sm:max-w-[425px] rounded-[30px] p-6 bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold text-gray-900">Konfirmasi Logout</DialogTitle>
+                        <DialogDescription className="text-gray-500 mt-2">
+                            Apakah Anda yakin ingin keluar dari aplikasi? Anda harus login kembali untuk mengakses akun Anda.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-3 mt-6">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowLogoutConfirm(false)}
+                            className="flex-1 rounded-xl bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 hover:text-gray-900"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={confirmLogout}
+                            className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Ya, Keluar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 

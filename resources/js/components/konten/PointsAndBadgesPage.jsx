@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import PointsBadgesSkeleton from "../loading/PointsBadgesSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function PointsAndBadgesPage() {
   const [loading, setLoading] = useState(true);
@@ -71,12 +72,10 @@ export default function PointsAndBadgesPage() {
   return (
     <div className="p-4 md:p-10 w-full h-full bg-gray-50">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Poin & Badge</h1>
-        <p className="text-gray-600 mt-2">
-          Lihat poin dan badge yang telah Anda dapatkan dari aktivitas rutin update data, membaca artikel edukasi, dan patuh jadwal posyandu.
-        </p>
-      </div>
+      <PageHeader title="Poin & Badge" subtitle="Portal Orang Tua" />
+      <p className="text-gray-600 mt-2 mb-6">
+        Lihat poin dan badge yang telah Anda dapatkan dari aktivitas rutin update data, membaca artikel edukasi, dan patuh jadwal posyandu.
+      </p>
 
       {/* Points Display */}
       <div className="mb-8">

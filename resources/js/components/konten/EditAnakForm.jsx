@@ -181,21 +181,16 @@ export default function EditAnakForm() {
         <div className="flex flex-1 w-full h-full overflow-auto">
             <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Edit Data Anak</h1>
-                        <p className="text-gray-600 mt-2">Perbarui data anak Anda</p>
-                    </div>
+                <PageHeader title="Edit Data Anak" subtitle="Portal Orang Tua">
                     <button
                         onClick={() => navigate('/dashboard/anak')}
-                        className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2"
+                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
-                        Batal
                     </button>
-                </div>
+                </PageHeader>
 
                 {/* Error Alert */}
                 {error && (
