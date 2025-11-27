@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public authentication routes
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // Public routes (no auth required)
 Route::get('/posyandus', [PosyanduController::class, 'index']); // Public untuk registrasi

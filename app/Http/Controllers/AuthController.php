@@ -71,6 +71,9 @@ class AuthController extends Controller
             ], 401);
         }
 
+        // Single Session Enforcement: Revoke all previous tokens
+        $user->tokens()->delete();
+
         // Generate Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
 
