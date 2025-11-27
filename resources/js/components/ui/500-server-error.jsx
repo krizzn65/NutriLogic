@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import SlideButton from "../slide-button";
 
 export function ServerErrorPage() {
     const handleRefresh = () => {
@@ -28,15 +29,15 @@ export function ServerErrorPage() {
                                 Internal Server Error
                             </h3>
                             <p className="mb-6 text-black sm:mb-5 font-poppins">
-                               Kami sedang bekerja untuk memperbaiki masalah ini. Silakan coba lagi nanti.
+                                Kami sedang bekerja untuk memperbaiki masalah ini. Silakan coba lagi nanti.
                             </p>
 
-                            <Button
-                                variant="default"
-                                onClick={handleRefresh}
-                                className="my-5">
-                                Refresh
-                            </Button>
+                            <div className="flex justify-center">
+                                <SlideButton
+                                    onComplete={handleRefresh}
+                                    className="my-5"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

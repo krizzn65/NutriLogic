@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X, Power, Pause, Play, RotateCcw, User, MapPin, Calendar, Activity } from "lucide-react";
+import { X, Power, Pause, Play, RotateCcw, User, MapPin, Calendar, Activity, Plus } from "lucide-react";
 import CreditCard from "./credit-card-1";
 import { formatAge, getStatusColor, getStatusLabel } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import logoScroll from '../assets/logo_scroll.svg';
+import { assets } from '../assets/assets';
+import { InteractiveHoverButton } from "./ui/interactive-hover-button";
 
 export function DataAnakTable({
     title = "Daftar Anak",
@@ -107,14 +109,12 @@ export function DataAnakTable({
                     </div>
 
                     {onAdd && (
-                        <button
+                        <InteractiveHoverButton
+                            text="Tambah Data Anak"
                             onClick={onAdd}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm shadow-blue-200">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span className="font-medium">Tambah Data Anak</span>
-                        </button>
+                            Icon={Plus}
+                            className="w-56 bg-blue-600 text-white border-blue-600 hover:text-white hover:bg-blue-700"
+                        />
                     )}
                 </div>
 
@@ -212,6 +212,8 @@ export function DataAnakTable({
                                 >
                                     <X className="w-6 h-6" />
                                 </button>
+
+
                                 <CreditCard
                                     cardNumber={selectedChild.nik ? selectedChild.nik.replace(/(\d{4})(?=\d)/g, '$1 ') : "0000 0000 0000 0000"}
                                     cardHolder={selectedChild.full_name}
@@ -221,6 +223,7 @@ export function DataAnakTable({
                                     labelName="NAMA ANAK"
                                     labelExpiry="TGL LAHIR"
                                     brandLogo={logoScroll}
+                                    chipImage={selectedChild.gender === 'L' ? assets.kepala_bayi : assets.kepala_bayi_cewe}
                                 />
                             </div>
                         </motion.div>

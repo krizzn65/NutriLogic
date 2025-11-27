@@ -3,6 +3,7 @@
 import React from "react";
 
 import { Button } from "@/components/ui/button";
+import SlideButton from "../slide-button";
 import { useNavigate } from "react-router-dom";
 
 export function NotFoundPage() {
@@ -31,12 +32,12 @@ export function NotFoundPage() {
                 Halaman yang kamu cari tidak tersedia!
               </p>
 
-              <Button
-                variant="default"
-                onClick={() => navigate("/")}
-                className="my-5">
-                Kembali ke Beranda
-              </Button>
+              <div className="flex justify-center">
+                <SlideButton
+                  onComplete={() => navigate("/")}
+                  className="my-5"
+                />
+              </div>
             </div>
           </div>
         </div>

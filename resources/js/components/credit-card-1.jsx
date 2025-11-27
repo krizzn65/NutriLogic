@@ -17,7 +17,8 @@ export default function CreditCard({
   labelName = "CARD HOLDER",
   labelExpiry = "EXPIRES",
   brandText = "VISA",
-  brandLogo
+  brandLogo,
+  chipImage
 }) {
   const [isFlipped, setIsFlipped] = React.useState(false)
   const [isClicked, setIsClicked] = React.useState(false)
@@ -41,7 +42,7 @@ export default function CreditCard({
   }
 
   const variantStyles = {
-    gradient: "bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600",
+    gradient: "bg-gradient-to-br from-blue-600 via-teal-500 to-emerald-500",
     dark: "bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900",
     glass: "bg-white/15 dark:bg-white/10 backdrop-blur-xl border border-white/20",
   }
@@ -51,7 +52,7 @@ export default function CreditCard({
       className={cn("flex items-center justify-center relative w-full h-full", className)}>
       <div className="relative">
         <motion.div
-          className="relative w-96 h-56"
+          className="relative w-[500px] h-[315px]"
           style={{ perspective: PERSPECTIVE }}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -109,9 +110,11 @@ export default function CreditCard({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: INITIAL_DELAY }}
                     className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-9 rounded bg-gradient-to-br from-amber-600 to-yellow-700 shadow-inner" />
-                    <Wifi className="w-6 h-6 rotate-90" />
+                    {chipImage ? (
+                      <img src={chipImage} alt="Chip" className="w-20 h-20 rounded-full object-cover shadow-sm" />
+                    ) : (
+                      <div className="w-12 h-9 rounded bg-gradient-to-br from-amber-600 to-yellow-700 shadow-inner" />
+                    )}
                   </motion.div>
                 </div>
 
@@ -176,26 +179,13 @@ export default function CreditCard({
               {/* Magnetic strip */}
               <div className="absolute top-8 left-0 right-0 h-12 bg-black/80" />
 
-              {/* Signature panel */}
-              <div
-                className="absolute top-24 left-6 right-6 bg-white/90 h-10 rounded flex items-center justify-end px-3">
-                <motion.div
-                  className="text-black font-mono font-bold"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}>
-                  {cvv}
-                </motion.div>
-              </div>
-
               {/* Card info */}
               <div
                 className="absolute bottom-8 left-8 right-8 text-white text-xs space-y-2 opacity-70">
-                <p>This card is property of issuing bank</p>
-                <p>Customer Service: 1-800-VISA</p>
+                <p>Kartu Identitas Anak - Posyandu NutriLogic</p>
+                <p>Hubungi Kader jika kartu ini hilang</p>
                 <p className="text-[10px]">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Authorized signature required for all transactions.
+                  Harap membawa kartu ini setiap kali melakukan kunjungan ke Posyandu untuk pencatatan pertumbuhan anak.
                 </p>
               </div>
             </motion.div>

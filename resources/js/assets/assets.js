@@ -10,6 +10,7 @@ import gmb_3 from './gmb_3.png'
 import gmb_4 from './gmb_4.png'
 import ibu_anak from './ibu_anak.png'
 import kepala_bayi from './kepala_bayi.png'
+import kepala_bayi_cewe from './kepala_bayi_cewe.png'
 
 export const assets = {
   logo,
@@ -23,5 +24,6 @@ export const assets = {
   gmb_3,
   gmb_4,
   ibu_anak,
-  kepala_bayi
+  kepala_bayi,
+  kepala_bayi_cewe
 }
