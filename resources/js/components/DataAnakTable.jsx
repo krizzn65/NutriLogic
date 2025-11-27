@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, Power, Pause, Play, RotateCcw, User, MapPin, Calendar, Activity } from "lucide-react";
+import CreditCard from "./credit-card-1";
 import { formatAge, getStatusColor, getStatusLabel } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
+import logoScroll from '../assets/logo_scroll.svg';
 
 export function DataAnakTable({
     title = "Daftar Anak",
@@ -200,69 +202,26 @@ export function DataAnakTable({
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col rounded-2xl z-10 overflow-hidden">
-
-                            <div className="relative bg-gradient-to-r from-gray-50 to-transparent p-4 border-b border-gray-100 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    {getGenderIcon(selectedChild.gender)}
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900">{selectedChild.full_name}</h3>
-                                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                                            <MapPin className="w-3 h-3" />
-                                            {selectedChild.posyandu?.name || '-'}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/dashboard/anak/${selectedChild.id}`);
-                                        }}
-                                        className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
-                                        Lihat Detail
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/dashboard/anak/edit/${selectedChild.id}`);
-                                        }}
-                                        className="px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors">
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={closeChildModal}
-                                        className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                        <X className="w-5 h-5 text-gray-500" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 p-6 overflow-y-auto">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Umur</div>
-                                        <div className="text-lg font-medium">{formatAge(selectedChild.age_in_months)}</div>
-                                    </div>
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Status Gizi</div>
-                                        <div>{getStatusBadge(selectedChild.latest_nutritional_status)}</div>
-                                    </div>
-                                    <div className="p-4 bg-gray-50 rounded-xl col-span-2">
-                                        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Info Tambahan</div>
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <span className="text-gray-500">Tanggal Lahir:</span>
-                                                <div className="font-medium">{selectedChild.birth_date || '-'}</div>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500">NIK:</span>
-                                                <div className="font-medium">{selectedChild.nik || '-'}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                            onClick={closeChildModal}
+                        >
+                            <div className="w-full max-w-3xl aspect-video relative" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                    onClick={closeChildModal}
+                                    className="absolute top-4 right-4 z-50 p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                                <CreditCard
+                                    cardNumber={selectedChild.nik ? selectedChild.nik.replace(/(\d{4})(?=\d)/g, '$1 ') : "0000 0000 0000 0000"}
+                                    cardHolder={selectedChild.full_name}
+                                    expiryDate={selectedChild.birth_date || "00/00"}
+                                    cvv={selectedChild.gender === 'L' ? '001' : '002'}
+                                    variant="gradient"
+                                    labelName="NAMA ANAK"
+                                    labelExpiry="TGL LAHIR"
+                                    brandLogo={logoScroll}
+                                />
                             </div>
                         </motion.div>
                     )}
