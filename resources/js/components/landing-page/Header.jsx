@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Icon } from '@iconify/react'
 import Navbar from './Navbar'
 import { assets } from '../../assets/assets'
+import { isAuthenticated } from '../../lib/auth'
 
 const Header = () => {
   const navigate = useNavigate()
@@ -72,7 +74,7 @@ const Header = () => {
 
   return (
     <div
-      className='relative min-h-screen mb-4 w-full overflow-hidden font-poppins'
+      className='relative min-h-screen w-full overflow-hidden font-montserrat'
       id='Home'
     >
       <style>{`
@@ -151,7 +153,7 @@ const Header = () => {
           <div className='px-6 md:pl-[150px] lg:pl-[230px] md:pr-12 lg:pr-20 xl:pr-32 w-full'>
             <div className='max-w-5xl'>
               {/* Main Heading */}
-              <h1 className='font-poppins text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-white animate-fade-in-left'
+              <h1 className='font-montserrat text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white animate-fade-in-left'
                 style={{ animationDelay: '200ms' }}>
                 <div>Cegah Stunting, Ciptakan</div>
                 <div>Generasi Emas Dengan</div>
@@ -159,18 +161,18 @@ const Header = () => {
               </h1>
 
               {/* Subheading */}
-              <p className='font-poppins mt-6 md:mt-8 text-base md:text-lg lg:text-xl text-white/95 leading-relaxed font-medium animate-fade-in-left'
+              <p className='font-montserrat mt-4 md:mt-6 text-sm md:text-base lg:text-lg text-white/90 leading-relaxed font-normal max-w-2xl animate-fade-in-left'
                 style={{ animationDelay: '400ms' }}>
-                Platform Terpadu Untuk Gizi Anak, Edukasi Keluarga, Dan Akses Mudah Ke Layanan Kesehatan Demi Masa Depan Yang Lebih Cerah
+                Platform Terpadu Untuk Gizi Anak, Edukasi Keluarga, Dan Akses Mudah Ke Layanan Kesehatan
               </p>
 
               {/* CTA Button */}
-              <div className='mt-8 md:mt-10 animate-fade-in-scale' style={{ animationDelay: '600ms' }}>
+              <div className='mt-6 md:mt-8 animate-fade-in-scale' style={{ animationDelay: '600ms' }}>
                 <button
-                  onClick={() => navigate('/auth')}
-                  className='font-poppins bg-white text-gray-800 px-8 md:px-10 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:shadow-[0_0_30px_rgba(255,255,255,0.8)] hover:scale-105 transition-all duration-300'
+                  onClick={() => navigate(isAuthenticated() ? '/dashboard' : '/auth')}
+                  className='font-montserrat bg-white text-gray-800 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-semibold text-sm md:text-base shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:bg-[#00BFEF] hover:text-white hover:shadow-[0_0_30px_rgba(0,191,239,0.8)] hover:scale-105 transition-all duration-500 ease-in-out'
                 >
-                  Cek Status Gizi Sekarang
+                  {isAuthenticated() ? 'Buka Dashboard' : 'Cek Status Gizi Sekarang'}
                 </button>
               </div>
             </div>
@@ -180,40 +182,38 @@ const Header = () => {
         {/* Statistics Card - Single Transparent Card */}
         <div className='absolute bottom-0 right-0 w-full md:w-auto' ref={statsRef}>
           <div
-            className='glassmorphism-stats animate-fade-in-up w-full md:w-[1415px] h-auto md:h-[200px] rounded-t-2xl md:rounded-t-none md:rounded-tl-[13px]'
+            className='glassmorphism-stats animate-fade-in-up w-full md:w-[1200px] h-auto md:h-[160px] rounded-t-2xl md:rounded-t-none md:rounded-tl-[13px]'
             style={{
               animationDelay: '800ms',
             }}
           >
-            <div className='h-full flex flex-wrap md:flex-nowrap items-center justify-between px-4 py-6 md:py-0 md:px-40 gap-4 md:gap-0'>
+            <div className='h-full flex flex-wrap md:flex-nowrap items-center justify-between px-4 py-6 md:py-0 md:px-20 gap-4 md:gap-8'>
               {/* Stat 1 */}
               <div className='text-center text-white'>
-                <h3 className='font-poppins text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2'>
+                <h3 className='font-montserrat text-3xl md:text-4xl lg:text-5xl font-extrabold mb-1'>
                   {count1}{count1 >= 20 ? '+' : ''}
                 </h3>
-                <p className='font-poppins text-sm md:text-base font-medium opacity-90'>Posyandu Setempat</p>
+                <p className='font-montserrat text-xs md:text-sm font-medium opacity-90'>Posyandu Setempat</p>
               </div>
 
               {/* Stat 2 */}
               <div className='text-center text-white'>
-                <h3 className='font-poppins text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2'>{count2}</h3>
-                <p className='font-poppins text-sm md:text-base font-medium opacity-90'>Dusun Terdaftar</p>
+                <h3 className='font-montserrat text-3xl md:text-4xl lg:text-5xl font-extrabold mb-1'>{count2}</h3>
+                <p className='font-montserrat text-xs md:text-sm font-medium opacity-90'>Dusun Terdaftar</p>
               </div>
 
               {/* Stat 3 */}
               <div className='text-center text-white'>
-                <h3 className='font-poppins text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2'>AI</h3>
-                <p className='font-poppins text-sm md:text-base font-medium opacity-90'>Integrasi</p>
+                <h3 className='font-montserrat text-3xl md:text-4xl lg:text-5xl font-extrabold mb-1'>AI</h3>
+                <p className='font-montserrat text-xs md:text-sm font-medium opacity-90'>Integrasi</p>
               </div>
 
               {/* Stat 4 */}
               <div className='text-center text-white'>
-                <div className='flex justify-center mb-2'>
-                  <svg className='w-10 h-10 md:w-12 md:h-12' fill='currentColor' viewBox='0 0 24 24'>
-                    <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' />
-                  </svg>
+                <div className='flex justify-center mb-1'>
+                  <Icon icon="bxs:chart" className='w-8 h-8 md:w-10 md:h-10' />
                 </div>
-                <p className='font-poppins text-sm md:text-base font-medium opacity-90'>Monitoring</p>
+                <p className='font-montserrat text-xs md:text-sm font-medium opacity-90'>Monitoring</p>
               </div>
             </div>
           </div>
@@ -224,3 +224,4 @@ const Header = () => {
 }
 
 export default Header
+

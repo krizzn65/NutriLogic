@@ -35,12 +35,25 @@ class ParentProfileController extends Controller
                 'max:191',
                 'unique:users,email,' . $user->id, // Ignore current user's email
             ],
+            'profile_photo' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
         // Update user profile (explicitly exclude role to prevent changes)
         $user->name = $validated['name'];
         $user->phone = $validated['phone'] ?? null;
         $user->email = $validated['email'];
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($user->profile_photo_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
+        }
+
         $user->save();
 
         return response()->json([
@@ -51,6 +64,9 @@ class ParentProfileController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role,
+                'profile_photo_url' => $user->profile_photo_path 
+                    ? asset('storage/' . $user->profile_photo_path) 
+                    : null,
             ],
         ], 200);
     }

@@ -8,10 +8,16 @@ import {
   BarChart,
   Users,
   ClipboardList,
+  Scale,
+  AlertTriangle,
+  Calendar,
+  MessageSquare,
+  Megaphone,
   LogOut,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
+import { logoutWithApi } from "../../lib/auth";
 
 export default function SidebarKader() {
   const navigate = useNavigate();
@@ -33,24 +39,45 @@ export default function SidebarKader() {
       ),
     },
     {
-      label: "Input Data",
-      href: "/dashboard/input-data",
+      label: "Penimbangan",
+      href: "/dashboard/penimbangan",
       icon: (
-        <ClipboardList className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+        <Scale className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Anak Prioritas",
+      href: "/dashboard/anak-prioritas",
+      icon: (
+        <AlertTriangle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Jadwal",
+      href: "/dashboard/jadwal",
+      icon: (
+        <Calendar className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Konsultasi",
+      href: "/dashboard/konsultasi",
+      icon: (
+        <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Broadcast",
+      href: "/dashboard/broadcast",
+      icon: (
+        <Megaphone className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
       label: "Laporan",
-      href: "/dashboard/reports",
+      href: "/dashboard/laporan",
       icon: (
         <FileText className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Statistik",
-      href: "/dashboard/statistics",
-      icon: (
-        <BarChart className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
@@ -61,21 +88,16 @@ export default function SidebarKader() {
       ),
     },
     {
-      label: "Pengaturan",
-      href: "/dashboard/settings",
-      icon: (
-        <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
-      ),
-    },
-    {
       label: "Keluar",
       href: "#",
       icon: (
         <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
-      onClick: () => {
-        // TODO: Clear authentication/localStorage
-        navigate("/");
+      onClick: async () => {
+        if (window.confirm('Apakah Anda yakin ingin keluar?')) {
+          await logoutWithApi();
+          navigate("/auth");
+        }
       },
     },
   ];

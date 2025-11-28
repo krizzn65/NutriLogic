@@ -25,7 +25,11 @@ class ParentSettingsController extends Controller
 
         return response()->json([
             'data' => [
-                'notification_channel' => $user->notification_channel ?? 'none',
+                'email_notifications' => (bool) $user->email_notifications,
+                'push_notifications' => (bool) $user->push_notifications,
+                'sms_notifications' => (bool) $user->sms_notifications,
+                'marketing_emails' => (bool) $user->marketing_emails,
+                'notification_frequency' => $user->notification_frequency ?? 'instant',
             ],
         ], 200);
     }
@@ -48,17 +52,29 @@ class ParentSettingsController extends Controller
 
         // Validate input
         $validated = $request->validate([
-            'notification_channel' => ['required', 'string', 'in:none,whatsapp,email'],
+            'email_notifications' => ['required', 'boolean'],
+            'push_notifications' => ['required', 'boolean'],
+            'sms_notifications' => ['required', 'boolean'],
+            'marketing_emails' => ['required', 'boolean'],
+            'notification_frequency' => ['required', 'string', 'in:instant,daily,weekly'],
         ]);
 
         // Update user settings
-        $user->notification_channel = $validated['notification_channel'];
+        $user->email_notifications = $validated['email_notifications'];
+        $user->push_notifications = $validated['push_notifications'];
+        $user->sms_notifications = $validated['sms_notifications'];
+        $user->marketing_emails = $validated['marketing_emails'];
+        $user->notification_frequency = $validated['notification_frequency'];
         $user->save();
 
         return response()->json([
             'message' => 'Settings updated successfully.',
             'data' => [
-                'notification_channel' => $user->notification_channel,
+                'email_notifications' => (bool) $user->email_notifications,
+                'push_notifications' => (bool) $user->push_notifications,
+                'sms_notifications' => (bool) $user->sms_notifications,
+                'marketing_emails' => (bool) $user->marketing_emails,
+                'notification_frequency' => $user->notification_frequency,
             ],
         ], 200);
     }

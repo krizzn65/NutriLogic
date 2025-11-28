@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
+import GenericFormSkeleton from "../loading/GenericFormSkeleton";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function CreateConsultation() {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ export default function CreateConsultation() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await api.get('/parent/children');
       setChildren(response.data.data);
     } catch (err) {
@@ -34,7 +36,7 @@ export default function CreateConsultation() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       setError('Judul konsultasi harus diisi.');
       return;
@@ -57,7 +59,7 @@ export default function CreateConsultation() {
       }
 
       const response = await api.post('/parent/consultations', payload);
-      
+
       // Navigate to consultation detail
       navigate(`/dashboard/konsultasi/${response.data.data.id}`);
     } catch (err) {
@@ -75,25 +77,15 @@ export default function CreateConsultation() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GenericFormSkeleton fieldCount={3} />;
   }
 
   return (
     <div className="flex flex-1 w-full h-full overflow-auto">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
+
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <PageHeader title="Buat Konsultasi Baru" subtitle="Portal Orang Tua">
           <button
             onClick={() => navigate('/dashboard/konsultasi')}
             className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -102,11 +94,7 @@ export default function CreateConsultation() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Buat Konsultasi Baru</h1>
-            <p className="text-gray-600 mt-2">Buat topik konsultasi baru dengan kader</p>
-          </div>
-        </div>
+        </PageHeader>
 
         {/* Error State */}
         {error && (

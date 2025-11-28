@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
+import GenericDetailSkeleton from "../loading/GenericDetailSkeleton";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function ConsultationDetail() {
   const { id } = useParams();
@@ -32,7 +34,7 @@ export default function ConsultationDetail() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await api.get(`/parent/consultations/${consultationId}`);
       setConsultation(response.data.data);
     } catch (err) {
@@ -52,7 +54,7 @@ export default function ConsultationDetail() {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim()) {
       return;
     }
@@ -99,7 +101,7 @@ export default function ConsultationDetail() {
     if (diffMins < 60) return `${diffMins} menit yang lalu`;
     if (diffHours < 24) return `${diffHours} jam yang lalu`;
     if (diffDays < 7) return `${diffDays} hari yang lalu`;
-    
+
     return date.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'long',
@@ -111,18 +113,7 @@ export default function ConsultationDetail() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data konsultasi...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <GenericDetailSkeleton />;
   }
 
   // Error state
@@ -172,7 +163,7 @@ export default function ConsultationDetail() {
     <div className="flex flex-1 w-full h-full overflow-hidden flex-col bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4 md:p-6">
-        <div className="flex items-center gap-4 mb-4">
+        <PageHeader title={consultation.title} subtitle="Portal Orang Tua">
           <button
             onClick={() => navigate('/dashboard/konsultasi')}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -181,10 +172,7 @@ export default function ConsultationDetail() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-800">{consultation.title}</h1>
-          </div>
-        </div>
+        </PageHeader>
 
         {/* Info Bar */}
         <div className="flex items-center gap-4 text-sm">
@@ -204,11 +192,10 @@ export default function ConsultationDetail() {
               <span>Kader: {consultation.kader.name}</span>
             </div>
           )}
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            consultation.status === 'open'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${consultation.status === 'open'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-800'
+            }`}>
             {consultation.status === 'open' ? 'Aktif' : 'Selesai'}
           </span>
         </div>
@@ -244,7 +231,7 @@ export default function ConsultationDetail() {
         ) : (
           consultation.messages.map((message) => {
             const isParent = isParentMessage(message);
-            
+
             return (
               <div
                 key={message.id}
@@ -252,21 +239,19 @@ export default function ConsultationDetail() {
               >
                 <div className={`flex gap-3 max-w-[70%] ${isParent ? 'flex-row-reverse' : 'flex-row'}`}>
                   {/* Avatar */}
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    isParent ? 'bg-blue-500' : 'bg-gray-400'
-                  }`}>
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${isParent ? 'bg-blue-500' : 'bg-gray-400'
+                    }`}>
                     <span className="text-white font-semibold text-sm">
                       {message.sender_name.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  
+
                   {/* Message Bubble */}
                   <div className="flex flex-col">
-                    <div className={`px-4 py-2 rounded-lg ${
-                      isParent
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-900'
-                    }`}>
+                    <div className={`px-4 py-2 rounded-lg ${isParent
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-900'
+                      }`}>
                       <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
                     </div>
                     <div className={`mt-1 text-xs text-gray-500 ${isParent ? 'text-right' : 'text-left'}`}>

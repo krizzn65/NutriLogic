@@ -4,6 +4,29 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <!-- Primary Meta Tags -->
+        <title>NutriLogic - Sistem Pemantauan Gizi Balita Berbasis AI</title>
+        <meta name="title" content="NutriLogic - Sistem Pemantauan Gizi Balita Berbasis AI">
+        <meta name="description" content="Platform terpadu untuk pemantauan gizi balita dengan teknologi AI. Deteksi dini stunting, rekomendasi gizi personal, dan edukasi keluarga untuk masa depan anak yang lebih cerah.">
+        <meta name="keywords" content="nutrilogic, gizi balita, stunting, AI, posyandu, pemantauan kesehatan, nutrisi anak, kesehatan balita, Indonesia">
+        <meta name="robots" content="index, follow">
+        <meta name="language" content="Indonesian">
+        <meta name="author" content="NutriLogic Team">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ url('/') }}">
+        <meta property="og:title" content="NutriLogic - Sistem Pemantauan Gizi Balita Berbasis AI">
+        <meta property="og:description" content="Platform terpadu untuk pemantauan gizi balita dengan teknologi AI. Deteksi dini stunting dan rekomendasi gizi personal.">
+        <meta property="og:image" content="{{ asset('images/og-image.png') }}">
+        
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="{{ url('/') }}">
+        <meta property="twitter:title" content="NutriLogic - Sistem Pemantauan Gizi Balita Berbasis AI">
+        <meta property="twitter:description" content="Platform terpadu untuk pemantauan gizi balita dengan teknologi AI. Deteksi dini stunting dan rekomendasi gizi personal.">
+        <meta property="twitter:image" content="{{ asset('images/twitter-image.png') }}">
+
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->

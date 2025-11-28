@@ -36,9 +36,19 @@ class PosyanduController extends Controller
      */
     public function show(Request $request, int $id): JsonResponse
     {
-        $posyandu = Posyandu::with(['children', 'users'])
-            ->withCount(['children', 'users'])
-            ->findOrFail($id);
+        $user = $request->user();
+
+        // Base query
+        $query = Posyandu::query();
+
+        // If user is Admin or Kader, include children and users details
+        if ($user->isAdmin() || $user->isKader()) {
+            $query->with(['children', 'users'])
+                  ->withCount(['children', 'users']);
+        } 
+        // If user is Ibu, only return basic Posyandu info (no relationships)
+        
+        $posyandu = $query->findOrFail($id);
 
         return response()->json([
             'data' => $posyandu,

@@ -114,14 +114,64 @@ class ParentDashboardController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'role' => $user->role,
+                    'profile_photo_url' => $user->profile_photo_path 
+                        ? asset('storage/' . $user->profile_photo_path) 
+                        : null,
                 ],
                 'summary' => [
                     'total_children' => $children->count(),
                     'at_risk_count' => $atRiskCount,
+                    'schedule_status' => $this->calculateScheduleStatus($children->pluck('id')),
                 ],
                 'children' => $childrenData,
                 'upcoming_schedules' => $upcomingSchedules,
             ],
+        ], 200);
+    }
+
+    /**
+     * Get all immunization schedules for calendar
+     * 
+     * Returns all upcoming and past schedules for the user's children
+     */
+    public function getCalendarSchedules(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Authorization: only for ibu role
+        if (!$user->isIbu()) {
+            return response()->json([
+                'message' => 'Unauthorized. This endpoint is only for parents.',
+            ], 403);
+        }
+
+        // Get all children IDs of this parent
+        $childIds = Child::where('parent_id', $user->id)
+            ->where('is_active', true)
+            ->pluck('id');
+
+        // Get ALL schedules (not limited)
+        $schedules = \App\Models\ImmunizationSchedule::whereIn('child_id', $childIds)
+            ->whereNull('completed_at')
+            ->with('child')
+            ->orderBy('scheduled_for', 'asc')
+            ->get();
+
+        $schedulesData = $schedules->map(function ($schedule) {
+            return [
+                'id' => $schedule->id,
+                'child_id' => $schedule->child_id,
+                'child_name' => $schedule->child->full_name,
+                'title' => $schedule->title,
+                'type' => $schedule->type,
+                'scheduled_for' => $schedule->scheduled_for->format('Y-m-d'),
+                'is_urgent' => \Carbon\Carbon::now()->diffInDays($schedule->scheduled_for, false) <= 7,
+            ];
+        });
+
+        return response()->json([
+            'data' => $schedulesData,
         ], 200);
     }
 
@@ -348,6 +398,131 @@ class ParentDashboardController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ],
         ], 200);
+    }
+
+    /**
+     * Get growth chart data for parent's children
+     * 
+     * Returns weight measurements over time for charting
+     */
+    public function growthChart(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Authorization: only for ibu role
+        if (!$user->isIbu()) {
+            return response()->json([
+                'message' => 'Unauthorized. This endpoint is only for parents.',
+            ], 403);
+        }
+
+        // Get all children IDs
+        $childIds = Child::where('parent_id', $user->id)
+            ->where('is_active', true)
+            ->pluck('id');
+
+        if ($childIds->isEmpty()) {
+            return response()->json([
+                'data' => [
+                    'datasets' => [],
+                    'message' => 'No children found',
+                ],
+            ], 200);
+        }
+
+        // Get weighing logs for all children (last 12 months)
+        $weighingLogs = \App\Models\WeighingLog::whereIn('child_id', $childIds)
+            ->where('measured_at', '>=', Carbon::now()->subMonths(12))
+            ->orderBy('measured_at', 'asc')
+            ->get();
+
+        // Group by month and calculate average weight
+        $monthlyData = [];
+        
+        foreach ($weighingLogs as $log) {
+            $monthKey = $log->measured_at->format('Y-m');
+            
+            if (!isset($monthlyData[$monthKey])) {
+                $monthlyData[$monthKey] = [
+                    'month' => $log->measured_at->format('M'),
+                    'year' => $log->measured_at->format('Y'),
+                    'total_weight' => 0,
+                    'count' => 0,
+                    'measurements' => [],
+                ];
+            }
+            
+            $monthlyData[$monthKey]['total_weight'] += $log->weight_kg;
+            $monthlyData[$monthKey]['count']++;
+            $monthlyData[$monthKey]['measurements'][] = [
+                'weight' => $log->weight_kg,
+                'height' => $log->height_cm,
+                'date' => $log->measured_at->format('Y-m-d'),
+            ];
+        }
+
+        // Calculate averages and format for chart
+        $chartData = [];
+        foreach ($monthlyData as $key => $data) {
+            $chartData[] = [
+                'month' => $data['month'],
+                'year' => $data['year'],
+                'averageWeight' => round($data['total_weight'] / $data['count'], 1),
+                'measurementCount' => $data['count'],
+                'measurements' => $data['measurements'],
+            ];
+        }
+
+        return response()->json([
+            'data' => [
+                'chartData' => $chartData,
+                'totalMeasurements' => $weighingLogs->count(),
+            ],
+        ], 200);
+    }
+
+    /**
+     * Calculate schedule status for dashboard stats
+     */
+    private function calculateScheduleStatus($childIds): array
+    {
+        $now = Carbon::now();
+        
+        // Count upcoming schedules for current month (remaining days)
+        $currentMonthCount = \App\Models\ImmunizationSchedule::whereIn('child_id', $childIds)
+            ->where('scheduled_for', '>=', $now)
+            ->where('scheduled_for', '<=', $now->copy()->endOfMonth())
+            ->whereNull('completed_at')
+            ->count();
+
+        if ($currentMonthCount > 0) {
+            return [
+                'count' => $currentMonthCount,
+                'label' => 'Bulan Ini',
+                'has_schedule' => true
+            ];
+        }
+
+        // Count schedules for next month
+        $nextMonthCount = \App\Models\ImmunizationSchedule::whereIn('child_id', $childIds)
+            ->where('scheduled_for', '>=', $now->copy()->addMonth()->startOfMonth())
+            ->where('scheduled_for', '<=', $now->copy()->addMonth()->endOfMonth())
+            ->whereNull('completed_at')
+            ->count();
+
+        if ($nextMonthCount > 0) {
+            return [
+                'count' => $nextMonthCount,
+                'label' => 'Bulan Depan',
+                'has_schedule' => true
+            ];
+        }
+
+        return [
+            'count' => 0,
+            'label' => 'Tidak Ada Kegiatan',
+            'has_schedule' => false
+        ];
     }
 }
 

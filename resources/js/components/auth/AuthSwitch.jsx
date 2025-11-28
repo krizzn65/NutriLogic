@@ -22,9 +22,9 @@ export default function AuthSwitch() {
   }, [isSignUp]);
 
   return (
-    <motion.div 
-      className="auth-page" 
-      style={{ 
+    <motion.div
+      className="auth-page"
+      style={{
         minHeight: '100vh',
         width: '100%',
         background: 'linear-gradient(135deg, #FFFFFFFF 0%, #FFFFFFFF 100%)',
@@ -96,7 +96,7 @@ export default function AuthSwitch() {
         @media (max-width: 570px) {
           .auth-container {
             height: auto;
-            min-height: auto;
+            min-height: 600px;
             border-radius: 15px;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
           }
@@ -548,8 +548,8 @@ export default function AuthSwitch() {
         }
       `}</style>
 
-      <motion.button 
-        onClick={() => navigate('/')} 
+      <motion.button
+        onClick={() => navigate('/')}
         className="back-button"
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -561,7 +561,7 @@ export default function AuthSwitch() {
         <span>Kembali</span>
       </motion.button>
 
-      <motion.div 
+      <motion.div
         className="auth-container"
         initial={{ scale: 0.8, opacity: 0, y: 50 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -570,8 +570,8 @@ export default function AuthSwitch() {
         <div className="forms-container">
           <div className="signin-signup">
             {/* Sign In Form */}
-            <form 
-              className="sign-in-form" 
+            <form
+              className="sign-in-form"
               autoComplete="off"
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -581,10 +581,10 @@ export default function AuthSwitch() {
                 try {
                   // Login user
                   await login(email, password);
-                  
+
                   // Fetch user data from API
                   const user = await fetchMe();
-                  
+
                   // Redirect based on role
                   if (user.role === 'ibu') {
                     navigate('/dashboard');
@@ -620,9 +620,9 @@ export default function AuthSwitch() {
               )}
               <div className="input-field">
                 <i><Icon icon="mdi:email" /></i>
-                <input 
-                  type="email" 
-                  placeholder="Email" 
+                <input
+                  type="email"
+                  placeholder="Email"
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -632,9 +632,9 @@ export default function AuthSwitch() {
               </div>
               <div className="input-field">
                 <i><Icon icon="material-symbols:lock" /></i>
-                <input 
-                  type="password" 
-                  placeholder="Password" 
+                <input
+                  type="password"
+                  placeholder="Password"
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -646,17 +646,17 @@ export default function AuthSwitch() {
                 e.preventDefault();
                 navigate('/forgot-password');
               }}>Lupa Password?</a>
-              <input 
-                type="submit" 
-                value={loading ? "Loading..." : "Login"} 
-                className="btn solid" 
+              <input
+                type="submit"
+                value={loading ? "Loading..." : "Login"}
+                className="btn solid"
                 disabled={loading}
               />
             </form>
 
             {/* Sign Up Form */}
-            <form 
-              className="sign-up-form" 
+            <form
+              className="sign-up-form"
               autoComplete="off"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -666,27 +666,27 @@ export default function AuthSwitch() {
               <h2 className="title">Sign up</h2>
               <div className="input-field">
                 <i><Icon icon="mdi:account" /></i>
-                <input 
-                  type="text" 
-                  placeholder="Username" 
+                <input
+                  type="text"
+                  placeholder="Username"
                   autoComplete="off"
                   defaultValue=""
                 />
               </div>
               <div className="input-field">
                 <i><Icon icon="fluent:phone-16-filled" /></i>
-                <input 
-                  type="phone" 
-                  placeholder="085xxxxxxx" 
+                <input
+                  type="phone"
+                  placeholder="085xxxxxxx"
                   autoComplete="off"
                   defaultValue=""
                 />
               </div>
               <div className="input-field">
                 <i><Icon icon="material-symbols:lock" /></i>
-                <input 
-                  type="password" 
-                  placeholder="Password" 
+                <input
+                  type="password"
+                  placeholder="Password"
                   autoComplete="new-password"
                   defaultValue=""
                 />
@@ -701,9 +701,9 @@ export default function AuthSwitch() {
             <div className="content">
               <h3>Belum Daftar?</h3>
               <p>Bergabunglah dengan keluarga besar NutriLogic demi masa depan buah hati yang lebih sehat dan bebas stunting!</p>
-              <button 
+              <button
                 type="button"
-                className="btn transparent" 
+                className="btn transparent"
                 onClick={(e) => {
                   e.preventDefault();
                   setIsSignUp(true);
@@ -718,9 +718,9 @@ export default function AuthSwitch() {
             <div className="content">
               <h3>One of us?</h3>
               <p>Welcome back! Sign in to continue your journey with us.</p>
-              <button 
+              <button
                 type="button"
-                className="btn transparent" 
+                className="btn transparent"
                 onClick={(e) => {
                   e.preventDefault();
                   setIsSignUp(false);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assets } from '../../assets/assets';
+import { isAuthenticated } from '../../lib/auth';
 
 const AnimatedNavLink = ({ onClick, children, isScrolled }) => {
   const defaultTextColor = isScrolled ? 'text-gray-600' : 'text-gray-200';
@@ -75,10 +76,10 @@ export default function Navbar() {
   const navLinksData = [
     { label: 'Home', id: 'Home' },
     { label: 'About', id: 'About' },
-    { label: 'Problem', id: 'Problem' },
+    { label: 'Data', id: 'Problem' },
     { label: 'Fitur', id: 'Fitur' },
     { label: 'Penggunaan', id: 'Penggunaan' },
-    { label: 'Testimonial', id: 'Testimonial' },
+    { label: 'Contact', id: 'Contact' },
   ];
 
   const handleNavClick = (id) => {
@@ -91,14 +92,16 @@ export default function Navbar() {
     }
   };
 
+  const isLoggedIn = isAuthenticated();
+
   const loginButtonElement = (
     <button
-      onClick={() => navigate('/auth')}
+      onClick={() => navigate(isLoggedIn ? '/dashboard' : '/auth')}
       className={`px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 w-full sm:w-auto ${isScrolled
         ? 'bg-[#00BFEF] text-white shadow-[0_0_20px_rgba(0,191,239,0.6)] hover:shadow-[0_0_25px_rgba(0,191,239,0.8)] hover:bg-[#009ec7]'
         : 'bg-white text-gray-800 hover:bg-gray-100 shadow-sm hover:shadow-md'
         }`}>
-      Login
+      {isLoggedIn ? 'Dashboard' : 'Login'}
     </button>
   );
 

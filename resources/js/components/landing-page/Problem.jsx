@@ -1,6 +1,7 @@
 import React from 'react'
 import { AdvancedMap } from '../interactive-map'
 import { ActivityChartCard } from '../activity-chart-card'
+import { RoadmapCard } from '../roadmap-card'
 import { cn } from "@/lib/utils"
 import { Icon } from '@iconify/react'
 
@@ -196,7 +197,7 @@ const Problem = () => {
   ]
 
   return (
-    <div ref={sectionRef} className='pb-16 pt-20 font-montserrat' style={{ backgroundColor: '#F3F4F6' }} id='Problem'>
+    <div ref={sectionRef} className='py-16 lg:py-24 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#FFFFFF' }} id='Problem'>
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -214,20 +215,20 @@ const Problem = () => {
           opacity: 0;
         }
       `}</style>
-      <div className="w-full px-6 md:px-8 lg:px-12 xl:px-16">
+      <div className="w-full">
         {/* Header */}
-        <div className={`mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
+        <div className={`mb-6 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '100ms' }}>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
             Data Stunting
           </h2>
           <div className="flex items-center gap-2 text-gray-500">
-            <Icon icon="mdi:layers-outline" className="w-5 h-5" />
-            <span className="text-sm md:text-base font-medium uppercase tracking-wide">Ringkasan Wilayah</span>
+            <Icon icon="mdi:layers-outline" className="w-4 h-4" />
+            <span className="text-xs md:text-sm font-medium uppercase tracking-wide">Ringkasan Wilayah</span>
           </div>
         </div>
 
         {/* Chart Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 xl:gap-4 mb-6">
           {stuntingData.map((stat, index) => (
             <div
               key={index}
@@ -246,20 +247,20 @@ const Problem = () => {
         </div>
 
         {/* Info Text with Icon */}
-        <div className={`mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '600ms' }}>
+        <div className={`mb-6 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '600ms' }}>
           <div className="flex items-start gap-3 text-gray-600">
-            <Icon icon="mdi:information-outline" className="w-5 h-5 mt-0.5 flex-shrink-0" />
-            <p className="text-sm md:text-base leading-relaxed">
+            <Icon icon="mdi:information-outline" className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <p className="text-xs md:text-sm leading-relaxed">
               Peta Interaktif Menampilkan Wilayah Kecamatan Rambipuji, Kabupaten Jember Dengan Data Stunting Terkini.
             </p>
           </div>
         </div>
 
         {/* Map and CTA Section */}
-        <div className={`flex flex-col lg:flex-row gap-6 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '700ms' }}>
+        <div className={`flex flex-col lg:flex-row gap-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '700ms' }}>
           {/* Map - 60% */}
           <div
-            className="w-full lg:w-[60%] h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative"
+            className="w-full lg:w-[60%] h-[350px] md:h-[450px] lg:h-[500px] overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative"
             onWheel={(e) => e.stopPropagation()}
           >
             <style>{`
@@ -299,20 +300,59 @@ const Problem = () => {
             />
           </div>
 
-          {/* CTA Box - 40% */}
-          <div className="w-full lg:w-[40%] bg-white rounded-2xl shadow-lg p-8 md:p-10 flex flex-col justify-center">
-            <div className="text-center lg:text-left">
-              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-6">
-                ISI DENGAN SOLUSI KAMI<br />
-                ISI NYA TENTANG NUTRILOGIC
+          {/* CTA Box - 40% - Split into 2 cards */}
+          <div className="w-full lg:w-[40%] h-[350px] md:h-[450px] lg:h-[500px] flex flex-col gap-3">
+            {/* Card 1: Data Sebagai Bukti */}
+            <div className="flex-1 bg-gradient-to-br from-[#00BFEF] to-[#0088c2] rounded-2xl shadow-lg p-5 md:p-6 flex flex-col justify-center">
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight mb-3">
+                Data Sebagai Bukti<br />
+                Urgensi Penanganan Stunting
               </h3>
-              <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-8">
-                Platform digital terintegrasi untuk monitoring dan pencegahan stunting di Kecamatan Rambipuji dengan data real-time dan analisis mendalam.
+              <p className="text-xs md:text-sm lg:text-base text-white/90 leading-relaxed">
+                Data stunting yang tersaji menjadi bukti nyata bahwa masalah ini memerlukan penanganan serius dan terstruktur. Dengan 765 kasus stunting di Kecamatan Rambipuji, diperlukan solusi digital yang tepat untuk monitoring, analisis mendalam, dan intervensi cepat.
               </p>
-              <button className="w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
-                <span>Pelajari Lebih Lanjut</span>
-                <Icon icon="mdi:arrow-right" className="w-5 h-5" />
-              </button>
+            </div>
+
+            {/* Card 2: Target Penurunan Stunting dengan Roadmap */}
+            <div className="flex-1 bg-gradient-to-br from-[#0088c2] to-[#006aa6] rounded-2xl shadow-lg p-5 md:p-6 flex flex-col">
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight mb-3">
+                Target Penurunan Stunting
+              </h3>
+              <p className="text-xs md:text-sm text-white/90 leading-relaxed mb-3">
+                Roadmap penurunan prevalensi stunting dengan dukungan NutriLogic
+              </p>
+              <div className="flex-1 flex items-center">
+                <RoadmapCard
+                  title=""
+                  description=""
+                  items={[
+                    {
+                      quarter: "2023",
+                      title: "21.5%",
+                      description: "Selesai",
+                      status: "done"
+                    },
+                    {
+                      quarter: "2024",
+                      title: "19.8%",
+                      description: "Selesai",
+                      status: "done"
+                    },
+                    {
+                      quarter: "2025",
+                      title: "16%",
+                      description: "Progress",
+                      status: "in-progress"
+                    },
+                    {
+                      quarter: "2026",
+                      title: "14%",
+                      description: "Goal",
+                      status: "upcoming"
+                    }
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </div>

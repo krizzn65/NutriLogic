@@ -93,30 +93,42 @@ export const MobileSidebar = ({
         {...props}>
         <div className="flex justify-end z-20 w-full">
           <Menu
-            className="text-neutral-800 dark:text-neutral-200 cursor-pointer"
+            className="text-white cursor-pointer"
             onClick={() => setOpen(!open)} />
         </div>
         <AnimatePresence>
           {open && (
-            <motion.div
-              initial={{ x: "-100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "-100%", opacity: 0 }}
-              transition={{
-                duration: 0.3,
-                ease: "easeInOut",
-              }}
-              className={cn(
-                "fixed h-full w-full inset-0 bg-white bg-[#006AA6] p-10 z-[100] flex flex-col justify-between",
-                className
-              )}>
-              <div
-                className="absolute right-10 top-10 z-50 text-neutral-200 cursor-pointer"
-                onClick={() => setOpen(!open)}>
-                <X />
-              </div>
-              {children}
-            </motion.div>
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 bg-black/50 z-[90]"
+                onClick={() => setOpen(false)}
+              />
+              {/* Sidebar */}
+              <motion.div
+                initial={{ x: "-100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "-100%", opacity: 0 }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeInOut",
+                }}
+                className={cn(
+                  "fixed left-0 top-0 h-full w-[80%] max-w-sm bg-white bg-[#006AA6] p-10 z-[100] flex flex-col justify-between shadow-2xl",
+                  className
+                )}>
+                <div
+                  className="absolute right-6 top-6 z-50 text-white cursor-pointer hover:bg-white/10 rounded-full p-2 transition-colors"
+                  onClick={() => setOpen(!open)}>
+                  <X />
+                </div>
+                {children}
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
@@ -129,15 +141,20 @@ export const SidebarLink = ({
   className,
   ...props
 }) => {
-  const { open, animate } = useSidebar();
-  
+  const { open, animate, setOpen } = useSidebar();
+
   const handleClick = (e) => {
+    // Close sidebar on mobile after navigation
+    if (window.innerWidth < 768) {
+      setOpen(false);
+    }
+
     if (link.onClick) {
       e.preventDefault();
       link.onClick();
     }
   };
-  
+
   return (
     <Link
       to={link.href}
@@ -150,7 +167,7 @@ export const SidebarLink = ({
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
         }}
-        className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0">
+        className="text-white text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0">
         {link.label}
       </motion.span>
     </Link>

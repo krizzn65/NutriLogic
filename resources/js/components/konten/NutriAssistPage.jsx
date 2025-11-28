@@ -1,6 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { assets } from "../../assets/assets";
 import { formatAge } from "../../lib/utils";
+import PageHeader from "../dashboard/PageHeader";
+import NutriAssistSkeleton from "../loading/NutriAssistSkeleton";
+import { useDataCache } from "../../contexts/DataCacheContext";
 
 // TODO: Integrate with AI/n8n for advanced recommendations in future version
 
@@ -14,6 +19,7 @@ export default function NutriAssistPage() {
   const [date, setDate] = useState("");
   const [notes, setNotes] = useState("");
   const [recommendations, setRecommendations] = useState(null);
+  const { getCachedData, setCachedData } = useDataCache();
 
   useEffect(() => {
     fetchChildren();
@@ -24,12 +30,26 @@ export default function NutriAssistPage() {
       setLoading(true);
       setError(null);
 
+      // Check cache first (reuse children cache)
+      const cachedData = getCachedData('children');
+      if (cachedData) {
+        setChildren(cachedData);
+        if (cachedData.length > 0) {
+          setSelectedChildId(cachedData[0].id.toString());
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from API if no cache
       const response = await api.get('/parent/children');
-      setChildren(response.data.data);
+      const data = response.data.data;
+      setChildren(data);
+      setCachedData('children', data);
 
       // Auto-select first child if available
-      if (response.data.data.length > 0) {
-        setSelectedChildId(response.data.data[0].id.toString());
+      if (data.length > 0) {
+        setSelectedChildId(data[0].id.toString());
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
@@ -102,30 +122,17 @@ export default function NutriAssistPage() {
 
   // Loading state (initial fetch)
   if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Memuat data...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <NutriAssistSkeleton />;
   }
 
   return (
     <div className="flex flex-1 w-full h-full overflow-auto">
       <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Nutri-Assist</h1>
-          <p className="text-gray-600 mt-2">
-            Input bahan makanan yang ada di rumah untuk mendapatkan rekomendasi menu MPASI yang sesuai gizi anak.
-          </p>
-        </div>
+        <PageHeader title="Nutri-Assist" subtitle="Portal Orang Tua" />
+        <p className="text-gray-600 mt-2 mb-6">
+          Asisten pintar untuk membantu memantau gizi dan kesehatan anak Anda.
+        </p>
 
         {/* Error State */}
         {error && (

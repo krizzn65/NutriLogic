@@ -5,12 +5,12 @@ import AboutUs from './landing-page/AboutUs'
 import Problem from './landing-page/Problem'
 import Fitur from './landing-page/Fitur'
 import Penggunaan from './landing-page/Penggunaan'
-import Testimonial from './landing-page/Testimonial'
+import Contact from './landing-page/Contact'
 import Footer from './landing-page/Footer'
 
 const LandingPage = () => {
   return (
-    <motion.div 
+    <motion.div
       className='w-full min-h-screen font-montserrat'
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -22,7 +22,7 @@ const LandingPage = () => {
       <Problem />
       <Fitur />
       <Penggunaan />
-      <Testimonial />
+      <Contact />
       <Footer />
     </motion.div>
   )
