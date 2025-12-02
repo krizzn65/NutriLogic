@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatAge } from "../../lib/utils";
-import { Ruler, Weight, CreditCard, Zap } from 'lucide-react';
+import { Ruler, Weight, CreditCard, Zap, Circle } from 'lucide-react';
 import { assets } from '../../assets/assets';
 
 export default function ChildProfileCard({ child, onClick, onShowCard }) {
@@ -11,6 +11,7 @@ export default function ChildProfileCard({ child, onClick, onShowCard }) {
     const currentWeight = latestWeighing?.weight_kg;
     const currentHeight = latestWeighing?.height_cm;
     const currentMuac = latestWeighing?.muac_cm;
+    const currentHeadCircumference = latestWeighing?.head_circumference_cm;
 
     return (
         <div
@@ -49,36 +50,53 @@ export default function ChildProfileCard({ child, onClick, onShowCard }) {
                     </div>
                 </div>
 
-                {/* Stats Grid */}
-                {/* Stats Row */}
+                {/* Stats Grid - 2x2 Layout */}
                 <div className="pt-3 md:pt-4">
-                    <div className="bg-gray-50 rounded-2xl p-2 md:p-4 flex items-center justify-between divide-x divide-gray-200 border border-gray-100">
-                        <div className="flex-1 px-1 md:px-2 flex flex-col items-center gap-0.5 md:gap-1">
-                            <div className="flex items-center gap-1 text-gray-400 mb-0.5">
-                                <Weight className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Berat</span>
+                    <div className="bg-gray-50 rounded-2xl p-2 md:p-3 border border-gray-100">
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Berat */}
+                            <div className="flex flex-col items-center gap-0.5 md:gap-1 p-1.5 md:p-2">
+                                <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                                    <Weight className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                    <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Berat</span>
+                                </div>
+                                <span className="text-sm md:text-base font-bold text-gray-800">
+                                    {currentWeight ? `${currentWeight}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">kg</span>
+                                </span>
                             </div>
-                            <span className="text-sm md:text-base font-bold text-gray-800">
-                                {currentWeight ? `${currentWeight}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">kg</span>
-                            </span>
-                        </div>
-                        <div className="flex-1 px-1 md:px-2 flex flex-col items-center gap-0.5 md:gap-1">
-                            <div className="flex items-center gap-1 text-gray-400 mb-0.5">
-                                <Ruler className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Tinggi</span>
+
+                            {/* Tinggi */}
+                            <div className="flex flex-col items-center gap-0.5 md:gap-1 p-1.5 md:p-2">
+                                <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                                    <Ruler className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                    <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Tinggi</span>
+                                </div>
+                                <span className="text-sm md:text-base font-bold text-gray-800">
+                                    {currentHeight ? `${currentHeight}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">cm</span>
+                                </span>
                             </div>
-                            <span className="text-sm md:text-base font-bold text-gray-800">
-                                {currentHeight ? `${currentHeight}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">cm</span>
-                            </span>
-                        </div>
-                        <div className="flex-1 px-1 md:px-2 flex flex-col items-center gap-0.5 md:gap-1">
-                            <div className="flex items-center gap-1 text-gray-400 mb-0.5">
-                                <Zap className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                                <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Lila</span>
+
+                            {/* Lila */}
+                            <div className="flex flex-col items-center gap-0.5 md:gap-1 p-1.5 md:p-2">
+                                <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                                    <Zap className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                    <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Lila</span>
+                                </div>
+                                <span className="text-sm md:text-base font-bold text-gray-800">
+                                    {currentMuac ? `${currentMuac}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">cm</span>
+                                </span>
                             </div>
-                            <span className="text-sm md:text-base font-bold text-gray-800">
-                                {currentMuac ? `${currentMuac}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">cm</span>
-                            </span>
+
+                            {/* Lingkar Kepala */}
+                            <div className="flex flex-col items-center gap-0.5 md:gap-1 p-1.5 md:p-2">
+                                <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                                    <Circle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                    <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">L. Kepala</span>
+                                </div>
+                                <span className="text-sm md:text-base font-bold text-gray-800">
+                                    {currentHeadCircumference ? `${currentHeadCircumference}` : '-'} <span className="text-[10px] md:text-xs font-medium text-gray-500">cm</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
