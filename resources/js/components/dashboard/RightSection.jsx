@@ -32,7 +32,7 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
     // Get the display child (selected or featured)
     const displayChild = selectedChildId
         ? childrenData?.find(c => c.id === selectedChildId)
-        : (childrenData?.find(c => c.latest_nutritional_status.is_at_risk) || childrenData?.[0]);
+        : (childrenData?.find(c => c.latest_nutritional_status?.is_at_risk) || childrenData?.[0]);
 
     const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 

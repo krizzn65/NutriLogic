@@ -12,13 +12,17 @@ export default function ChildProfileCard({ child, onClick, onShowCard }) {
     const currentHeight = latestWeighing?.height_cm;
     const currentMuac = latestWeighing?.muac_cm;
 
+    const handleCardClick = (e) => {
+        e.stopPropagation();
+        onShowCard?.(child);
+    };
+
     return (
         <div
             onClick={onClick}
-            className="group bg-white hover:bg-blue-600 rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.3)] hover:scale-[1.02] hover:border-blue-600 transition-all duration-300 ease-out cursor-pointer relative overflow-hidden border border-gray-100 h-full"
+            className="group bg-white hover:bg-blue-600 rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.3)] hover:scale-[1.02] hover:border-blue-600 transition-all duration-300 ease-out cursor-pointer relative overflow-hidden border border-gray-100 h-full"
         >
             <div className="relative z-10 flex flex-col h-full">
-                {/* Header: Avatar & Status */}
                 {/* Header: Avatar & Status */}
                 <div className="flex-1 flex flex-col justify-center">
                     <div className="flex justify-between items-center w-full">
@@ -44,7 +48,16 @@ export default function ChildProfileCard({ child, onClick, onShowCard }) {
                                 <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-green-500 group-hover:bg-white animate-pulse" />
                                 Sehat
                             </span>
-
+                            {/* Card Preview Button */}
+                            {onShowCard && (
+                                <button
+                                    onClick={handleCardClick}
+                                    className="p-1.5 md:p-2 bg-blue-50 text-blue-600 group-hover:bg-white/20 group-hover:text-white rounded-lg hover:bg-blue-100 transition-colors"
+                                    title="Lihat Kartu Anak"
+                                >
+                                    <CreditCard className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

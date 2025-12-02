@@ -162,6 +162,7 @@ export default function AuthSwitch() {
           padding: 0 0.4rem;
           position: relative;
           transition: 0.3s;
+          overflow: hidden; /* Clip the rectangular input corners */
         }
 
         .input-field:focus-within {
@@ -193,12 +194,28 @@ export default function AuthSwitch() {
           font-weight: 500;
           font-size: 1rem;
           color: #333;
+          color: #333;
           width: 100%;
+          border-radius: 55px; /* Ensure autofill background is rounded */
         }
 
         .input-field input::placeholder {
           color: #aaa;
           font-weight: 400;
+        }
+
+        /* Fix for browser autofill background */
+        .input-field input:-webkit-autofill,
+        .input-field input:-webkit-autofill:hover, 
+        .input-field input:-webkit-autofill:focus, 
+        .input-field input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+          -webkit-text-fill-color: #333 !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .input-field:focus-within input:-webkit-autofill {
+          -webkit-box-shadow: 0 0 0 30px #e8e8e8 inset !important;
         }
 
         .btn {
