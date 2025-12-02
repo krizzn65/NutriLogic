@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Consultation extends Model
 {
@@ -35,6 +36,14 @@ class Consultation extends Model
     public function kader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'kader_id');
+    }
+
+    /**
+     * Get the latest message for this consultation (for eager loading)
+     */
+    public function latestMessage(): HasOne
+    {
+        return $this->hasOne(ConsultationMessage::class)->latestOfMany('created_at');
     }
 
     public function child(): BelongsTo

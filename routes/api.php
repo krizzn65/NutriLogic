@@ -135,6 +135,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\KaderDashboardController::class, 'dashboard']);
 
+        // Parents list (lightweight endpoint for dropdowns)
+        Route::get('/parents', [App\Http\Controllers\KaderParentController::class, 'index']);
+
         // Children Management
         Route::prefix('children')->group(function () {
             Route::get('/', [App\Http\Controllers\KaderChildController::class, 'index']);

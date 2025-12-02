@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
-import { Search, MessageSquare, Clock, CheckCircle, User, ChevronRight, Filter } from "lucide-react";
+import { Search, MessageSquare, Clock, CheckCircle, User, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function KonsultasiKader() {
@@ -9,18 +9,33 @@ export default function KonsultasiKader() {
     const [error, setError] = useState(null);
     const [consultations, setConsultations] = useState([]);
     const [activeTab, setActiveTab] = useState("open");
+    const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchConsultations();
     }, [activeTab]);
 
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchConsultations();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     const fetchConsultations = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            const response = await api.get(`/kader/consultations?status=${activeTab}`);
+            const params = new URLSearchParams();
+            params.append('status', activeTab);
+            if (searchTerm.trim()) {
+                params.append('search', searchTerm.trim());
+            }
+
+            const response = await api.get(`/kader/consultations?${params.toString()}`);
             setConsultations(response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat konsultasi. Silakan coba lagi.';
@@ -62,12 +77,11 @@ export default function KonsultasiKader() {
                                 <input
                                     type="text"
                                     placeholder="Cari nama..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 w-full md:w-64 transition-all"
                                 />
                             </div>
-                            <button className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors">
-                                <Filter className="w-5 h-5" />
-                            </button>
                         </div>
                     </div>
 

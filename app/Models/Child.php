@@ -56,7 +56,7 @@ class Child extends Model
 
     public function weighingLogs(): HasMany
     {
-        return $this->hasMany(WeighingLog::class);
+        return $this->hasMany(WeighingLog::class)->orderBy('measured_at', 'desc');
     }
 
     public function mealLogs(): HasMany

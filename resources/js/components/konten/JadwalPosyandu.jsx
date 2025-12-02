@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge } from "../../lib/utils";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
-import PageHeader from "../dashboard/PageHeader";
 
 export default function JadwalPosyandu() {
     const [loading, setLoading] = useState(true);
@@ -109,8 +108,11 @@ export default function JadwalPosyandu() {
         <div className="flex flex-1 w-full h-full overflow-auto">
             <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
                 {/* Header */}
-                {/* Header */}
-                <PageHeader title="Jadwal Kegiatan" subtitle="Portal Orang Tua">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800">Jadwal Kegiatan</h1>
+                        <p className="text-gray-600 mt-2">Jadwal kegiatan posyandu dan imunisasi yang akan datang</p>
+                    </div>
                     <button
                         onClick={() => navigate('/dashboard/jadwal/tambah')}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -120,13 +122,9 @@ export default function JadwalPosyandu() {
                         </svg>
                         Tambah Jadwal
                     </button>
-                </PageHeader>
-                <p className="text-gray-600 mt-2 mb-6">
-                    Jadwal kegiatan posyandu dan imunisasi yang akan datang.
-                </p>
-            </div>
+                </div>
 
-            {/* Filters */}
+                {/* Filters */}
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Kegiatan</label>
@@ -270,7 +268,7 @@ export default function JadwalPosyandu() {
                     </table>
                 </div>
             </div>
+            </div>
         </div>
-
     );
 }
