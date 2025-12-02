@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
 
-export default function GrowthChart() {
+export default function GrowthChart({ childId }) {
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -11,12 +11,13 @@ export default function GrowthChart() {
 
     useEffect(() => {
         fetchGrowthData();
-    }, []);
+    }, [childId]);
 
     const fetchGrowthData = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/parent/growth-chart');
+            const params = childId ? { child_id: childId } : {};
+            const response = await api.get('/parent/growth-chart', { params });
             setChartData(response.data.data.chartData || []);
         } catch (error) {
             console.error('Error fetching growth chart data:', error);

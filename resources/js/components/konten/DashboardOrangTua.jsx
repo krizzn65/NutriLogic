@@ -8,6 +8,13 @@ import ChildProfileCard from "../dashboard/ChildProfileCard";
 import { Calendar } from "../ui/calendar";
 import GrowthChart from "../dashboard/GrowthChart";
 import RightSection from "../dashboard/RightSection";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Icon } from "@iconify/react";
 
 import { useProfileModal } from "../../contexts/ProfileModalContext";
 
@@ -15,6 +22,7 @@ export default function DashboardOrangTuaContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const [selectedChildId, setSelectedChildId] = useState(null);
   const { getCachedData, setCachedData, invalidateCache } = useDataCache();
   const { profileUpdateTrigger } = useProfileModal();
 
@@ -43,6 +51,12 @@ export default function DashboardOrangTuaContent() {
       const data = response.data.data;
       setDashboardData(data);
       setCachedData('dashboard', data);
+
+      // Set initial selected child if not already set
+      if (!selectedChildId && data.children && data.children.length > 0) {
+        const featuredChild = data.children?.find(c => c.latest_nutritional_status.is_at_risk) || data.children?.[0];
+        setSelectedChildId(featuredChild?.id);
+      }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data dashboard. Silakan coba lagi.';
       setError(errorMessage);
@@ -87,8 +101,10 @@ export default function DashboardOrangTuaContent() {
 
   const { user, summary, children } = dashboardData;
 
-  // Get the first child or the one needing attention
-  const featuredChild = children?.find(c => c.latest_nutritional_status.is_at_risk) || children?.[0];
+  // Get selected child or featured child
+  const selectedChild = selectedChildId
+    ? children?.find(c => c.id === selectedChildId)
+    : (children?.find(c => c.latest_nutritional_status.is_at_risk) || children?.[0]);
 
   return (
     <DashboardLayout
@@ -96,22 +112,62 @@ export default function DashboardOrangTuaContent() {
         <RightSection
           user={user}
           childrenData={children}
+          selectedChildId={selectedChildId}
+          onSelectChild={setSelectedChildId}
         />
       }
     >
       {/* Top Section: Stats Cards (MainSection) */}
-      <MainSection
+      < MainSection
         user={user}
         summary={summary}
       />
 
       {/* Middle Section: Child & Calendar (Side-by-side on Mobile & Desktop) */}
       {/* User Request: "kartu anak dan jadwal sejajar" (side-by-side) on mobile */}
-      {/* HIDDEN ON DESKTOP (xl) because it's in the sidebar */}
+
+      {/* Child Selector Dropdown - Visible ONLY on Mobile/Tablet (xl:hidden) */}
+      {
+        children && children.length > 0 && (
+          <div className="mb-4 xl:hidden">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-700">Kartu Anak</h3>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm">
+                    <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
+                    <span>{selectedChild?.full_name || "Pilih Anak"}</span>
+                    <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                  {children.map((child) => (
+                    <DropdownMenuItem
+                      key={child.id}
+                      onClick={() => setSelectedChildId(child.id)}
+                      className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
+                        {child.full_name.charAt(0)}
+                      </div>
+                      <span>{child.full_name}</span>
+                      {child.id === selectedChildId && (
+                        <Icon icon="lucide:check" className="ml-auto text-blue-600 w-4 h-4" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Child card and calendar grid - HIDDEN ON DESKTOP (xl) because it's in the sidebar */}
       <div className="grid grid-cols-2 gap-3 md:gap-6 xl:hidden">
         <div className="h-full">
-          {featuredChild ? (
-            <ChildProfileCard child={featuredChild} />
+          {selectedChild ? (
+            <ChildProfileCard child={selectedChild} />
           ) : (
             <div className="bg-blue-50 rounded-[30px] p-8 text-center border border-blue-100 border-dashed h-full flex items-center justify-center">
               <p className="text-blue-600 font-medium">Belum ada data anak</p>
@@ -124,7 +180,7 @@ export default function DashboardOrangTuaContent() {
       </div>
 
       {/* Bottom Section: Chart */}
-      <GrowthChart />
-    </DashboardLayout>
+      <GrowthChart childId={selectedChildId} />
+    </DashboardLayout >
   );
 }

@@ -7,14 +7,12 @@ import DataAnakSkeleton from "../loading/DataAnakSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
 import { DataAnakTable } from "./DataAnakTable";
-import AddChildModal from "./AddChildModal";
 
 export default function DataAnakList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [children, setChildren] = useState([]);
     const [successMessage, setSuccessMessage] = useState(null);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
@@ -141,29 +139,13 @@ export default function DataAnakList() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                         <p className="text-gray-600 mb-4">Belum ada data anak terdaftar</p>
-                        <button
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 font-medium"
-                            onClick={() => setIsAddModalOpen(true)}
-                        >
-                            <Plus className="w-5 h-5" />
-                            Tambah Anak Pertama
-                        </button>
                     </div>
                 ) : (
                     <DataAnakTable
                         data={children}
-                        onAdd={() => setIsAddModalOpen(true)}
                     />
                 )}
-
-                {/* Add Child Modal */}
-                <AddChildModal
-                    isOpen={isAddModalOpen}
-                    onClose={() => setIsAddModalOpen(false)}
-                    onSuccess={handleAddSuccess}
-                />
             </div>
         </div>
     );
 }
-

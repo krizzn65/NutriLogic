@@ -4,6 +4,14 @@ import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
+import { DatePicker } from "../ui/date-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Icon } from "@iconify/react";
 
 export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
@@ -23,21 +31,29 @@ export default function HistoryPage() {
   });
   const [children, setChildren] = useState([]);
   const { getCachedData, setCachedData } = useDataCache();
+  const [isInitialMount, setIsInitialMount] = useState(true);
 
   useEffect(() => {
     fetchChildren();
     fetchHistory(1);
   }, []);
 
+  // Real-time filtering - automatically fetch when filters change
+  useEffect(() => {
+    if (isInitialMount) {
+      setIsInitialMount(false);
+      return;
+    }
+    fetchHistory(1);
+  }, [filters]);
+
   const fetchChildren = async () => {
     try {
-      // Reuse children cache
       const cachedData = getCachedData('children');
       if (cachedData) {
         setChildren(cachedData);
         return;
       }
-
       const response = await api.get("/parent/children");
       const data = response.data.data;
       setChildren(data);
@@ -57,20 +73,11 @@ export default function HistoryPage() {
         per_page: pagination.per_page,
       };
 
-      if (filters.child_id) {
-        params.child_id = filters.child_id;
-      }
-      if (filters.type && filters.type !== "all") {
-        params.type = filters.type;
-      }
-      if (filters.start_date) {
-        params.start_date = filters.start_date;
-      }
-      if (filters.end_date) {
-        params.end_date = filters.end_date;
-      }
+      if (filters.child_id) params.child_id = filters.child_id;
+      if (filters.type && filters.type !== "all") params.type = filters.type;
+      if (filters.start_date) params.start_date = filters.start_date;
+      if (filters.end_date) params.end_date = filters.end_date;
 
-      // Create cache key based on params
       const cacheKey = `history_${JSON.stringify(params)}`;
       const cachedData = getCachedData(cacheKey);
       if (cachedData) {
@@ -80,12 +87,10 @@ export default function HistoryPage() {
         return;
       }
 
-      // Fetch from API if no cache
       const response = await api.get("/parent/history", { params });
       setHistoryData(response.data.data);
       setPagination(response.data.meta);
 
-      // Cache the result
       setCachedData(cacheKey, {
         data: response.data.data,
         meta: response.data.meta,
@@ -101,14 +106,32 @@ export default function HistoryPage() {
   };
 
   const handleFilterChange = (field, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+    setFilters((prev) => {
+      const newFilters = {
+        ...prev,
+        [field]: value,
+      };
 
-  const handleApplyFilters = () => {
-    fetchHistory(1);
+      // Validate date range: if end_date is before start_date, clear end_date
+      if (field === "start_date" && newFilters.end_date) {
+        const startDate = new Date(value);
+        const endDate = new Date(newFilters.end_date);
+        if (startDate > endDate) {
+          newFilters.end_date = ""; // Clear end_date if it's before start_date
+        }
+      }
+
+      // Validate date range: if start_date is after end_date, clear start_date
+      if (field === "end_date" && newFilters.start_date) {
+        const startDate = new Date(newFilters.start_date);
+        const endDate = new Date(value);
+        if (endDate < startDate) {
+          newFilters.start_date = ""; // Clear start_date if end_date is before it
+        }
+      }
+
+      return newFilters;
+    });
   };
 
   const handlePageChange = (page) => {
@@ -119,18 +142,8 @@ export default function HistoryPage() {
     if (!dateString) return "";
     const date = new Date(dateString);
     const months = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+      "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
     ];
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
@@ -140,134 +153,91 @@ export default function HistoryPage() {
     const date = new Date(dateTimeString);
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
-    return `${formatDate(dateTimeString)} ${hours}:${minutes}`;
+    return `${formatDate(dateTimeString)}, ${hours}:${minutes}`;
   };
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case "weighing":
-        return "⚖️";
-      case "meal":
-        return "🍽️";
-      case "immunization":
-        return "💉";
-      default:
-        return "📋";
+      case "weighing": return "⚖️";
+      case "meal": return "🍽️";
+      case "immunization": return "💉";
+      default: return "📋";
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case "weighing": return "bg-blue-50 text-blue-600";
+      case "meal": return "bg-green-50 text-green-600";
+      case "immunization": return "bg-purple-50 text-purple-600";
+      default: return "bg-gray-50 text-gray-600";
     }
   };
 
   const getTypeLabel = (type) => {
     switch (type) {
-      case "weighing":
-        return "Penimbangan";
-      case "meal":
-        return "Log Makanan";
-      case "immunization":
-        return "Imunisasi";
-      default:
-        return type;
+      case "weighing": return "Penimbangan";
+      case "meal": return "Log Makanan";
+      case "immunization": return "Imunisasi";
+      default: return type;
     }
   };
 
   const renderHistoryItem = (item) => {
-    const { type, date, datetime, child_name, data } = item;
+    const { type, datetime, child_name, data } = item;
 
     return (
       <div
         key={`${type}-${item.id}`}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        className="group bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
       >
-        <div className="flex items-start gap-4">
-          <div className="text-2xl">{getTypeIcon(type)}</div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                  {getTypeLabel(type)}
-                </span>
-                <span className="ml-2 text-sm text-gray-600">{child_name}</span>
-              </div>
-              <div className="text-sm text-gray-500">{formatDateTime(datetime)}</div>
+        <div className="px-4 md:px-8 py-4 flex flex-col md:flex-row md:items-center gap-4">
+          {/* Icon & Basic Info */}
+          <div className="flex items-center gap-4 min-w-[200px]">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${getTypeColor(type)}`}>
+              {getTypeIcon(type)}
             </div>
+            <div>
+              <p className="font-semibold text-gray-900">{getTypeLabel(type)}</p>
+              <p className="text-xs text-gray-500">{child_name}</p>
+            </div>
+          </div>
 
+          {/* Details */}
+          <div className="flex-1 text-sm text-gray-600">
             {type === "weighing" && (
-              <div className="mt-2 space-y-1 text-sm">
-                <div className="flex gap-4">
-                  <span className="text-gray-600">
-                    Berat: <span className="font-medium text-gray-900">{data.weight_kg} kg</span>
-                  </span>
-                  {data.height_cm && (
-                    <span className="text-gray-600">
-                      Tinggi: <span className="font-medium text-gray-900">{data.height_cm} cm</span>
-                    </span>
-                  )}
-                </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-1">
+                <span>Berat: <span className="font-medium text-gray-900">{data.weight_kg} kg</span></span>
+                {data.height_cm && <span>Tinggi: <span className="font-medium text-gray-900">{data.height_cm} cm</span></span>}
                 {data.nutritional_status && (
-                  <div>
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-medium rounded border ${getStatusColor(
-                        data.nutritional_status
-                      )}`}
-                    >
-                      {getStatusLabel(data.nutritional_status)}
-                    </span>
-                  </div>
-                )}
-                {data.notes && (
-                  <div className="text-gray-600 mt-1">
-                    <span className="font-medium">Catatan:</span> {data.notes}
-                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(data.nutritional_status)}`}>
+                    {getStatusLabel(data.nutritional_status)}
+                  </span>
                 )}
               </div>
             )}
 
             {type === "meal" && (
-              <div className="mt-2 space-y-1 text-sm">
-                <div>
-                  <span className="text-gray-600">
-                    Waktu: <span className="font-medium text-gray-900">{data.time_of_day}</span>
-                  </span>
-                </div>
-                {data.description && (
-                  <div className="text-gray-600">
-                    <span className="font-medium">Deskripsi:</span> {data.description}
-                  </div>
-                )}
-                {data.ingredients && (
-                  <div className="text-gray-600">
-                    <span className="font-medium">Bahan:</span> {data.ingredients}
-                  </div>
-                )}
-                {data.source && (
-                  <div className="text-gray-500 text-xs mt-1">
-                    Sumber: {data.source}
-                  </div>
-                )}
+              <div className="space-y-1">
+                <p><span className="font-medium text-gray-900">{data.time_of_day}</span> - {data.description || "Tidak ada deskripsi"}</p>
+                {data.ingredients && <p className="text-xs text-gray-500 truncate max-w-md">{data.ingredients}</p>}
               </div>
             )}
 
             {type === "immunization" && (
-              <div className="mt-2 space-y-1 text-sm">
-                <div>
-                  <span className="font-medium text-gray-900">{data.title}</span>
-                </div>
-                {data.type && (
-                  <div className="text-gray-600">
-                    Tipe: <span className="font-medium">{data.type}</span>
-                  </div>
-                )}
-                {data.scheduled_for && (
-                  <div className="text-gray-600">
-                    Dijadwalkan: <span className="font-medium">{formatDate(data.scheduled_for)}</span>
-                  </div>
-                )}
-                {data.notes && (
-                  <div className="text-gray-600 mt-1">
-                    <span className="font-medium">Catatan:</span> {data.notes}
-                  </div>
-                )}
+              <div>
+                <p className="font-medium text-gray-900">{data.title}</p>
+                {data.scheduled_for && <p className="text-xs text-gray-500">Jadwal: {formatDate(data.scheduled_for)}</p>}
               </div>
             )}
+
+            {data.notes && <p className="text-xs text-gray-400 mt-1 italic line-clamp-1">{data.notes}</p>}
+          </div>
+
+          {/* Date & Time */}
+          <div className="text-right min-w-[120px]">
+            <p className="text-sm font-medium text-gray-900">{formatDate(datetime).split(' ').slice(0, 2).join(' ')}</p>
+            <p className="text-xs text-gray-400">{new Date(datetime).getFullYear()} • {new Date(datetime).getHours().toString().padStart(2, '0')}:{new Date(datetime).getMinutes().toString().padStart(2, '0')}</p>
           </div>
         </div>
       </div>
@@ -276,19 +246,31 @@ export default function HistoryPage() {
 
   // Loading state
   if (loading && historyData.length === 0) {
-    return <GenericListSkeleton itemCount={8} />;
+    return (
+      <div className="w-full h-full bg-white">
+        <div className="px-4 pt-5 md:px-10 md:pt-10 pb-4">
+          <PageHeader title="Riwayat" subtitle="Portal Orang Tua" />
+        </div>
+        <div className="px-4 md:px-10">
+          <GenericListSkeleton itemCount={8} />
+        </div>
+      </div>
+    );
   }
 
   // Error state
   if (error && historyData.length === 0) {
     return (
-      <div className="flex flex-1 w-full h-full overflow-auto">
-        <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
+      <div className="flex flex-col w-full h-full bg-white">
+        <div className="px-4 pt-5 md:px-10 md:pt-10 pb-4">
+          <PageHeader title="Riwayat" subtitle="Portal Orang Tua" />
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <p className="text-red-600 mb-2">{error}</p>
             <button
               onClick={() => fetchHistory(pagination.current_page)}
-              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               Coba Lagi
             </button>
@@ -299,163 +281,148 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex flex-1 w-full h-full overflow-auto">
-      <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-
-        {/* Header */}
+    <div className="flex flex-col w-full h-full bg-white overflow-x-hidden">
+      {/* Header - Preserved Padding */}
+      <div className="px-4 pt-5 md:px-10 md:pt-10 pb-2 bg-white z-10">
         <PageHeader title="Riwayat" subtitle="Portal Orang Tua" />
 
-        {/* Filter Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Filter</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Pilih Anak
-              </label>
-              <select
-                value={filters.child_id}
-                onChange={(e) => handleFilterChange("child_id", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Semua Anak</option>
+        {/* Modern Filter Bar */}
+        <div className="mt-6 flex flex-col md:flex-row gap-3 items-center justify-between pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
+            {/* Child Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100">
+                  <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
+                  <span>
+                    {filters.child_id
+                      ? children.find(c => c.id == filters.child_id)?.full_name || "Semua Anak"
+                      : "Semua Anak"}
+                  </span>
+                  <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4 ml-1" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                <DropdownMenuItem
+                  onClick={() => handleFilterChange("child_id", "")}
+                  className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+                >
+                  <span className="font-medium">Semua Anak</span>
+                </DropdownMenuItem>
                 {children.map((child) => (
-                  <option key={child.id} value={child.id}>
-                    {child.full_name}
-                  </option>
+                  <DropdownMenuItem
+                    key={child.id}
+                    onClick={() => handleFilterChange("child_id", child.id)}
+                    className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
+                      {child.full_name.charAt(0)}
+                    </div>
+                    <span>{child.full_name}</span>
+                  </DropdownMenuItem>
                 ))}
-              </select>
-            </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Jenis Riwayat
-              </label>
-              <select
-                value={filters.type}
-                onChange={(e) => handleFilterChange("type", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Semua</option>
-                <option value="weighing">Penimbangan</option>
-                <option value="meal">Log Makanan</option>
-                <option value="immunization">Imunisasi</option>
-              </select>
-            </div>
+            {/* Type Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100">
+                  <span>
+                    {filters.type === "all" && "Semua Tipe"}
+                    {filters.type === "weighing" && "⚖️ Penimbangan"}
+                    {filters.type === "meal" && "🍽️ Makanan"}
+                    {filters.type === "immunization" && "💉 Imunisasi"}
+                  </span>
+                  <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4 ml-1" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                <DropdownMenuItem
+                  onClick={() => handleFilterChange("type", "all")}
+                  className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 font-medium"
+                >
+                  Semua Tipe
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleFilterChange("type", "weighing")}
+                  className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                >
+                  <span>⚖️</span> Penimbangan
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleFilterChange("type", "meal")}
+                  className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                >
+                  <span>🍽️</span> Makanan
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleFilterChange("type", "immunization")}
+                  className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                >
+                  <span>💉</span> Imunisasi
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tanggal Mulai
-              </label>
-              <input
-                type="date"
+          <div className="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap">
+            <div className="flex items-center gap-2 flex-1 md:flex-none">
+              <DatePicker
                 value={filters.start_date}
-                onChange={(e) => handleFilterChange("start_date", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(date) => handleFilterChange("start_date", date)}
+                placeholder="Mulai"
+                className="w-full md:w-auto"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tanggal Akhir
-              </label>
-              <input
-                type="date"
+              <span className="text-gray-300">-</span>
+              <DatePicker
                 value={filters.end_date}
-                onChange={(e) => handleFilterChange("end_date", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(date) => handleFilterChange("end_date", date)}
+                placeholder="Selesai"
+                className="w-full md:w-auto"
               />
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="mt-4">
-            <button
-              onClick={handleApplyFilters}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Terapkan Filter
-            </button>
+      {/* Full Width Content */}
+      <div className="flex-1 overflow-auto bg-white [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        {historyData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <div className="text-4xl mb-3">📭</div>
+            <p>Tidak ada riwayat ditemukan</p>
           </div>
-        </div>
-
-        {/* History Timeline */}
-        <div className="space-y-4">
-          {historyData.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-              <p className="text-gray-600">Tidak ada riwayat ditemukan</p>
-            </div>
-          ) : (
-            historyData.map((item) => renderHistoryItem(item))
-          )}
-        </div>
-
-        {/* Pagination */}
-        {pagination.last_page > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <button
-              onClick={() => handlePageChange(pagination.current_page - 1)}
-              disabled={pagination.current_page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Sebelumnya
-            </button>
-
-            <div className="flex gap-1">
-              {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
-                .filter(
-                  (page) =>
-                    page === 1 ||
-                    page === pagination.last_page ||
-                    (page >= pagination.current_page - 1 &&
-                      page <= pagination.current_page + 1)
-                )
-                .map((page, index, array) => {
-                  if (index > 0 && array[index - 1] !== page - 1) {
-                    return (
-                      <React.Fragment key={`ellipsis-${page}`}>
-                        <span className="px-2 py-2">...</span>
-                        <button
-                          onClick={() => handlePageChange(page)}
-                          className={`px-4 py-2 border rounded-md ${pagination.current_page === page
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "border-gray-300 hover:bg-gray-50"
-                            }`}
-                        >
-                          {page}
-                        </button>
-                      </React.Fragment>
-                    );
-                  }
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 border rounded-md ${pagination.current_page === page
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-            </div>
-
-            <button
-              onClick={() => handlePageChange(pagination.current_page + 1)}
-              disabled={pagination.current_page === pagination.last_page}
-              className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Selanjutnya
-            </button>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {historyData.map((item) => renderHistoryItem(item))}
           </div>
         )}
 
-        {pagination.total > 0 && (
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Menampilkan {((pagination.current_page - 1) * pagination.per_page) + 1} -{" "}
-            {Math.min(pagination.current_page * pagination.per_page, pagination.total)} dari{" "}
-            {pagination.total} riwayat
+        {/* Pagination */}
+        {pagination.last_page > 1 && (
+          <div className="py-6 flex justify-center">
+            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-100 shadow-sm">
+              <button
+                onClick={() => handlePageChange(pagination.current_page - 1)}
+                disabled={pagination.current_page === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              >
+                ←
+              </button>
+
+              <span className="px-3 text-sm font-medium text-gray-600">
+                Halaman {pagination.current_page} dari {pagination.last_page}
+              </span>
+
+              <button
+                onClick={() => handlePageChange(pagination.current_page + 1)}
+                disabled={pagination.current_page === pagination.last_page}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              >
+                →
+              </button>
+            </div>
           </div>
         )}
       </div>

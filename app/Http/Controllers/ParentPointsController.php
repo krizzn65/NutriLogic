@@ -61,6 +61,7 @@ class ParentPointsController extends Controller
         return response()->json([
             'data' => [
                 'total_points' => $user->points ?? 0,
+                'total_activities' => $this->pointsService->getTotalActivities($user),
                 'badges' => $earnedBadges,
                 'badge_definitions' => $badgeDefinitionsWithStatus,
             ],
