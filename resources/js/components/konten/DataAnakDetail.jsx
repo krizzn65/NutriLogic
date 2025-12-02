@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
 import {
     ChevronLeft,
@@ -26,6 +27,7 @@ import { assets } from '../../assets/assets';
 export default function DataAnakDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { invalidateCache } = useDataCache();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [childData, setChildData] = useState(null);
@@ -63,7 +65,10 @@ export default function DataAnakDetail() {
     const handleDelete = async () => {
         if (window.confirm('Apakah Anda yakin ingin menghapus data anak ini? Data yang dihapus tidak dapat dikembalikan.')) {
             try {
-                await api.delete(`/children/${id}`);
+                await api.delete(`/parent/children/${id}`);
+                // Invalidate cache after successful delete
+                invalidateCache('children');
+                invalidateCache('dashboard');
                 navigate('/dashboard/anak', { state: { message: 'Data anak berhasil dihapus.' } });
             } catch (err) {
                 console.error('Delete error:', err);

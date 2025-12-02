@@ -26,7 +26,7 @@ const AboutUs = () => {
       `}</style>
 
       <section ref={sectionRef} className='w-full px-6 md:px-[150px] lg:px-[230px] py-16 lg:py-24'>
-        <div className='w-full flex flex-col lg:flex-row items-center gap-12 lg:gap-20'>
+        <div className='w-full flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20'>
 
           {/* Left Column: Text Content */}
           <div className={`w-full lg:w-1/2 text-left transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>

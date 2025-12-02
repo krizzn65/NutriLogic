@@ -111,18 +111,18 @@ export const ActivityChartCard = ({
       <Card
         className={cn("w-full border-0 shadow-md hover:shadow-xl transition-shadow duration-300", className)}
         aria-labelledby="activity-card-title">
-        <CardHeader>
-          <CardTitle id="activity-card-title">{title}</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle id="activity-card-title" className="text-base md:text-xl">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-2 sm:gap-4">
             {/* Total Value */}
             <div className="flex flex-col" ref={ref}>
-              <p className="text-5xl font-bold tracking-tighter text-foreground">
+              <p className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter text-gray-900">
                 {displayValue.toFixed(suffix.includes('%') ? 1 : 0)}{suffix}
               </p>
               {description && (
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-gray-500 mt-2">
                   {description}
                 </p>
               )}
@@ -130,7 +130,7 @@ export const ActivityChartCard = ({
 
             {/* Bar Chart */}
             <motion.div
-              className="flex h-36 w-full items-end justify-between gap-3"
+              className="flex h-24 sm:h-28 md:h-36 w-full items-end justify-between gap-1 sm:gap-2 md:gap-3"
               variants={chartVariants}
               initial="hidden"
               animate="visible"
@@ -204,7 +204,7 @@ export const ActivityChartCard = ({
                       )}
                     </motion.div>
 
-                    <span className={`text-xs font-medium transition-all duration-200 ${isHovered ? 'text-foreground font-bold scale-110' : 'text-muted-foreground'
+                    <span className={`text-xs font-medium transition-all duration-200 ${isHovered ? 'text-gray-900 font-bold scale-110' : 'text-gray-500'
                       }`}>
                       {item.day}
                     </span>

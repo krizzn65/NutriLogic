@@ -5,6 +5,7 @@ import { useDataCache } from "../../contexts/DataCacheContext";
 import { Search, Plus, MessageSquare, Clock, CheckCircle, User, ChevronRight, Filter, Trash2, AlertTriangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ConsultationDetail from "./ConsultationDetail";
+import ConsultationListSkeleton from "../loading/ConsultationListSkeleton";
 
 export default function ConsultationList() {
     const { id } = useParams();
@@ -127,6 +128,10 @@ export default function ConsultationList() {
         c.kader?.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    if (loading && consultations.length === 0) {
+        return <ConsultationListSkeleton />;
+    }
+
     return (
         <div className="flex h-full bg-white overflow-hidden">
             {/* Sidebar List */}
@@ -182,6 +187,10 @@ export default function ConsultationList() {
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
                         <div className="p-4 space-y-4">
+                            {/* This part is actually handled by the full page skeleton if loading is true initially, 
+                                 but if we want to keep the structure while refreshing or initial load inside the component structure:
+                                 Actually, for full page load we should return the skeleton early. 
+                             */}
                             {[1, 2, 3, 4].map((i) => (
                                 <div key={i} className="flex gap-3 items-center animate-pulse">
                                     <div className="w-12 h-12 bg-slate-200 rounded-full flex-shrink-0" />

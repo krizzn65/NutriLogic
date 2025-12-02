@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Icon } from "@iconify/react";
+import { useIsDesktop } from "../../hooks/useMediaQuery";
 
 import { useProfileModal } from "../../contexts/ProfileModalContext";
 
@@ -25,6 +26,7 @@ export default function DashboardOrangTuaContent() {
   const [selectedChildId, setSelectedChildId] = useState(null);
   const { getCachedData, setCachedData, invalidateCache } = useDataCache();
   const { profileUpdateTrigger } = useProfileModal();
+  const isDesktop = useIsDesktop(); // xl breakpoint (1280px)
 
   useEffect(() => {
     if (profileUpdateTrigger > 0) {
@@ -54,7 +56,7 @@ export default function DashboardOrangTuaContent() {
 
       // Set initial selected child if not already set
       if (!selectedChildId && data.children && data.children.length > 0) {
-        const featuredChild = data.children?.find(c => c.latest_nutritional_status.is_at_risk) || data.children?.[0];
+        const featuredChild = data.children?.find(c => c.latest_nutritional_status?.is_at_risk) || data.children?.[0];
         setSelectedChildId(featuredChild?.id);
       }
     } catch (err) {
@@ -104,7 +106,7 @@ export default function DashboardOrangTuaContent() {
   // Get selected child or featured child
   const selectedChild = selectedChildId
     ? children?.find(c => c.id === selectedChildId)
-    : (children?.find(c => c.latest_nutritional_status.is_at_risk) || children?.[0]);
+    : (children?.find(c => c.latest_nutritional_status?.is_at_risk) || children?.[0]);
 
   return (
     <DashboardLayout
@@ -124,60 +126,61 @@ export default function DashboardOrangTuaContent() {
       />
 
       {/* Middle Section: Child & Calendar (Side-by-side on Mobile & Desktop) */}
-      {/* User Request: "kartu anak dan jadwal sejajar" (side-by-side) on mobile */}
-
-      {/* Child Selector Dropdown - Visible ONLY on Mobile/Tablet (xl:hidden) */}
-      {
-        children && children.length > 0 && (
-          <div className="mb-4 xl:hidden">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-gray-700">Kartu Anak</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm">
-                    <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
-                    <span>{selectedChild?.full_name || "Pilih Anak"}</span>
-                    <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
-                  {children.map((child) => (
-                    <DropdownMenuItem
-                      key={child.id}
-                      onClick={() => setSelectedChildId(child.id)}
-                      className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
-                    >
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
-                        {child.full_name.charAt(0)}
-                      </div>
-                      <span>{child.full_name}</span>
-                      {child.id === selectedChildId && (
-                        <Icon icon="lucide:check" className="ml-auto text-blue-600 w-4 h-4" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        )
-      }
-
-      {/* Child card and calendar grid - HIDDEN ON DESKTOP (xl) because it's in the sidebar */}
-      <div className="grid grid-cols-2 gap-3 md:gap-6 xl:hidden">
-        <div className="h-full">
-          {selectedChild ? (
-            <ChildProfileCard child={selectedChild} />
-          ) : (
-            <div className="bg-blue-50 rounded-[30px] p-8 text-center border border-blue-100 border-dashed h-full flex items-center justify-center">
-              <p className="text-blue-600 font-medium">Belum ada data anak</p>
+      {/* Only render on non-desktop to avoid duplicate render with RightSection */}
+      {!isDesktop && (
+        <>
+          {/* Child Selector Dropdown - Visible ONLY on Mobile/Tablet */}
+          {children && children.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-gray-700">Kartu Anak</h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm">
+                      <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
+                      <span>{selectedChild?.full_name || "Pilih Anak"}</span>
+                      <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                    {children.map((child) => (
+                      <DropdownMenuItem
+                        key={child.id}
+                        onClick={() => setSelectedChildId(child.id)}
+                        className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
+                          {child.full_name.charAt(0)}
+                        </div>
+                        <span>{child.full_name}</span>
+                        {child.id === selectedChildId && (
+                          <Icon icon="lucide:check" className="ml-auto text-blue-600 w-4 h-4" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           )}
-        </div>
-        <div className="h-full">
-          <Calendar />
-        </div>
-      </div>
+
+          {/* Child card and calendar grid - Only on Mobile/Tablet */}
+          <div className="grid grid-cols-2 gap-3 md:gap-6">
+            <div className="h-full">
+              {selectedChild ? (
+                <ChildProfileCard child={selectedChild} />
+              ) : (
+                <div className="bg-blue-50 rounded-3xl p-8 text-center border border-blue-100 border-dashed h-full flex items-center justify-center">
+                  <p className="text-blue-600 font-medium">Belum ada data anak</p>
+                </div>
+              )}
+            </div>
+            <div className="h-full">
+              <Calendar />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Bottom Section: Chart */}
       <GrowthChart childId={selectedChildId} />

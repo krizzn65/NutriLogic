@@ -19,8 +19,7 @@ const MobileBottomNav = () => {
         { id: 2, icon: "lucide:utensils-crossed", label: "Nutri", href: "/dashboard/nutri-assist" },
         { id: 3, icon: "lucide:message-circle", label: "Chat", href: "/dashboard/konsultasi" },
         { id: 4, icon: "lucide:award", label: "Poin", href: "/dashboard/gamification" },
-        { id: 5, icon: "lucide:file-text", label: "Riwayat", href: "/dashboard/riwayat" },
-        { id: 6, icon: "lucide:globe", label: "Web", href: "/" },
+        { id: 5, icon: "lucide:globe", label: "Web", href: "/" },
     ];
 
     useEffect(() => {

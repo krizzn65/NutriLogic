@@ -26,7 +26,7 @@ class KaderConsultationController extends Controller
         // Get consultations where:
         // 1. Child is in same posyandu as kader, OR
         // 2. Kader is assigned to this consultation
-        $query = Consultation::with(['parent', 'child', 'kader'])
+        $query = Consultation::with(['parent', 'child', 'kader', 'latestMessage.sender'])
             ->where(function ($q) use ($user) {
                 $q->whereHas('child', function ($childQuery) use ($user) {
                     $childQuery->where('posyandu_id', $user->posyandu_id);
@@ -39,19 +39,32 @@ class KaderConsultationController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Search by parent name or child name
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('parent', function ($parentQuery) use ($search) {
+                    $parentQuery->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('child', function ($childQuery) use ($search) {
+                    $childQuery->where('full_name', 'like', "%{$search}%");
+                })
+                ->orWhere('title', 'like', "%{$search}%");
+            });
+        }
+
         $consultations = $query->orderBy('updated_at', 'desc')->get();
 
-        // Add last message to each consultation
+        // Transform latest message (already eager loaded)
         $consultations->each(function ($consultation) {
-            $lastMessage = $consultation->messages()
-                ->orderBy('created_at', 'desc')
-                ->first();
-
+            $lastMessage = $consultation->latestMessage;
             $consultation->last_message = $lastMessage ? [
                 'message' => $lastMessage->message,
                 'created_at' => $lastMessage->created_at,
                 'sender_name' => $lastMessage->sender->name ?? 'Unknown',
             ] : null;
+            // Remove the relation from response to avoid duplication
+            unset($consultation->latestMessage);
         });
 
         return response()->json([

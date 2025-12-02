@@ -38,7 +38,7 @@ class KaderReportController extends Controller
             ->whereBetween('measured_at', [$dateFrom, $dateTo])
             ->count();
 
-        // Children by nutritional status (latest status for each child)
+        // Children by nutritional status (optimized - single query with subquery)
         $childrenByStatus = [
             'normal' => 0,
             'kurang' => 0,
@@ -51,13 +51,26 @@ class KaderReportController extends Controller
             'gemuk' => 0,
         ];
 
-        foreach ($childIds as $childId) {
-            $latestWeighing = WeighingLog::where('child_id', $childId)
-                ->orderBy('measured_at', 'desc')
-                ->first();
+        // Use a single query with subquery to get latest status for each child
+        $latestStatuses = \DB::table('children')
+            ->leftJoin('weighing_logs', function ($join) {
+                $join->on('children.id', '=', 'weighing_logs.child_id')
+                    ->whereRaw('weighing_logs.id = (
+                        SELECT id FROM weighing_logs wl2
+                        WHERE wl2.child_id = children.id
+                        ORDER BY wl2.measured_at DESC
+                        LIMIT 1
+                    )');
+            })
+            ->where('children.posyandu_id', $user->posyandu_id)
+            ->where('children.is_active', true)
+            ->whereNotNull('weighing_logs.nutritional_status')
+            ->select('weighing_logs.nutritional_status')
+            ->get();
 
-            if ($latestWeighing && isset($childrenByStatus[$latestWeighing->nutritional_status])) {
-                $childrenByStatus[$latestWeighing->nutritional_status]++;
+        foreach ($latestStatuses as $row) {
+            if (isset($childrenByStatus[$row->nutritional_status])) {
+                $childrenByStatus[$row->nutritional_status]++;
             }
         }
 

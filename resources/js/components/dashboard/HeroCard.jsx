@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { assets } from '../../assets/assets';
 
 export default function HeroCard({ userName }) {
+    const navigate = useNavigate();
     return (
         <div className="relative w-full rounded-[20px] md:rounded-[24px] overflow-visible bg-gradient-to-r from-[#4481EB] to-[#04BEFE] shadow-lg shadow-blue-200/50 text-white">
             {/* Background Decorative Elements */}
@@ -17,7 +19,10 @@ export default function HeroCard({ userName }) {
                         Pantau tumbuh kembang buah hati Anda dengan mudah dan akurat bersama NutriLogic.
                     </p>
 
-                    <button className="bg-white text-[#4481EB] px-5 py-2 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <button
+                        onClick={() => navigate('/dashboard/anak')}
+                        className="bg-white text-[#4481EB] px-5 py-2 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                    >
                         Lihat Detail
                     </button>
                 </div>

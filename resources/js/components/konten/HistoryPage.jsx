@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
-import GenericListSkeleton from "../loading/GenericListSkeleton";
+import HistoryPageSkeleton from "../loading/HistoryPageSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
 import { DatePicker } from "../ui/date-picker";
@@ -248,12 +248,7 @@ export default function HistoryPage() {
   if (loading && historyData.length === 0) {
     return (
       <div className="w-full h-full bg-white">
-        <div className="px-4 pt-5 md:px-10 md:pt-10 pb-4">
-          <PageHeader title="Riwayat" subtitle="Portal Orang Tua" />
-        </div>
-        <div className="px-4 md:px-10">
-          <GenericListSkeleton itemCount={8} />
-        </div>
+        <HistoryPageSkeleton />
       </div>
     );
   }

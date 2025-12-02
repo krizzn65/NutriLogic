@@ -215,7 +215,7 @@ export default function DataAnakKader() {
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {children.map((child) => {
-                                        const status = child.latest_nutritional_status;
+                                        const status = child.latest_nutritional_status || {};
 
                                         return (
                                             <tr key={child.id} className="hover:bg-gray-50">
@@ -223,7 +223,7 @@ export default function DataAnakKader() {
                                                     <div className="flex items-center">
                                                         <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                                                             <span className="text-blue-600 font-semibold">
-                                                                {child.full_name.charAt(0).toUpperCase()}
+                                                                {child.full_name?.charAt(0)?.toUpperCase() || '?'}
                                                             </span>
                                                         </div>
                                                         <div className="ml-4">
@@ -242,13 +242,13 @@ export default function DataAnakKader() {
                                                     <div className="text-sm text-gray-900">{formatAge(child.age_in_months)}</div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    {status.status === 'tidak_diketahui' || !status.measured_at ? (
+                                                    {status?.status === 'tidak_diketahui' || !status?.measured_at ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
                                                             Belum ada data
                                                         </span>
                                                     ) : (
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(status.status)}`}>
-                                                            {getStatusLabel(status.status)}
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(status?.status)}`}>
+                                                            {getStatusLabel(status?.status)}
                                                         </span>
                                                     )}
                                                 </td>

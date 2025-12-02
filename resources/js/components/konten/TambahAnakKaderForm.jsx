@@ -29,22 +29,9 @@ export default function TambahAnakKaderForm() {
 
     const fetchParents = async () => {
         try {
-            // Get all users with role 'ibu' in the same posyandu
-            const response = await api.get('/kader/children');
-            const children = response.data.data;
-
-            // Extract unique parents
-            const uniqueParents = [];
-            const parentIds = new Set();
-
-            children.forEach(child => {
-                if (child.parent && !parentIds.has(child.parent.id)) {
-                    parentIds.add(child.parent.id);
-                    uniqueParents.push(child.parent);
-                }
-            });
-
-            setParents(uniqueParents);
+            // Use dedicated parents endpoint (lightweight)
+            const response = await api.get('/kader/parents');
+            setParents(response.data.data);
         } catch (err) {
             console.error('Failed to fetch parents:', err);
         }
