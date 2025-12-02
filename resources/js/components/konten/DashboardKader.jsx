@@ -1,14 +1,21 @@
+
 import React, { useState, useEffect } from "react";
+import { MapPin } from "lucide-react";
 import api from "../../lib/api";
 import DashboardKaderSkeleton from "../loading/DashboardKaderSkeleton";
+import PageHeader from "../dashboard/PageHeader";
+import { Calendar } from "../ui/calendar";
 
 export default function DashboardKaderContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const [allSchedules, setAllSchedules] = useState([]);
+  const [calendarDate, setCalendarDate] = useState(new Date()); // Track calendar's current month
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAllSchedules();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -24,6 +31,16 @@ export default function DashboardKaderContent() {
       console.error('Dashboard fetch error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllSchedules = async () => {
+    try {
+      const response = await api.get('/kader/schedules');
+      setAllSchedules(response.data.data || []);
+    } catch (err) {
+      console.error('Schedules fetch error:', err);
+      setAllSchedules([]);
     }
   };
 
@@ -56,6 +73,7 @@ export default function DashboardKaderContent() {
           </div>
         </div>
       </div>
+
     );
   }
 
@@ -71,180 +89,295 @@ export default function DashboardKaderContent() {
     (statistics.nutritional_status.sangat_kurus || 0);
 
   return (
-    <div className="flex flex-1 w-full h-full overflow-auto font-montserrat">
-      <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Dashboard Kader
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {posyandu.name} - {posyandu.village}, {posyandu.district}
-          </p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Anak Aktif */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-gray-600 text-sm font-medium">Total Anak Aktif</h3>
-                <p className="text-3xl font-bold text-gray-800 mt-2">{statistics.active_children}</p>
-                <p className="text-xs text-gray-500 mt-1">dari {statistics.total_children} total</p>
+    <div className="flex flex-1 w-full h-full overflow-auto font-montserrat bg-gray-50">
+      <div className="p-4 md:p-8 w-full flex flex-col gap-8">
+        <PageHeader
+          title="Dashboard Kader"
+          subtitle="Portal Kader"
+          description={
+            <div className="flex items-center gap-2 mt-1">
+              <div className="p-1.5 bg-blue-50 rounded-full">
+                <MapPin className="w-3.5 h-3.5 text-blue-600" />
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <span className="font-medium text-gray-600">{posyandu.name} - {posyandu.village}, {posyandu.district}</span>
+            </div>
+          }
+        />
+
+        {/* Bento Grid Layout - Compact Mode */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+          {/* 1. Hero Section (Span 2) - Welcome & Total Active */}
+          <div className="md:col-span-2 bg-gradient-to-br from-[#4481EB] to-[#04BEFE] rounded-3xl p-6 text-white shadow-lg shadow-blue-200/50 relative overflow-hidden group transition-all duration-500 hover:shadow-blue-300/50">
+            {/* Abstract Shapes */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+            <div className="absolute bottom-0 left-0 w-60 h-60 bg-black/5 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+            <div className="relative z-10 h-full flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3 opacity-90">
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold border border-white/30 tracking-wide">
+                    DASHBOARD UTAMA
+                  </span>
+                </div>
+                <h2 className="text-2xl font-bold mb-1 tracking-tight">Halo, Kader! </h2>
+                <p className="text-blue-50 text-lg font-medium leading-relaxed max-w-md">
+                  Pantau kesehatan anak balita di posyandu Anda hari ini.
+                </p>
+              </div>
+
+              <div className="mt-6 flex items-end gap-4">
+                <div>
+                  <div className="text-5xl font-bold tracking-tighter drop-shadow-sm">
+                    {statistics.active_children}
+                  </div>
+                  <div className="text-blue-100 font-medium text-lg mt-1">Total Anak Terdaftar</div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Gizi Normal */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
+          {/* 2. Priority Action Card (Span 1) */}
+          <div className="bg-red-50/80 backdrop-blur-sm rounded-3xl p-5 shadow-sm border border-red-100 hover:shadow-lg hover:shadow-red-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+              <svg className="w-24 h-24 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
               <div>
-                <h3 className="text-gray-600 text-sm font-medium">Gizi Normal</h3>
-                <p className="text-3xl font-bold text-green-600 mt-2">{statistics.nutritional_status.normal}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <h3 className="font-bold text-gray-900 text-lg">Perlu Perhatian</h3>
+                <p className="text-red-500 text-xs font-semibold uppercase tracking-wider mt-0.5">PENTING</p>
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="text-4xl font-bold text-gray-900 tracking-tight">{statistics.priority_children}</div>
+              <p className="text-gray-600 font-medium mt-2">Anak butuh intervensi</p>
+            </div>
+
+            <div className="mt-6 flex items-center text-red-600 font-semibold text-sm group-hover:gap-2 transition-all">
+              Lihat Detail <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+            </div>
+          </div>
+
+          {/* 3. Consultation Action Card (Span 1) */}
+          <div className="bg-purple-50/80 backdrop-blur-sm rounded-3xl p-5 shadow-sm border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+              <svg className="w-24 h-24 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg">Konsultasi</h3>
+                <p className="text-purple-500 text-xs font-semibold uppercase tracking-wider mt-0.5">AKTIVITAS</p>
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="text-4xl font-bold text-gray-900 tracking-tight">{highlights.open_consultations}</div>
+              <p className="text-gray-600 font-medium mt-2">Pesan belum dibalas</p>
+            </div>
+
+            <div className="mt-6 flex items-center text-purple-600 font-semibold text-sm group-hover:gap-2 transition-all">
+              Buka Chat <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+            </div>
+          </div>
+
+          {/* 4. Nutrition Distribution (Span 2) */}
+          <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-bold text-xl text-gray-900">Status Gizi Anak</h3>
+                <p className="text-gray-500 text-sm mt-1">Distribusi status gizi bulan ini</p>
+              </div>
+              <div className="px-4 py-1.5 bg-gray-50 rounded-full text-xs font-semibold text-gray-600 border border-gray-100">
+                Bulan Ini
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Normal Stats */}
+              <div className="p-4 rounded-2xl bg-green-50/50 border border-green-100/50 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <svg className="w-24 h-24 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                </div>
+
+                <div className="flex items-center gap-2 mb-3 relative z-10">
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-200"></div>
+                  <span className="text-sm font-bold text-gray-700 tracking-wide">Gizi Normal</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 relative z-10">{statistics.nutritional_status.normal}</div>
+                <div className="text-sm text-gray-500 mt-1 font-medium relative z-10">
                   {statistics.active_children > 0
                     ? Math.round((statistics.nutritional_status.normal / statistics.active_children) * 100)
                     : 0}% dari total
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Perlu Perhatian */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-gray-600 text-sm font-medium">Perlu Perhatian</h3>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{totalWithIssues}</p>
-                <p className="text-xs text-gray-500 mt-1">Gizi kurang/pendek</p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Anak Prioritas */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-gray-600 text-sm font-medium">Anak Prioritas</h3>
-                <p className="text-3xl font-bold text-red-600 mt-2">{statistics.priority_children}</p>
-                <p className="text-xs text-gray-500 mt-1">Butuh intervensi</p>
-              </div>
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Highlights Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Distribusi Status Gizi */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Distribusi Status Gizi</h2>
-            <div className="space-y-3">
-              {[
-                { label: 'Normal', value: statistics.nutritional_status.normal, color: 'bg-green-500' },
-                { label: 'Pendek', value: statistics.nutritional_status.pendek, color: 'bg-yellow-500' },
-                { label: 'Sangat Pendek', value: statistics.nutritional_status.sangat_pendek, color: 'bg-red-500' },
-                { label: 'Kurang', value: statistics.nutritional_status.kurang, color: 'bg-yellow-500' },
-                { label: 'Sangat Kurang', value: statistics.nutritional_status.sangat_kurang, color: 'bg-red-500' },
-                { label: 'Kurus', value: statistics.nutritional_status.kurus, color: 'bg-yellow-500' },
-                { label: 'Sangat Kurus', value: statistics.nutritional_status.sangat_kurus, color: 'bg-red-500' },
-                { label: 'Belum Diketahui', value: statistics.nutritional_status.tidak_diketahui, color: 'bg-gray-400' },
-              ].filter(item => item.value > 0).map((item, index) => {
-                const percentage = statistics.active_children > 0
-                  ? (item.value / statistics.active_children) * 100
-                  : 0;
-
-                return (
-                  <div key={index}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                      <span className="text-sm text-gray-600">{item.value} ({percentage.toFixed(1)}%)</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`${item.color} h-2 rounded-full transition-all duration-300`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Highlights */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Highlights</h2>
-            <div className="space-y-4">
-              {/* Next Schedule */}
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800">Jadwal Terdekat</h3>
-                    {highlights.next_schedule ? (
-                      <div className="mt-1">
-                        <p className="text-sm text-gray-700">{highlights.next_schedule.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {highlights.next_schedule.child_name} - {new Date(highlights.next_schedule.scheduled_for).toLocaleDateString('id-ID', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-1">Tidak ada jadwal mendatang</p>
-                    )}
-                  </div>
+                </div>
+                <div className="w-full bg-green-100/50 rounded-full h-2 mt-4 overflow-hidden relative z-10">
+                  <div className="bg-green-500 h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${statistics.active_children > 0 ? (statistics.nutritional_status.normal / statistics.active_children) * 100 : 0}%` }}></div>
                 </div>
               </div>
 
-              {/* Open Consultations */}
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
+              {/* Issues Stats */}
+              <div className="p-4 rounded-2xl bg-yellow-50/50 border border-yellow-100/50 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <svg className="w-24 h-24 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
+                </div>
+
+                <div className="flex items-center gap-2 mb-3 relative z-10">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm shadow-yellow-200"></div>
+                  <span className="text-sm font-bold text-gray-700 tracking-wide">Bermasalah</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 relative z-10">{totalWithIssues}</div>
+                <div className="text-sm text-gray-500 mt-1 font-medium relative z-10">
+                  {statistics.active_children > 0
+                    ? Math.round((totalWithIssues / statistics.active_children) * 100)
+                    : 0}% dari total
+                </div>
+                <div className="w-full bg-yellow-100/50 rounded-full h-2 mt-4 overflow-hidden relative z-10">
+                  <div className="bg-yellow-500 h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${statistics.active_children > 0 ? (totalWithIssues / statistics.active_children) * 100 : 0}%` }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Breakdown */}
+            <div className="mt-4 space-y-3">
+              {[
+                { label: 'Pendek (Stunting)', value: (statistics.nutritional_status.pendek || 0) + (statistics.nutritional_status.sangat_pendek || 0), color: 'bg-red-500', bg: 'bg-red-100' },
+                { label: 'Kurang Gizi', value: (statistics.nutritional_status.kurang || 0) + (statistics.nutritional_status.sangat_kurang || 0), color: 'bg-orange-500', bg: 'bg-orange-100' },
+                { label: 'Kurus (Wasting)', value: (statistics.nutritional_status.kurus || 0) + (statistics.nutritional_status.sangat_kurus || 0), color: 'bg-yellow-500', bg: 'bg-yellow-100' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center text-sm group">
+                  <span className="w-36 text-gray-500 font-medium group-hover:text-gray-800 transition-colors">{item.label}</span>
+                  <div className="flex-1 mx-4 bg-gray-50 rounded-full h-2.5 overflow-hidden">
+                    <div className={`${item.color} h-2.5 rounded-full transition-all duration-1000 ease-out relative`} style={{ width: `${statistics.active_children > 0 ? (item.value / statistics.active_children) * 100 : 0}%` }}>
+                      <div className="absolute inset-0 bg-white/20"></div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800">Konsultasi Terbuka</h3>
-                    <p className="text-sm text-gray-700 mt-1">
-                      {highlights.open_consultations} konsultasi menunggu respons
+                  <span className="font-bold text-gray-700 w-8 text-right">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 5. Schedule Card (Span 2) - Sleek Redesign with Calendar */}
+          <div className="md:col-span-2 bg-white rounded-3xl p-0 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-all duration-300">
+            {/* Decorative Top Line */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400"></div>
+
+            <div className="p-6 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900 leading-none">Agenda Posyandu</h3>
+                    <p className="text-gray-400 text-xs font-medium mt-1">
+                      {calendarDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
                     </p>
                   </div>
                 </div>
+                <button className="group/btn flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-wider">
+                  Lihat Semua
+                  <svg className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Left Side: All Monthly Schedules */}
+                <div className="flex-1">
+                  {(() => {
+                    // Filter schedules for selected calendar month
+                    const currentMonthSchedules = allSchedules.filter(schedule => {
+                      const scheduleDate = new Date(schedule.scheduled_for);
+                      return scheduleDate.getMonth() === calendarDate.getMonth() &&
+                        scheduleDate.getFullYear() === calendarDate.getFullYear();
+                    });
+
+                    return currentMonthSchedules.length > 0 ? (
+                      <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
+                        {currentMonthSchedules.map((schedule, index) => (
+                          <div key={schedule.id} className="flex items-start gap-3 p-3 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-blue-50/30 hover:border-blue-200 transition-all">
+                            {/* Compact Date */}
+                            <div className="flex flex-col items-center justify-center min-w-[50px] bg-white rounded-lg px-2 py-1.5 border border-gray-200">
+                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">
+                                {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { month: 'short' }).toUpperCase()}
+                              </span>
+                              <span className="text-2xl font-bold text-gray-900 tracking-tighter leading-none mt-0.5">
+                                {new Date(schedule.scheduled_for).getDate()}
+                              </span>
+                              <span className="text-[8px] font-medium text-blue-600 leading-none mt-0.5">
+                                {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { weekday: 'short' })}
+                              </span>
+                            </div>
+
+                            {/* Schedule Details */}
+                            <div className="flex-1 min-w-0">
+                              <h5 className="text-sm font-bold text-gray-900 leading-tight truncate">
+                                {schedule.title}
+                              </h5>
+                              <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">
+                                {schedule.notes || 'Tidak ada deskripsi'}
+                              </p>
+
+                              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                <div className="flex items-center gap-1 text-gray-600 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                                  <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                  <span className="text-[10px] font-medium">
+                                    {new Date(schedule.scheduled_for).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                  </span>
+                                </div>
+                                {schedule.location && (
+                                  <div className="flex items-center gap-1 text-gray-600 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                                    <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    <span className="text-[10px] font-medium truncate max-w-[100px]">{schedule.location}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center py-8 h-full">
+                        <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-2 text-gray-300">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <p className="text-gray-900 font-bold text-sm">Tidak ada jadwal</p>
+                        <p className="text-gray-400 text-xs">Belum ada kegiatan bulan ini</p>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Right Side: Calendar */}
+                <div className="hidden lg:block w-px bg-gray-100"></div>
+                <div className="flex-1 flex justify-center items-start">
+                  <div className="scale-90 origin-top">
+                    <Calendar
+                      mode="single"
+                      selected={new Date()}
+                      className="rounded-md border-0"
+                      schedules={allSchedules}
+                      currentDate={calendarDate}
+                      onMonthChange={setCalendarDate}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
+
   );
 }

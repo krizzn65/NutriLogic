@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search, ArrowLeft, AlertTriangle, TrendingDown, Clock, Filter, ChevronDown, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
 import { formatAge } from "../../lib/utils";
-import GenericListSkeleton from "../loading/GenericListSkeleton";
 
 export default function AnakPrioritas() {
     const [loading, setLoading] = useState(true);
@@ -10,10 +11,22 @@ export default function AnakPrioritas() {
     const [priorityChildren, setPriorityChildren] = useState([]);
     const [summary, setSummary] = useState(null);
     const [filterReason, setFilterReason] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchPriorityChildren();
+
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const fetchPriorityChildren = async () => {
@@ -34,24 +47,52 @@ export default function AnakPrioritas() {
     };
 
     const getReasonBadge = (reason) => {
-        const colors = {
-            bad_nutritional_status: 'bg-red-100 text-red-800 border-red-300',
-            weight_stagnation: 'bg-orange-100 text-orange-800 border-orange-300',
-            long_absence: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        const styles = {
+            bad_nutritional_status: {
+                bg: 'bg-red-50',
+                text: 'text-red-700',
+                border: 'border-red-200',
+                icon: AlertTriangle
+            },
+            weight_stagnation: {
+                bg: 'bg-orange-50',
+                text: 'text-orange-700',
+                border: 'border-orange-200',
+                icon: TrendingDown
+            },
+            long_absence: {
+                bg: 'bg-yellow-50',
+                text: 'text-yellow-700',
+                border: 'border-yellow-200',
+                icon: Clock
+            },
         };
 
+        const style = styles[reason.type] || styles.bad_nutritional_status;
+        const Icon = style.icon;
+
         return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colors[reason.type]}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${style.bg} ${style.text} ${style.border}`}>
+                <Icon className="w-3 h-3" />
                 {reason.label}
             </span>
         );
     };
 
-    const filteredChildren = filterReason
-        ? priorityChildren.filter(child =>
-            child.priority_reasons.some(r => r.type === filterReason)
-        )
-        : priorityChildren;
+    const filterOptions = [
+        { value: "", label: "Semua Kategori" },
+        { value: "bad_nutritional_status", label: "Status Gizi Buruk" },
+        { value: "weight_stagnation", label: "Berat Stagnan" },
+        { value: "long_absence", label: "Tidak Ditimbang Lama" }
+    ];
+
+    const filteredChildren = priorityChildren.filter(child => {
+        const matchesFilter = filterReason
+            ? child.priority_reasons.some(r => r.type === filterReason)
+            : true;
+        const matchesSearch = child.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
+    });
 
     if (loading) {
         return (
@@ -69,123 +110,186 @@ export default function AnakPrioritas() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
+        <div className="flex flex-1 w-full h-full overflow-auto bg-gray-50/50">
+            <div className="w-full flex flex-col gap-6 p-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Anak Prioritas</h1>
-                        <p className="text-gray-600 mt-2">Anak yang memerlukan perhatian khusus</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Anak Prioritas</h1>
+                        <p className="text-gray-500 mt-1">Daftar anak yang memerlukan perhatian khusus</p>
                     </div>
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
                     >
+                        <ArrowLeft className="w-4 h-4" />
                         Kembali
                     </button>
                 </div>
 
                 {/* Error Alert */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span>{error}</span>
-                        </div>
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3">
+                        <AlertTriangle className="w-5 h-5" />
+                        <span className="font-medium">{error}</span>
                     </div>
                 )}
 
                 {/* Summary Cards */}
                 {summary && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">Total Prioritas</p>
-                                    <p className="text-3xl font-bold text-gray-800 mt-2">{summary.total_priority}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <div className="relative z-10">
+                                <p className="text-sm font-medium text-gray-500 mb-1">Total Prioritas</p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-3xl font-bold text-gray-900">{summary.total_priority}</h3>
+                                    <span className="text-sm text-gray-500">Anak</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                            <p className="text-sm text-gray-600">Status Gizi Buruk</p>
-                            <p className="text-2xl font-bold text-red-600 mt-2">{summary.by_reason.bad_nutritional_status}</p>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="p-1 bg-red-100 rounded-lg">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-500">Gizi Buruk</p>
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900">{summary.by_reason.bad_nutritional_status}</h3>
+                            </div>
                         </div>
 
-                        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                            <p className="text-sm text-gray-600">Berat Stagnan</p>
-                            <p className="text-2xl font-bold text-orange-600 mt-2">{summary.by_reason.weight_stagnation}</p>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="p-1 bg-orange-100 rounded-lg">
+                                        <TrendingDown className="w-3.5 h-3.5 text-orange-600" />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-500">Berat Stagnan</p>
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900">{summary.by_reason.weight_stagnation}</h3>
+                            </div>
                         </div>
 
-                        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                            <p className="text-sm text-gray-600">Tidak Ditimbang Lama</p>
-                            <p className="text-2xl font-bold text-yellow-600 mt-2">{summary.by_reason.long_absence}</p>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="p-1 bg-yellow-100 rounded-lg">
+                                        <Clock className="w-3.5 h-3.5 text-yellow-600" />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-500">Jarang Hadir</p>
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900">{summary.by_reason.long_absence}</h3>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Filter */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <div className="flex items-center gap-4">
-                        <label htmlFor="filter" className="text-sm font-medium text-gray-700">
-                            Filter berdasarkan:
-                        </label>
-                        <select
-                            id="filter"
-                            value={filterReason}
-                            onChange={(e) => setFilterReason(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {/* Filters & Search */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-center z-20 relative">
+                    <div className="relative w-full md:w-96">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Cari nama anak..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
+                        />
+                    </div>
+
+                    <div className="relative w-full md:w-64" ref={dropdownRef}>
+                        <button
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                         >
-                            <option value="">Semua Alasan</option>
-                            <option value="bad_nutritional_status">Status Gizi Buruk</option>
-                            <option value="weight_stagnation">Berat Stagnan</option>
-                            <option value="long_absence">Tidak Ditimbang Lama</option>
-                        </select>
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-gray-400" />
+                                <span className="truncate">
+                                    {filterOptions.find(opt => opt.value === filterReason)?.label || "Semua Kategori"}
+                                </span>
+                            </div>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {isDropdownOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 8 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
+                                >
+                                    {filterOptions.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => {
+                                                setFilterReason(option.value);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-gray-50 transition-colors ${filterReason === option.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
+                                                }`}
+                                        >
+                                            <span>{option.label}</span>
+                                            {filterReason === option.value && (
+                                                <Check className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
 
                 {/* Children List */}
                 {filteredChildren.length === 0 ? (
-                    <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200 text-center">
-                        <svg className="w-16 h-16 text-green-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-gray-800 font-medium mb-2">Tidak Ada Anak Prioritas</p>
-                        <p className="text-gray-600">Semua anak dalam kondisi baik!</p>
+                    <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-200 text-center z-0">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Search className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Tidak ada data ditemukan</h3>
+                        <p className="text-gray-500">
+                            {searchQuery || filterReason
+                                ? "Coba ubah kata kunci pencarian atau filter kategori."
+                                : "Tidak ada anak yang masuk dalam kategori prioritas saat ini."}
+                        </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 z-0">
                         {filteredChildren.map((child) => (
                             <div
                                 key={child.id}
-                                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group"
                                 onClick={() => navigate(`/dashboard/data-anak/${child.id}`)}
                             >
-                                {/* Child Info */}
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-blue-600 font-bold text-lg">
+                                {/* Header */}
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center border border-blue-200 text-blue-600 font-bold text-lg shadow-sm">
                                             {child.full_name.charAt(0).toUpperCase()}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold text-gray-900 truncate">{child.full_name}</h3>
-                                        <p className="text-sm text-gray-600">
-                                            {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} • {formatAge(child.age_in_months)}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">Ibu: {child.parent.name || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                                                {child.full_name}
+                                            </h3>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} • {formatAge(child.age_in_months)}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Priority Badges */}
-                                <div className="flex flex-wrap gap-2 mb-4">
+                                {/* Badges */}
+                                <div className="flex flex-wrap gap-2 mb-4 min-h-[28px]">
                                     {child.priority_reasons.map((reason, index) => (
                                         <div key={index}>
                                             {getReasonBadge(reason)}
@@ -193,43 +297,45 @@ export default function AnakPrioritas() {
                                     ))}
                                 </div>
 
-                                {/* Latest Weighing */}
-                                {child.latest_weighing ? (
-                                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                                        <p className="text-xs text-gray-600 mb-2">Data Terakhir:</p>
-                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                {/* Latest Data */}
+                                <div className="bg-gray-50/80 rounded-xl p-3 mb-4 border border-gray-100">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Data Terakhir</span>
+                                        <span className="text-[10px] text-gray-400">
+                                            {child.latest_weighing
+                                                ? new Date(child.latest_weighing.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                                                : '-'}
+                                        </span>
+                                    </div>
+
+                                    {child.latest_weighing ? (
+                                        <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <p className="text-gray-600">Berat</p>
-                                                <p className="font-medium text-gray-900">{child.latest_weighing.weight_kg} kg</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Berat Badan</p>
+                                                <p className="text-sm font-bold text-gray-900">{child.latest_weighing.weight_kg} kg</p>
                                             </div>
                                             <div>
-                                                <p className="text-gray-600">Tinggi</p>
-                                                <p className="font-medium text-gray-900">{child.latest_weighing.height_cm} cm</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Tinggi Badan</p>
+                                                <p className="text-sm font-bold text-gray-900">{child.latest_weighing.height_cm} cm</p>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            {new Date(child.latest_weighing.measured_at).toLocaleDateString('id-ID')}
-                                            {child.days_since_last_weighing !== null && (
-                                                <span> ({child.days_since_last_weighing} hari lalu)</span>
-                                            )}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                                        <p className="text-sm text-gray-600 text-center">Belum ada data penimbangan</p>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <p className="text-xs text-gray-400 italic text-center py-1">Belum ada data penimbangan</p>
+                                    )}
+                                </div>
 
-                                {/* Action Button */}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/dashboard/data-anak/${child.id}`);
-                                    }}
-                                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                                >
-                                    Lihat Detail
-                                </button>
+                                {/* Footer */}
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-gray-400">Orang Tua</span>
+                                        <span className="text-xs font-medium text-gray-700 truncate max-w-[120px]">
+                                            {child.parent?.name || '-'}
+                                        </span>
+                                    </div>
+                                    <button className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                                        Lihat Detail
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

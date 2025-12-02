@@ -99,6 +99,8 @@ class KaderScheduleController extends Controller
             'title' => ['required', 'string', 'max:150'],
             'type' => ['required', 'string', 'in:imunisasi,vitamin,posyandu'],
             'scheduled_for' => ['required', 'date'],
+            'scheduled_time' => ['nullable', 'date_format:H:i'],
+            'location' => ['nullable', 'string', 'max:200'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -110,11 +112,18 @@ class KaderScheduleController extends Controller
             ], 403);
         }
 
+        // Combine date and time into datetime
+        $scheduledDateTime = $validated['scheduled_for'];
+        if (isset($validated['scheduled_time'])) {
+            $scheduledDateTime .= ' ' . $validated['scheduled_time'];
+        }
+
         $schedule = ImmunizationSchedule::create([
             'child_id' => $validated['child_id'],
             'title' => $validated['title'],
             'type' => $validated['type'],
-            'scheduled_for' => $validated['scheduled_for'],
+            'scheduled_for' => $scheduledDateTime,
+            'location' => $validated['location'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ]);
 
@@ -143,6 +152,7 @@ class KaderScheduleController extends Controller
             'title' => ['sometimes', 'string', 'max:150'],
             'type' => ['sometimes', 'string', 'in:imunisasi,vitamin,posyandu'],
             'scheduled_for' => ['sometimes', 'date'],
+            'location' => ['nullable', 'string', 'max:200'],
             'notes' => ['nullable', 'string', 'max:500'],
             'completed_at' => ['nullable', 'date'],
         ]);

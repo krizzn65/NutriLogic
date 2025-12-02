@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Search, Filter, Plus, ChevronDown, MoreHorizontal, User, Calendar, Activity } from "lucide-react";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
+import TableSkeleton from "../loading/TableSkeleton";
+import PageHeader from "../dashboard/PageHeader";
+import { assets } from "../../assets/assets";
+import EditChildModal from "./EditChildModal";
 
 export default function DataAnakKader() {
     const [loading, setLoading] = useState(true);
@@ -14,14 +19,13 @@ export default function DataAnakKader() {
     const [successMessage, setSuccessMessage] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedChildId, setSelectedChildId] = useState(null);
 
     useEffect(() => {
-        // Check for success message from navigation state
         if (location.state?.message) {
             setSuccessMessage(location.state.message);
-            // Clear the state
             window.history.replaceState({}, document.title);
-            // Auto-hide after 5 seconds
             setTimeout(() => setSuccessMessage(null), 5000);
         }
     }, [location]);
@@ -45,7 +49,6 @@ export default function DataAnakKader() {
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
             setError(errorMessage);
-            console.error('Children fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -56,225 +59,219 @@ export default function DataAnakKader() {
         fetchChildren();
     };
 
-    // Loading state
     if (loading && children.length === 0) {
-        return <GenericListSkeleton itemCount={6} />;
+        return <TableSkeleton itemCount={6} />;
     }
 
-
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
+        <div className="flex flex-1 w-full h-full overflow-auto bg-gray-50/50">
+            <div className="w-full flex flex-col gap-6 p-4">
                 {/* Success Message */}
                 {successMessage && (
-                    <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between">
+                    <div className="bg-green-50/80 backdrop-blur-sm border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
                         <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <span>{successMessage}</span>
+                            <div className="w-5 h-5 rounded-full bg-green-200 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span className="font-medium">{successMessage}</span>
                         </div>
-                        <button
-                            onClick={() => setSuccessMessage(null)}
-                            className="text-green-600 hover:text-green-800"
-                        >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <button onClick={() => setSuccessMessage(null)} className="text-green-600 hover:text-green-800 transition-colors">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
                 )}
 
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Data Anak</h1>
-                        <p className="text-gray-600 mt-2">Kelola data anak di posyandu Anda</p>
+                <PageHeader title="Data Anak" subtitle="Portal Kader" />
+
+                {/* Filters & Search */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div className="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between mb-4 md:mb-0">
+                        {/* This div wrapper is needed if we want to separate the form and the button, 
+                             but looking at the code below, the form is the container. 
+                             Let's just insert the button into the form or alongside it.
+                             The user wants it "pantes". Putting it next to filters is standard.
+                          */}
                     </div>
-                    <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                        onClick={() => navigate('/dashboard/data-anak/tambah')}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Anak
-                    </button>
-                </div>
 
-                {/* Filters */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {/* Search */}
-                        <div className="md:col-span-2">
-                            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-                                Cari Anak/Orang Tua
-                            </label>
-                            <input
-                                type="text"
-                                id="search"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Nama anak atau nama ibu..."
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                        </div>
+                    <div className="flex flex-col xl:flex-row gap-4 items-end xl:items-center justify-between">
+                        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 items-end md:items-center flex-1 w-full">
+                            <div className="flex-1 w-full">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Pencarian</label>
+                                <div className="relative group">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                    <input
+                                        type="text"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Cari nama anak atau orang tua..."
+                                        className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-700 placeholder:text-gray-400"
+                                    />
+                                </div>
+                            </div>
 
-                        {/* Filter Status */}
-                        <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                                Status Gizi
-                            </label>
-                            <select
-                                id="status"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            <div className="w-full md:w-48">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Status Gizi</label>
+                                <div className="relative">
+                                    <select
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value)}
+                                        className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none appearance-none cursor-pointer text-gray-700"
+                                    >
+                                        <option value="">Semua Status</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="pendek">Pendek</option>
+                                        <option value="sangat_pendek">Sangat Pendek</option>
+                                        <option value="kurang">Kurang</option>
+                                        <option value="sangat_kurang">Sangat Kurang</option>
+                                        <option value="kurus">Kurus</option>
+                                        <option value="sangat_kurus">Sangat Kurus</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div className="w-full md:w-40">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Status Aktif</label>
+                                <div className="relative">
+                                    <select
+                                        value={filterActive}
+                                        onChange={(e) => setFilterActive(e.target.value)}
+                                        className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none appearance-none cursor-pointer text-gray-700"
+                                    >
+                                        <option value="">Semua</option>
+                                        <option value="1">Aktif</option>
+                                        <option value="0">Tidak Aktif</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
+                        </form>
+
+                        <div className="w-full xl:w-auto flex-shrink-0">
+                            <label className="text-xs font-semibold text-transparent uppercase tracking-wider mb-1.5 block ml-1 select-none">Action</label>
+                            <button
+                                className="w-full xl:w-auto px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center justify-center gap-2 font-medium"
+                                onClick={() => navigate('/dashboard/data-anak/tambah')}
                             >
-                                <option value="">Semua Status</option>
-                                <option value="normal">Normal</option>
-                                <option value="pendek">Pendek</option>
-                                <option value="sangat_pendek">Sangat Pendek</option>
-                                <option value="kurang">Kurang</option>
-                                <option value="sangat_kurang">Sangat Kurang</option>
-                                <option value="kurus">Kurus</option>
-                                <option value="sangat_kurus">Sangat Kurus</option>
-                            </select>
+                                <Plus className="w-5 h-5" />
+                                <span className="whitespace-nowrap">Tambah Anak</span>
+                            </button>
                         </div>
-
-                        {/* Filter Active */}
-                        <div>
-                            <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-2">
-                                Status Aktif
-                            </label>
-                            <select
-                                id="active"
-                                value={filterActive}
-                                onChange={(e) => setFilterActive(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="">Semua</option>
-                                <option value="1">Aktif</option>
-                                <option value="0">Tidak Aktif</option>
-                            </select>
-                        </div>
-                    </form>
+                    </div>
                 </div>
 
                 {/* Error State */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span>{error}</span>
-                        </div>
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3">
+                        <Activity className="w-5 h-5" />
+                        <span className="font-medium">{error}</span>
                     </div>
                 )}
 
-                {/* Table */}
+                {/* Data List */}
                 {children.length === 0 ? (
-                    <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200 text-center">
-                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <p className="text-gray-600 mb-4">Belum ada data anak terdaftar</p>
+                    <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center min-h-[400px]">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                            <User className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada data anak</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto mb-8">
+                            Data anak yang terdaftar akan muncul di sini. Mulai dengan menambahkan data anak baru.
+                        </p>
                         <button
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center gap-2 font-medium"
                             onClick={() => navigate('/dashboard/data-anak/tambah')}
                         >
+                            <Plus className="w-5 h-5" />
                             Tambah Anak Pertama
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Nama Anak
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Orang Tua
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Umur
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status Gizi
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Aksi
-                                        </th>
+                                <thead>
+                                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Anak</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Orang Tua</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Umur</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status Gizi</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status Aktif</th>
+                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
+                                <tbody className="divide-y divide-gray-50">
                                     {children.map((child) => {
                                         const status = child.latest_nutritional_status || {};
-
                                         return (
-                                            <tr key={child.id} className="hover:bg-gray-50">
+                                            <tr key={child.id} className="group hover:bg-blue-50/30 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center">
-                                                        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                            <span className="text-blue-600 font-semibold">
-                                                                {child.full_name?.charAt(0)?.toUpperCase() || '?'}
-                                                            </span>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 rounded-full bg-blue-50 p-0.5 shadow-sm flex items-center justify-center overflow-hidden">
+                                                            <img
+                                                                src={child.gender === 'L' ? assets.kepala_bayi : child.gender === 'P' ? assets.kepala_bayi_cewe : `https://api.dicebear.com/9.x/adventurer/svg?seed=${child.full_name}&backgroundColor=b6e3f4`}
+                                                                alt={child.full_name}
+                                                                className="w-full h-full rounded-full object-cover"
+                                                            />
                                                         </div>
-                                                        <div className="ml-4">
-                                                            <div className="text-sm font-medium text-gray-900">{child.full_name}</div>
-                                                            <div className="text-sm text-gray-500">
-                                                                {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                                        <div>
+                                                            <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{child.full_name}</div>
+                                                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                                                                {child.gender === 'L' ? (
+                                                                    <span className="text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Laki-laki</span>
+                                                                ) : (
+                                                                    <span className="text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Perempuan</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">{child.parent?.name || '-'}</div>
-                                                    <div className="text-sm text-gray-500">{child.parent?.phone || '-'}</div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-gray-900">{child.parent?.name || '-'}</span>
+                                                        <span className="text-xs text-gray-500">{child.parent?.phone || '-'}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">{formatAge(child.age_in_months)}</div>
+                                                    <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2.5 py-1 rounded-lg w-fit">
+                                                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                                                        <span className="text-sm font-medium">{formatAge(child.age_in_months)}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     {status?.status === 'tidak_diketahui' || !status?.measured_at ? (
-                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
                                                             Belum ada data
                                                         </span>
                                                     ) : (
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(status?.status)}`}>
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(status?.status)} shadow-sm`}>
                                                             {getStatusLabel(status?.status)}
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    {child.is_active ? (
-                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                            Aktif
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                            Tidak Aktif
-                                                        </span>
-                                                    )}
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${child.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                                        {child.is_active ? 'Aktif' : 'Tidak Aktif'}
+                                                    </span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <div className="flex items-center gap-3">
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div className="flex items-center justify-end gap-2">
                                                         <button
                                                             onClick={() => navigate(`/dashboard/data-anak/${child.id}`)}
-                                                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                                                            className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                                                         >
                                                             Detail
                                                         </button>
-                                                        <span className="text-gray-300">|</span>
                                                         <button
-                                                            onClick={() => navigate(`/dashboard/data-anak/edit/${child.id}`)}
-                                                            className="text-green-600 hover:text-green-900 transition-colors"
+                                                            onClick={() => {
+                                                                setSelectedChildId(child.id);
+                                                                setIsEditModalOpen(true);
+                                                            }}
+                                                            className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                                                         >
                                                             Edit
                                                         </button>
@@ -288,6 +285,16 @@ export default function DataAnakKader() {
                         </div>
                     </div>
                 )}
+
+                <EditChildModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onSuccess={(msg) => {
+                        setSuccessMessage(msg);
+                        fetchChildren();
+                    }}
+                    childId={selectedChildId}
+                />
             </div>
         </div>
     );

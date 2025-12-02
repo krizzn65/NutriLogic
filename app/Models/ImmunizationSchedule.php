@@ -15,6 +15,7 @@ class ImmunizationSchedule extends Model
         'title',
         'type',
         'scheduled_for',
+        'location',
         'completed_at',
         'notes',
     ];
@@ -22,7 +23,7 @@ class ImmunizationSchedule extends Model
     protected function casts(): array
     {
         return [
-            'scheduled_for' => 'date',
+            'scheduled_for' => 'datetime',
             'completed_at' => 'date',
         ];
     }

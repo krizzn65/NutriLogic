@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { Search, MessageSquare, Clock, CheckCircle, User, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function KonsultasiKader() {
     const [loading, setLoading] = useState(true);
@@ -63,14 +64,9 @@ export default function KonsultasiKader() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
-            {/* Header Section */}
-            <div className="bg-white border-b border-slate-200 px-6 py-8">
+            <div className="bg-white border-b border-slate-200 px-6 py-4">
                 <div className="max-w-5xl mx-auto w-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-800">Konsultasi</h1>
-                            <p className="text-slate-500 mt-1">Kelola pesan dan konsultasi dari orang tua</p>
-                        </div>
+                    <PageHeader title="Konsultasi" subtitle="Portal Kader">
                         <div className="flex items-center gap-3">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -83,15 +79,15 @@ export default function KonsultasiKader() {
                                 />
                             </div>
                         </div>
-                    </div>
+                    </PageHeader>
 
                     {/* Tabs */}
-                    <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+                    <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit mt-4">
                         <button
                             onClick={() => setActiveTab('open')}
                             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'open'
-                                    ? 'bg-white text-blue-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-blue-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             Aktif
@@ -99,8 +95,8 @@ export default function KonsultasiKader() {
                         <button
                             onClick={() => setActiveTab('closed')}
                             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'closed'
-                                    ? 'bg-white text-slate-800 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-slate-800 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             Selesai

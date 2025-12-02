@@ -36,10 +36,11 @@ class UserSeeder extends Seeder
 
         // Ibu
         User::create([
-            'name'     => 'Ibu Ani',
-            'email'    => 'ibu@ibu.com',
-            'password' => Hash::make('ibu'),
-            'role'     => 'ibu',
+            'name'        => 'Ibu Ani',
+            'email'       => 'ibu@ibu.com',
+            'password'    => Hash::make('ibu'),
+            'role'        => 'ibu',
+            'posyandu_id' => $posyandu->id,
         ]);
     }
 }

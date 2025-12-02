@@ -22,7 +22,7 @@ import { logoutWithApi, getUser } from '../../lib/auth';
 import { useProfileModal } from '../../contexts/ProfileModalContext';
 import { useSettingsModal } from '../../contexts/SettingsModalContext';
 
-export default function PageHeader({ title, subtitle = "Portal Orang Tua", children, showProfile = true, profileClassName = "" }) {
+export default function PageHeader({ title, subtitle = "Portal Orang Tua", description, children, showProfile = true, profileClassName = "" }) {
     const navigate = useNavigate();
     const { openProfileModal, profileUpdateTrigger } = useProfileModal();
     const { openSettingsModal } = useSettingsModal();
@@ -50,6 +50,11 @@ export default function PageHeader({ title, subtitle = "Portal Orang Tua", child
                 <div>
                     <p className="text-gray-500 text-base md:text-sm font-medium">{subtitle}</p>
                     <h1 className="text-3xl md:text-2xl font-bold text-gray-800">{title}</h1>
+                    {description && (
+                        <div className="mt-2 text-gray-600 text-sm">
+                            {description}
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Side: Actions & Profile */}

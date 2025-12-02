@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, ChevronLeft, ChevronRight, Search, Save, ArrowLeft, Check } from "lucide-react";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 
@@ -8,7 +11,14 @@ export default function PenimbanganMassal() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [children, setChildren] = useState([]);
+
+    // Date State
     const [weighingDate, setWeighingDate] = useState(new Date().toISOString().split('T')[0]);
+    const [pickerDate, setPickerDate] = useState(new Date());
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    const dateButtonRef = useRef(null);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+
     const [weighingData, setWeighingData] = useState({});
     const [results, setResults] = useState(null);
     const navigate = useNavigate();
@@ -54,6 +64,22 @@ export default function PenimbanganMassal() {
                 [field]: value
             }
         }));
+    };
+
+    const toggleDatePicker = () => {
+        if (!isDatePickerOpen && dateButtonRef.current) {
+            const rect = dateButtonRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + 8,
+                left: rect.left
+            });
+        }
+        setIsDatePickerOpen(!isDatePickerOpen);
+    };
+
+    const handleDateChange = (dateStr) => {
+        setWeighingDate(dateStr);
+        setPickerDate(new Date(dateStr));
     };
 
     const handleSubmit = async (e) => {
@@ -125,39 +151,44 @@ export default function PenimbanganMassal() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
+        <div className="flex flex-1 w-full h-full overflow-auto bg-gray-50/50">
+            <div className="w-full flex flex-col gap-6 p-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Penimbangan Massal</h1>
-                        <p className="text-gray-600 mt-2">Input data penimbangan anak-anak di posyandu</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Penimbangan Massal</h1>
+                        <p className="text-gray-500 mt-1">Input data penimbangan anak-anak di posyandu</p>
                     </div>
                     <button
                         onClick={() => navigate('/dashboard/data-anak')}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
                     >
+                        <ArrowLeft className="w-4 h-4" />
                         Kembali
                     </button>
                 </div>
 
                 {/* Success Results */}
                 {results && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <h3 className="text-lg font-semibold text-green-800">{results.message}</h3>
+                    <div className="bg-green-50 border border-green-200 rounded-2xl p-6 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                <Check className="w-5 h-5 text-green-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-green-800">{results.message}</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {results.data.map((weighing) => {
                                 const child = children.find(c => c.id === weighing.child_id);
                                 return (
-                                    <div key={weighing.id} className="bg-white p-3 rounded-lg border border-green-200">
-                                        <p className="font-medium text-gray-900">{child?.full_name}</p>
-                                        <p className="text-sm text-gray-600">{weighing.weight_kg} kg / {weighing.height_cm} cm</p>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border mt-2 ${getStatusColor(weighing.nutritional_status)}`}>
+                                    <div key={weighing.id} className="bg-white p-4 rounded-xl border border-green-100 shadow-sm">
+                                        <p className="font-bold text-gray-900">{child?.full_name}</p>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                            <span>{weighing.weight_kg} kg</span>
+                                            <span className="text-gray-300">•</span>
+                                            <span>{weighing.height_cm} cm</span>
+                                        </div>
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-3 ${getStatusColor(weighing.nutritional_status)}`}>
                                             {getStatusLabel(weighing.nutritional_status)}
                                         </span>
                                     </div>
@@ -166,175 +197,290 @@ export default function PenimbanganMassal() {
                         </div>
                         <button
                             onClick={() => setResults(null)}
-                            className="mt-4 text-green-700 hover:text-green-900 text-sm font-medium"
+                            className="mt-6 text-green-700 hover:text-green-900 text-sm font-semibold hover:underline"
                         >
-                            Tutup
+                            Tutup Notifikasi
                         </button>
                     </div>
                 )}
 
                 {/* Error Alert */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span>{error}</span>
-                        </div>
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-medium">{error}</span>
                     </div>
                 )}
 
-                {/* Instructions */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-900 mb-2">Petunjuk Pengisian:</h3>
-                    <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
-                        <li>Pilih tanggal penimbangan (default: hari ini)</li>
-                        <li>Isi berat badan (kg) dan tinggi badan (cm) untuk setiap anak</li>
-                        <li>Catatan bersifat opsional</li>
-                        <li>Anda tidak perlu mengisi semua anak, hanya yang hadir saja</li>
-                        <li>Klik "Simpan Semua Data" setelah selesai</li>
-                    </ul>
-                </div>
+                {/* Main Content Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-end md:items-center bg-gray-50/50">
+                        <div className="w-full md:w-auto">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                                Tanggal Penimbangan
+                            </label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    ref={dateButtonRef}
+                                    onClick={toggleDatePicker}
+                                    className="w-full md:w-64 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-left text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all flex items-center justify-between hover:bg-gray-50 hover:border-gray-300"
+                                >
+                                    <span className="font-medium">
+                                        {new Date(weighingDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </span>
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                </button>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    {/* Date Selector */}
-                    <div className="mb-6">
-                        <label htmlFor="weighing_date" className="block text-sm font-medium text-gray-700 mb-2">
-                            Tanggal Penimbangan
-                        </label>
-                        <input
-                            type="date"
-                            id="weighing_date"
-                            value={weighingDate}
-                            onChange={(e) => setWeighingDate(e.target.value)}
-                            max={new Date().toISOString().split('T')[0]}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                                {isDatePickerOpen && createPortal(
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-[9998] bg-transparent"
+                                            onClick={() => setIsDatePickerOpen(false)}
+                                        />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.2 }}
+                                            style={{
+                                                top: dropdownPos.top,
+                                                left: dropdownPos.left
+                                            }}
+                                            className="fixed z-[9999] p-4 bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl w-[320px]"
+                                        >
+                                            {/* Calendar Header */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() - 1)))}
+                                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                                >
+                                                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                                                </button>
+                                                <span className="font-semibold text-gray-800">
+                                                    {pickerDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() + 1)))}
+                                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                                >
+                                                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                                                </button>
+                                            </div>
+
+                                            {/* Days Header */}
+                                            <div className="grid grid-cols-7 mb-2">
+                                                {['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'].map((day) => (
+                                                    <div key={day} className="text-xs font-medium text-gray-400 text-center py-1">
+                                                        {day}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Calendar Grid */}
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {(() => {
+                                                    const daysInMonth = new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 0).getDate();
+                                                    const firstDay = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), 1).getDay();
+                                                    const days = [];
+
+                                                    for (let i = 0; i < firstDay; i++) {
+                                                        days.push(<div key={`empty-${i}`} className="w-10 h-10" />);
+                                                    }
+
+                                                    for (let i = 1; i <= daysInMonth; i++) {
+                                                        const currentDateStr = `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                                                        const isSelected = weighingDate === currentDateStr;
+                                                        const isToday = new Date().toISOString().split('T')[0] === currentDateStr;
+
+                                                        days.push(
+                                                            <button
+                                                                key={i}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    handleDateChange(currentDateStr);
+                                                                    setIsDatePickerOpen(false);
+                                                                }}
+                                                                className={`w-10 h-10 text-sm rounded-full flex items-center justify-center transition-all
+                                                                    ${isSelected
+                                                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                                                                        : isToday
+                                                                            ? 'text-blue-600 font-bold bg-blue-50'
+                                                                            : 'text-gray-700 hover:bg-gray-100'
+                                                                    }`}
+                                                            >
+                                                                {i}
+                                                            </button>
+                                                        );
+                                                    }
+                                                    return days;
+                                                })()}
+                                            </div>
+
+                                            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const today = new Date();
+                                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                        handleDateChange(todayStr);
+                                                        setPickerDate(today);
+                                                        setIsDatePickerOpen(false);
+                                                    }}
+                                                    className="w-full text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1.5 rounded hover:bg-blue-50 transition-colors text-center"
+                                                >
+                                                    Pilih Hari Ini
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </>,
+                                    document.body
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-500 bg-blue-50/50 px-4 py-2 rounded-lg border border-blue-100">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                            Hanya isi data anak yang hadir
+                        </div>
                     </div>
 
-                    {/* Children Table */}
-                    {children.length === 0 ? (
-                        <div className="text-center py-8">
-                            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                            <p className="text-gray-600">Tidak ada anak aktif di posyandu</p>
-                        </div>
-                    ) : (
+                    {/* Table */}
+                    <form onSubmit={handleSubmit}>
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Anak</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Umur</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data Terakhir</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Berat (kg)</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tinggi (cm)</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lingkar Lengan (cm)</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
+                                <thead>
+                                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">No</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Anak</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Data Terakhir</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Berat (kg)</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Tinggi (cm)</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Lengan (cm)</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Catatan</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {children.map((child, index) => (
-                                        <tr key={child.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
-                                            <td className="px-4 py-3">
-                                                <div className="text-sm font-medium text-gray-900">{child.full_name}</div>
-                                                <div className="text-xs text-gray-500">{child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</div>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-900">{formatAge(child.age_in_months)}</td>
-                                            <td className="px-4 py-3">
-                                                {child.latest_weighing ? (
-                                                    <div className="text-xs text-gray-600">
-                                                        <div>{child.latest_weighing.weight_kg} kg</div>
-                                                        <div>{child.latest_weighing.height_cm} cm</div>
-                                                        <div>LL: {child.latest_weighing.muac_cm || '-'} cm</div>
-                                                        <div className="text-gray-500">{new Date(child.latest_weighing.measured_at).toLocaleDateString('id-ID')}</div>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">Belum ada data</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="100"
-                                                    value={weighingData[child.id]?.weight_kg || ''}
-                                                    onChange={(e) => handleInputChange(child.id, 'weight_kg', e.target.value)}
-                                                    className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                                    placeholder="0.0"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="200"
-                                                    value={weighingData[child.id]?.height_cm || ''}
-                                                    onChange={(e) => handleInputChange(child.id, 'height_cm', e.target.value)}
-                                                    className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                                    placeholder="0.0"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="50"
-                                                    value={weighingData[child.id]?.muac_cm || ''}
-                                                    onChange={(e) => handleInputChange(child.id, 'muac_cm', e.target.value)}
-                                                    className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                                    placeholder="0.0"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <input
-                                                    type="text"
-                                                    value={weighingData[child.id]?.notes || ''}
-                                                    onChange={(e) => handleInputChange(child.id, 'notes', e.target.value)}
-                                                    className="w-32 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                                    placeholder="Catatan..."
-                                                />
+                                <tbody className="divide-y divide-gray-50">
+                                    {children.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                                                Belum ada data anak yang terdaftar.
                                             </td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        children.map((child, index) => (
+                                            <tr key={child.id} className="group hover:bg-blue-50/30 transition-colors">
+                                                <td className="px-6 py-4 text-sm text-gray-500 font-medium">
+                                                    {index + 1}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                                            {child.full_name}
+                                                        </span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                                {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                                            </span>
+                                                            <span className="text-xs text-gray-400">•</span>
+                                                            <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {child.latest_weighing ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                                                                <span>{child.latest_weighing.weight_kg} kg</span>
+                                                                <span className="text-gray-300">/</span>
+                                                                <span>{child.latest_weighing.height_cm} cm</span>
+                                                            </div>
+                                                            <span className="text-[10px] text-gray-400">
+                                                                {new Date(child.latest_weighing.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Belum ada data</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        max="100"
+                                                        value={weighingData[child.id]?.weight_kg || ''}
+                                                        onChange={(e) => handleInputChange(child.id, 'weight_kg', e.target.value)}
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
+                                                        placeholder="0.00"
+                                                    />
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="200"
+                                                        value={weighingData[child.id]?.height_cm || ''}
+                                                        onChange={(e) => handleInputChange(child.id, 'height_cm', e.target.value)}
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
+                                                        placeholder="0.0"
+                                                    />
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="50"
+                                                        value={weighingData[child.id]?.muac_cm || ''}
+                                                        onChange={(e) => handleInputChange(child.id, 'muac_cm', e.target.value)}
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
+                                                        placeholder="0.0"
+                                                    />
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <input
+                                                        type="text"
+                                                        value={weighingData[child.id]?.notes || ''}
+                                                        onChange={(e) => handleInputChange(child.id, 'notes', e.target.value)}
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm text-gray-900 placeholder:text-gray-400"
+                                                        placeholder="Catatan..."
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                    )}
 
-                    {/* Submit Button */}
-                    {children.length > 0 && (
-                        <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                        {/* Footer / Submit */}
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
                             <button
                                 type="submit"
-                                disabled={submitting}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+                                disabled={submitting || children.length === 0}
+                                className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {submitting ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        Menyimpan...
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                        Menyimpan Data...
                                     </>
                                 ) : (
                                     <>
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
+                                        <Save className="w-5 h-5" />
                                         Simpan Semua Data
                                     </>
                                 )}
                             </button>
                         </div>
-                    )}
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );

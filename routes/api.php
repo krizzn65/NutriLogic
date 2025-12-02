@@ -16,6 +16,15 @@ use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\WeighingLogController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/debug-user', function () {
+    $user = \App\Models\User::where('email', 'kader@kader.com')->first();
+    if (!$user) return 'User not found';
+    return [
+        'password_hash' => $user->getAttributes()['password'], // Get raw attribute
+        'is_hashed' => \Illuminate\Support\Facades\Hash::info($user->getAttributes()['password']),
+    ];
+});
+
 // Public authentication routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');

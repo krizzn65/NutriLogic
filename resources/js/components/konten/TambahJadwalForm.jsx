@@ -14,6 +14,8 @@ export default function TambahJadwalForm() {
         type: "imunisasi",
         title: "",
         scheduled_for: "",
+        scheduled_time: "",
+        location: "",
         notes: "",
     });
 
@@ -123,6 +125,35 @@ export default function TambahJadwalForm() {
                                     name="scheduled_for"
                                     value={formData.scheduled_for}
                                     onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Jam Kegiatan <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="time"
+                                    name="scheduled_time"
+                                    value={formData.scheduled_time}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Lokasi Posyandu <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    placeholder="Contoh: Balai Desa Mawar, Posyandu Melati"
                                     required
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />

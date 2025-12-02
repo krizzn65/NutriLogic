@@ -30,6 +30,9 @@ class KaderProfileController extends Controller
                     'id' => $user->posyandu->id,
                     'name' => $user->posyandu->name,
                 ] : null,
+                'profile_photo_url' => $user->profile_photo_path 
+                    ? asset('storage/' . $user->profile_photo_path) 
+                    : null,
             ],
         ], 200);
     }
@@ -45,9 +48,26 @@ class KaderProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:20'],
+            'profile_photo' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
-        $user->update($validated);
+        // Update basic info
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->phone = $validated['phone'] ?? null;
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($user->profile_photo_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
+        }
+
+        $user->save();
 
         return response()->json([
             'data' => [
@@ -55,6 +75,10 @@ class KaderProfileController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'role' => $user->role,
+                'profile_photo_url' => $user->profile_photo_path 
+                    ? asset('storage/' . $user->profile_photo_path) 
+                    : null,
             ],
             'message' => 'Profil berhasil diperbarui.',
         ], 200);

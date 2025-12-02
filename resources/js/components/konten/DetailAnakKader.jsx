@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
+import PageHeader from "../dashboard/PageHeader";
+import { assets } from "../../assets/assets";
 
 export default function DetailAnakKader() {
     const navigate = useNavigate();
@@ -76,12 +78,7 @@ export default function DetailAnakKader() {
     return (
         <div className="flex flex-1 w-full h-full overflow-auto">
             <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Detail Anak</h1>
-                        <p className="text-gray-600 mt-2">Informasi lengkap data anak</p>
-                    </div>
+                <PageHeader title="Detail Anak" subtitle="Portal Kader">
                     <div className="flex gap-3">
                         <button
                             onClick={() => navigate(`/dashboard/data-anak/edit/${id}`)}
@@ -99,7 +96,7 @@ export default function DetailAnakKader() {
                             Kembali
                         </button>
                     </div>
-                </div>
+                </PageHeader>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Main Info */}
@@ -107,10 +104,12 @@ export default function DetailAnakKader() {
                         {/* Child Info Card */}
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                             <div className="flex items-start gap-4 mb-6">
-                                <div className="flex-shrink-0 h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span className="text-blue-600 font-bold text-3xl">
-                                        {childData.full_name.charAt(0).toUpperCase()}
-                                    </span>
+                                <div className="flex-shrink-0 h-20 w-20 bg-blue-50 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                                    <img
+                                        src={childData.gender === 'L' ? assets.kepala_bayi : childData.gender === 'P' ? assets.kepala_bayi_cewe : `https://api.dicebear.com/9.x/adventurer/svg?seed=${childData.full_name}&backgroundColor=b6e3f4`}
+                                        alt={childData.full_name}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <div className="flex-1">
                                     <h2 className="text-2xl font-bold text-gray-800">{childData.full_name}</h2>
@@ -118,15 +117,6 @@ export default function DetailAnakKader() {
                                         <span>{childData.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
                                         <span>•</span>
                                         <span>{formatAge(childData.age_in_months)}</span>
-                                        {childData.is_active ? (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                Aktif
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                Tidak Aktif
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
                             </div>

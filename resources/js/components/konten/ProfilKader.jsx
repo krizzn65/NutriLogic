@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function ProfilKader() {
     const [loading, setLoading] = useState(true);
@@ -140,11 +141,7 @@ export default function ProfilKader() {
     return (
         <div className="flex flex-1 w-full h-full overflow-auto">
             <div className="p-4 md:p-10 w-full max-w-4xl mx-auto bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Profil Saya</h1>
-                    <p className="text-gray-600 mt-2">Kelola informasi profil dan keamanan akun Anda</p>
-                </div>
+                <PageHeader title="Profil Saya" subtitle="Portal Kader" showProfile={false} />
 
                 {/* Success/Error Alerts */}
                 {success && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/api";
-import { fetchMe } from "../../lib/auth";
+import { fetchMe, getUser } from "../../lib/auth";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
     Dialog,
@@ -26,6 +26,11 @@ export default function ProfileModal({ isOpen, onClose }) {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const fileInputRef = useRef(null);
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
+    // Get user role to determine endpoint
+    const user = getUser();
+    const isKader = user?.role === 'kader';
+    const profileEndpoint = isKader ? '/kader/profile' : '/parent/profile';
 
     const fetchProfile = useCallback(async () => {
         try {
@@ -97,7 +102,7 @@ export default function ProfileModal({ isOpen, onClose }) {
             }
             formData.append('_method', 'PUT');
 
-            const response = await api.post("/parent/profile", formData, {
+            const response = await api.post(profileEndpoint, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

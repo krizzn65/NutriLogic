@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from '@iconify/react'
 import { login, fetchMe } from '../../lib/auth';
 
@@ -612,7 +612,7 @@ export default function AuthSwitch() {
                   }
                 } catch (err) {
                   // Handle error
-                  const errorMessage = err.response?.data?.message || 'Login gagal. Silakan coba lagi.';
+                  const errorMessage = err.response?.data?.message || 'Login gagal. Periksa kembali email dan password Anda.';
                   setError(errorMessage);
                 } finally {
                   setLoading(false);
@@ -620,21 +620,40 @@ export default function AuthSwitch() {
               }}
             >
               <h2 className="title">Sign in</h2>
-              {error && (
-                <div style={{
-                  color: '#dc3545',
-                  fontSize: '0.85rem',
-                  marginBottom: '10px',
-                  padding: '8px 12px',
-                  backgroundColor: '#f8d7da',
-                  borderRadius: '8px',
-                  width: '100%',
-                  maxWidth: '380px',
-                  textAlign: 'center'
-                }}>
-                  {error}
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -10, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    style={{
+                      width: '100%',
+                      maxWidth: '380px',
+                      marginBottom: '15px',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div style={{
+                      padding: '12px 16px',
+                      background: 'rgba(255, 59, 48, 0.1)',
+                      border: '1px solid rgba(255, 59, 48, 0.2)',
+                      borderRadius: '12px',
+                      color: '#FF3B30',
+                      fontSize: '0.85rem',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      backdropFilter: 'blur(10px)',
+                      boxShadow: '0 4px 12px rgba(255, 59, 48, 0.1)'
+                    }}>
+                      <Icon icon="solar:danger-circle-bold-duotone" style={{ fontSize: '1.25rem', flexShrink: 0 }} />
+                      <span>{error}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="input-field">
                 <i><Icon icon="mdi:email" /></i>
                 <input

@@ -30,14 +30,26 @@ const CalendarDay = ({ day, isHeader, isScheduled, isToday, isCurrentMonth }) =>
   );
 };
 
-export function Calendar() {
+export function Calendar({ schedules: propSchedules, currentDate: propCurrentDate, onMonthChange }) {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(propCurrentDate || new Date());
 
   useEffect(() => {
-    fetchSchedules();
-  }, []);
+    if (propSchedules) {
+      setSchedules(propSchedules);
+      setLoading(false);
+    } else {
+      fetchSchedules();
+    }
+  }, [propSchedules]);
+
+  // Sync with external currentDate
+  useEffect(() => {
+    if (propCurrentDate) {
+      setCurrentDate(propCurrentDate);
+    }
+  }, [propCurrentDate]);
 
   const fetchSchedules = async () => {
     try {
@@ -51,11 +63,15 @@ export function Calendar() {
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    setCurrentDate(newDate);
+    if (onMonthChange) onMonthChange(newDate);
   };
 
   const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    setCurrentDate(newDate);
+    if (onMonthChange) onMonthChange(newDate);
   };
 
   const currentMonthName = currentDate.toLocaleString("id-ID", { month: "long" });

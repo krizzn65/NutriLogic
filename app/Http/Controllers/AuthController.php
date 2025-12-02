@@ -67,7 +67,7 @@ class AuthController extends Controller
         // Check password
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Invalid credentials.',
+                'message' => 'Email atau password salah.',
             ], 401);
         }
 

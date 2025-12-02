@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { User, Calendar, Ruler, Weight, FileText, Save, X, ChevronDown, Search, Phone, Mail, AlertCircle, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
+import PageHeader from "../dashboard/PageHeader";
 
 export default function TambahAnakKaderForm() {
     const navigate = useNavigate();
@@ -23,13 +26,40 @@ export default function TambahAnakKaderForm() {
     });
     const [errors, setErrors] = useState({});
 
+    // Custom Input States
+    const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
+    const [parentSearch, setParentSearch] = useState("");
+    const [pickerDate, setPickerDate] = useState(new Date());
+    const dateWrapperRef = useRef(null);
+    const genderWrapperRef = useRef(null);
+    const parentWrapperRef = useRef(null);
+
     useEffect(() => {
         fetchParents();
+
+        // Click outside handler
+        const handleClickOutside = (event) => {
+            if (dateWrapperRef.current && !dateWrapperRef.current.contains(event.target)) {
+                setIsDatePickerOpen(false);
+            }
+            if (genderWrapperRef.current && !genderWrapperRef.current.contains(event.target)) {
+                setIsGenderDropdownOpen(false);
+            }
+            if (parentWrapperRef.current && !parentWrapperRef.current.contains(event.target)) {
+                setIsParentDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
     }, []);
 
     const fetchParents = async () => {
         try {
-            // Use dedicated parents endpoint (lightweight)
             const response = await api.get('/kader/parents');
             setParents(response.data.data);
         } catch (err) {
@@ -44,7 +74,6 @@ export default function TambahAnakKaderForm() {
             [name]: value
         }));
 
-        // Clear error for this field
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -121,7 +150,6 @@ export default function TambahAnakKaderForm() {
 
             await api.post('/kader/children', dataToSubmit);
 
-            // Navigate back to list with success message
             navigate('/dashboard/data-anak', {
                 state: { message: 'Data anak berhasil ditambahkan!' }
             });
@@ -129,7 +157,6 @@ export default function TambahAnakKaderForm() {
             console.error('Submit error:', err);
 
             if (err.response?.data?.errors) {
-                // Validation errors from backend
                 setErrors(err.response.data.errors);
             } else {
                 setError(err.response?.data?.message || 'Gagal menambahkan data anak. Silakan coba lagi.');
@@ -139,309 +166,429 @@ export default function TambahAnakKaderForm() {
         }
     };
 
-    return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Tambah Data Anak</h1>
-                        <p className="text-gray-600 mt-2">Tambahkan data anak baru ke posyandu</p>
-                    </div>
-                    <button
-                        onClick={() => navigate('/dashboard/data-anak')}
-                        className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Batal
-                    </button>
-                </div>
+    const InputField = ({ label, name, type = "text", placeholder, icon: Icon, required = false, ...props }) => (
+        <div className="w-full">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <div className="relative group">
+                {Icon && (
+                    <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                )}
+                <input
+                    type={type}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    placeholder={placeholder}
+                    className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${errors[name] ? 'border-red-500 bg-red-50/50' : ''}`}
+                    {...props}
+                />
+            </div>
+            {errors[name] && (
+                <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors[name]}
+                </p>
+            )}
+        </div>
+    );
 
-                {/* Error Alert */}
+    return (
+        <div className="flex flex-col flex-1 w-full h-full overflow-auto bg-gray-50/50">
+            {/* Header - Full Width */}
+            <div className="w-full px-4 md:px-8 pt-4 md:pt-8">
+                <PageHeader title="Tambah Data Anak" subtitle="Formulir Pendaftaran" />
+            </div>
+            
+            {/* Content - Centered with max-width */}
+            <div className="w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-8 flex flex-col gap-6">
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span>{error}</span>
-                        </div>
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="font-medium">{error}</span>
                     </div>
                 )}
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    {/* Parent Selection */}
-                    <div className="mb-6 pb-6 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Data Orang Tua</h2>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                    {/* Parent Section */}
+                    <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-gray-100 pb-6">
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <User className="w-5 h-5 text-blue-500" />
+                                    Data Orang Tua
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">Informasi orang tua atau wali anak</p>
+                            </div>
 
-                        {/* Toggle */}
-                        <div className="flex items-center gap-4 mb-4">
-                            <button
-                                type="button"
-                                onClick={() => setUseExistingParent(true)}
-                                className={`px-4 py-2 rounded-lg transition-colors ${useExistingParent
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Pilih Orang Tua Existing
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setUseExistingParent(false)}
-                                className={`px-4 py-2 rounded-lg transition-colors ${!useExistingParent
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Tambah Orang Tua Baru
-                            </button>
+                            <div className="flex bg-gray-100 p-1 rounded-xl">
+                                <button
+                                    type="button"
+                                    onClick={() => setUseExistingParent(true)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${useExistingParent
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    Pilih Existing
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setUseExistingParent(false)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!useExistingParent
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    Buat Baru
+                                </button>
+                            </div>
                         </div>
 
                         {useExistingParent ? (
-                            /* Select Existing Parent */
-                            <div>
-                                <label htmlFor="parent_id" className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="w-full" ref={parentWrapperRef}>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
                                     Pilih Orang Tua <span className="text-red-500">*</span>
                                 </label>
-                                <select
-                                    id="parent_id"
-                                    name="parent_id"
-                                    value={formData.parent_id}
-                                    onChange={handleChange}
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.parent_id ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                >
-                                    <option value="">-- Pilih Orang Tua --</option>
-                                    {parents.map((parent) => (
-                                        <option key={parent.id} value={parent.id}>
-                                            {parent.name} {parent.phone ? `(${parent.phone})` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
+                                        className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.parent_id ? 'border-red-500 bg-red-50/50' : 'border-transparent'}`}
+                                    >
+                                        <span className={!formData.parent_id ? "text-gray-400" : ""}>
+                                            {formData.parent_id
+                                                ? parents.find(p => p.id === parseInt(formData.parent_id))?.name || "Orang Tua Terpilih"
+                                                : "-- Pilih Orang Tua --"}
+                                        </span>
+                                        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? "rotate-180" : ""}`} />
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isParentDropdownOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+                                            >
+                                                <div className="p-2 border-b border-gray-100">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Cari nama orang tua..."
+                                                            value={parentSearch}
+                                                            onChange={(e) => setParentSearch(e.target.value)}
+                                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="max-h-60 overflow-y-auto">
+                                                    {parents.filter(p => p.name.toLowerCase().includes(parentSearch.toLowerCase())).length > 0 ? (
+                                                        parents
+                                                            .filter(p => p.name.toLowerCase().includes(parentSearch.toLowerCase()))
+                                                            .map((parent) => (
+                                                                <div
+                                                                    key={parent.id}
+                                                                    onClick={() => {
+                                                                        handleChange({ target: { name: 'parent_id', value: parent.id } });
+                                                                        setIsParentDropdownOpen(false);
+                                                                    }}
+                                                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
+                                                                >
+                                                                    <div>
+                                                                        <span className={`block text-sm ${parseInt(formData.parent_id) === parent.id ? 'text-blue-700 font-semibold' : 'text-gray-700 font-medium group-hover:text-blue-700'}`}>
+                                                                            {parent.name}
+                                                                        </span>
+                                                                        {parent.phone && (
+                                                                            <span className="text-xs text-gray-400 group-hover:text-blue-400">
+                                                                                {parent.phone}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    {parseInt(formData.parent_id) === parent.id && (
+                                                                        <Check className="w-4 h-4 text-blue-600" />
+                                                                    )}
+                                                                </div>
+                                                            ))
+                                                    ) : (
+                                                        <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                                                            Tidak ada data orang tua ditemukan
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
                                 {errors.parent_id && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.parent_id}</p>
+                                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                                        <AlertCircle className="w-3 h-3" />
+                                        {errors.parent_id}
+                                    </p>
                                 )}
                             </div>
                         ) : (
-                            /* New Parent Form */
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
-                                    <label htmlFor="parent_name" className="block text-sm font-medium text-gray-700 mb-2">
-                                        Nama Orang Tua <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="parent_name"
+                                    <InputField
+                                        label="Nama Orang Tua"
                                         name="parent_name"
-                                        value={formData.parent_name}
-                                        onChange={handleChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.parent_name ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                        placeholder="Masukkan nama orang tua"
-                                    />
-                                    {errors.parent_name && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.parent_name}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="parent_email" className="block text-sm font-medium text-gray-700 mb-2">
-                                        Email (Opsional)
-                                    </label>
-                                    <input
-                                        type="email"
-                                        id="parent_email"
-                                        name="parent_email"
-                                        value={formData.parent_email}
-                                        onChange={handleChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.parent_email ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                        placeholder="email@example.com"
-                                    />
-                                    {errors.parent_email && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.parent_email}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="parent_phone" className="block text-sm font-medium text-gray-700 mb-2">
-                                        No. Telepon (Opsional)
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="parent_phone"
-                                        name="parent_phone"
-                                        value={formData.parent_phone}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="08xxxxxxxxxx"
+                                        placeholder="Masukkan nama lengkap orang tua"
+                                        icon={User}
+                                        required
                                     />
                                 </div>
+                                <InputField
+                                    label="Email"
+                                    name="parent_email"
+                                    type="email"
+                                    placeholder="email@example.com"
+                                    icon={Mail}
+                                />
+                                <InputField
+                                    label="No. Telepon"
+                                    name="parent_phone"
+                                    type="tel"
+                                    placeholder="08xxxxxxxxxx"
+                                    icon={Phone}
+                                />
                             </div>
                         )}
                     </div>
 
-                    {/* Child Data */}
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Data Anak</h2>
+                    {/* Child Section */}
+                    <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
+                        <div className="mb-6 border-b border-gray-100 pb-6">
+                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <User className="w-5 h-5 text-pink-500" />
+                                Data Anak
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">Informasi lengkap anak yang akan didaftarkan</p>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Nama Lengkap */}
                             <div className="md:col-span-2">
-                                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nama Lengkap Anak <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    id="full_name"
+                                <InputField
+                                    label="Nama Lengkap Anak"
                                     name="full_name"
-                                    value={formData.full_name}
-                                    onChange={handleChange}
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.full_name ? 'border-red-500' : 'border-gray-300'
-                                        }`}
                                     placeholder="Masukkan nama lengkap anak"
+                                    icon={User}
+                                    required
                                 />
-                                {errors.full_name && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
-                                )}
                             </div>
 
-                            {/* NIK */}
-                            <div>
-                                <label htmlFor="nik" className="block text-sm font-medium text-gray-700 mb-2">
-                                    NIK (Opsional)
-                                </label>
-                                <input
-                                    type="text"
-                                    id="nik"
-                                    name="nik"
-                                    value={formData.nik}
-                                    onChange={handleChange}
-                                    maxLength="32"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.nik ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                    placeholder="Masukkan NIK anak"
-                                />
-                                {errors.nik && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.nik}</p>
-                                )}
-                            </div>
+                            <InputField
+                                label="NIK"
+                                name="nik"
+                                placeholder="Nomor Induk Kependudukan"
+                                icon={FileText}
+                                maxLength="16"
+                            />
 
-                            {/* Tanggal Lahir */}
-                            <div>
-                                <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700 mb-2">
+                            {/* Custom Date Picker */}
+                            <div className="relative" ref={dateWrapperRef}>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
                                     Tanggal Lahir <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="date"
-                                    id="birth_date"
-                                    name="birth_date"
-                                    value={formData.birth_date}
-                                    onChange={handleChange}
-                                    max={new Date().toISOString().split('T')[0]}
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.birth_date ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.birth_date ? 'border-red-500 bg-red-50/50' : 'border-transparent'}`}
+                                >
+                                    <span className={!formData.birth_date ? "text-gray-400" : ""}>
+                                        {formData.birth_date ? new Date(formData.birth_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : "dd/mm/yyyy"}
+                                    </span>
+                                    <Calendar className="w-5 h-5 text-gray-400" />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isDatePickerOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="absolute z-50 mt-2 p-4 bg-white border border-gray-200 rounded-2xl shadow-xl w-[320px]"
+                                        >
+                                            <div className="flex items-center justify-between mb-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() - 1)))}
+                                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                                >
+                                                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                                                </button>
+                                                <span className="font-semibold text-gray-800">
+                                                    {pickerDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() + 1)))}
+                                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                                >
+                                                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-7 mb-2">
+                                                {['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'].map((day) => (
+                                                    <div key={day} className="text-xs font-medium text-gray-400 text-center py-1">
+                                                        {day}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {(() => {
+                                                    const daysInMonth = new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 0).getDate();
+                                                    const firstDay = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), 1).getDay();
+                                                    const days = [];
+
+                                                    for (let i = 0; i < firstDay; i++) {
+                                                        days.push(<div key={`empty-${i}`} className="w-8 h-8" />);
+                                                    }
+
+                                                    for (let i = 1; i <= daysInMonth; i++) {
+                                                        const currentDateStr = `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                                                        const isSelected = formData.birth_date === currentDateStr;
+                                                        const isToday = new Date().toISOString().split('T')[0] === currentDateStr;
+
+                                                        days.push(
+                                                            <button
+                                                                key={i}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    handleChange({ target: { name: 'birth_date', value: currentDateStr } });
+                                                                    setIsDatePickerOpen(false);
+                                                                }}
+                                                                className={`w-8 h-8 text-sm rounded-full flex items-center justify-center transition-all
+                                                                    ${isSelected
+                                                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                                                                        : isToday
+                                                                            ? 'text-blue-600 font-bold bg-blue-50'
+                                                                            : 'text-gray-700 hover:bg-gray-100'
+                                                                    }`}
+                                                            >
+                                                                {i}
+                                                            </button>
+                                                        );
+                                                    }
+                                                    return days;
+                                                })()}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                                 {errors.birth_date && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.birth_date}</p>
+                                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                                        <AlertCircle className="w-3 h-3" />
+                                        {errors.birth_date}
+                                    </p>
                                 )}
                             </div>
 
-                            {/* Jenis Kelamin */}
-                            <div>
-                                <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+                            {/* Custom Gender Dropdown */}
+                            <div className="relative" ref={genderWrapperRef}>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
                                     Jenis Kelamin <span className="text-red-500">*</span>
                                 </label>
-                                <select
-                                    id="gender"
-                                    name="gender"
-                                    value={formData.gender}
-                                    onChange={handleChange}
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.gender ? 'border-red-500' : 'border-gray-300'
-                                        }`}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsGenderDropdownOpen(!isGenderDropdownOpen)}
+                                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.gender ? 'border-red-500 bg-red-50/50' : 'border-transparent'}`}
                                 >
-                                    <option value="">Pilih jenis kelamin</option>
-                                    <option value="L">Laki-laki</option>
-                                    <option value="P">Perempuan</option>
-                                </select>
+                                    <span className={!formData.gender ? "text-gray-400" : ""}>
+                                        {formData.gender === 'L' ? 'Laki-laki' : formData.gender === 'P' ? 'Perempuan' : 'Pilih jenis kelamin'}
+                                    </span>
+                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isGenderDropdownOpen ? "rotate-180" : ""}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isGenderDropdownOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+                                        >
+                                            {[
+                                                { value: 'L', label: 'Laki-laki' },
+                                                { value: 'P', label: 'Perempuan' }
+                                            ].map((option) => (
+                                                <div
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        handleChange({ target: { name: 'gender', value: option.value } });
+                                                        setIsGenderDropdownOpen(false);
+                                                    }}
+                                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
+                                                >
+                                                    <span className={`text-sm ${formData.gender === option.value ? 'text-blue-700 font-semibold' : 'text-gray-700 font-medium group-hover:text-blue-700'}`}>
+                                                        {option.label}
+                                                    </span>
+                                                    {formData.gender === option.value && (
+                                                        <Check className="w-4 h-4 text-blue-600" />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                                 {errors.gender && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+                                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                                        <AlertCircle className="w-3 h-3" />
+                                        {errors.gender}
+                                    </p>
                                 )}
                             </div>
 
-                            {/* Berat Lahir */}
-                            <div>
-                                <label htmlFor="birth_weight_kg" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Berat Lahir (kg)
-                                </label>
-                                <input
-                                    type="number"
-                                    id="birth_weight_kg"
+                            <div className="grid grid-cols-2 gap-4">
+                                <InputField
+                                    label="Berat Lahir (kg)"
                                     name="birth_weight_kg"
-                                    value={formData.birth_weight_kg}
-                                    onChange={handleChange}
-                                    step="0.1"
-                                    min="0"
-                                    max="10"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.birth_weight_kg ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                    placeholder="Contoh: 3.2"
-                                />
-                                {errors.birth_weight_kg && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.birth_weight_kg}</p>
-                                )}
-                            </div>
-
-                            {/* Tinggi Lahir */}
-                            <div>
-                                <label htmlFor="birth_height_cm" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Tinggi Lahir (cm)
-                                </label>
-                                <input
                                     type="number"
-                                    id="birth_height_cm"
-                                    name="birth_height_cm"
-                                    value={formData.birth_height_cm}
-                                    onChange={handleChange}
+                                    placeholder="0.0"
                                     step="0.1"
-                                    min="0"
-                                    max="100"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.birth_height_cm ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                    placeholder="Contoh: 48.5"
+                                    icon={Weight}
                                 />
-                                {errors.birth_height_cm && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.birth_height_cm}</p>
-                                )}
+                                <InputField
+                                    label="Tinggi Lahir (cm)"
+                                    name="birth_height_cm"
+                                    type="number"
+                                    placeholder="0.0"
+                                    step="0.1"
+                                    icon={Ruler}
+                                />
                             </div>
 
-                            {/* Catatan */}
                             <div className="md:col-span-2">
-                                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
                                     Catatan (Opsional)
                                 </label>
                                 <textarea
-                                    id="notes"
                                     name="notes"
                                     value={formData.notes}
                                     onChange={handleChange}
                                     rows="3"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Tambahkan catatan jika diperlukan"
+                                    className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 resize-none"
+                                    placeholder="Tambahkan catatan khusus mengenai kondisi anak..."
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* Submit Buttons */}
-                    <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-end gap-3 pt-4">
                         <button
                             type="button"
                             onClick={() => navigate('/dashboard/data-anak')}
-                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
                             disabled={loading}
                         >
                             Batal
@@ -449,19 +596,17 @@ export default function TambahAnakKaderForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center gap-2 font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    Menyimpan...
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                                    <span>Menyimpan...</span>
                                 </>
                             ) : (
                                 <>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Simpan Data
+                                    <Save className="w-4 h-4" />
+                                    <span>Simpan Data</span>
                                 </>
                             )}
                         </button>

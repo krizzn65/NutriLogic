@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
+import { getUser } from "../../lib/auth";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
     Dialog,
@@ -15,7 +16,9 @@ import {
 } from "lucide-react";
 
 export default function SettingsModal({ isOpen, onClose }) {
-    const [activeTab, setActiveTab] = useState('notifications');
+    const user = getUser();
+    const isKader = user?.role === 'kader';
+    const [activeTab, setActiveTab] = useState(isKader ? 'security' : 'notifications');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -72,7 +75,7 @@ export default function SettingsModal({ isOpen, onClose }) {
     useEffect(() => {
         if (isOpen) {
             fetchSettings();
-            setActiveTab('notifications');
+            setActiveTab(isKader ? 'security' : 'notifications');
             setPasswordForm({
                 current_password: "",
                 new_password: "",
@@ -81,7 +84,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             setPasswordError(null);
             setPasswordSuccess(null);
         }
-    }, [isOpen, fetchSettings]);
+    }, [isOpen, fetchSettings, isKader]);
 
     const handleSettingsSubmit = async (e) => {
         e.preventDefault();
@@ -190,18 +193,20 @@ export default function SettingsModal({ isOpen, onClose }) {
                 {/* Tabs */}
                 <div className="border-b border-gray-100 px-8">
                     <div className="flex gap-6">
-                        <button
-                            onClick={() => setActiveTab('notifications')}
-                            className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${activeTab === 'notifications'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <Bell className="w-4 h-4" />
-                                Notifikasi
-                            </div>
-                        </button>
+                        {!isKader && (
+                            <button
+                                onClick={() => setActiveTab('notifications')}
+                                className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${activeTab === 'notifications'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Bell className="w-4 h-4" />
+                                    Notifikasi
+                                </div>
+                            </button>
+                        )}
                         <button
                             onClick={() => setActiveTab('security')}
                             className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${activeTab === 'security'
