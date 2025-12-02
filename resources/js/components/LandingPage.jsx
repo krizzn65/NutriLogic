@@ -17,6 +17,22 @@ const LandingPage = () => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
     >
+      <style>{`
+        @media (max-width: 768px) {
+          /* Hide scrollbar for Chrome, Safari and Opera */
+          html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none !important;
+            width: 0px !important;
+            background: transparent !important;
+          }
+          
+          /* Hide scrollbar for IE, Edge and Firefox */
+          html, body {
+            -ms-overflow-style: none !important;  /* IE and Edge */
+            scrollbar-width: none !important;  /* Firefox */
+          }
+        }
+      `}</style>
       <Header />
       <AboutUs />
       <Problem />

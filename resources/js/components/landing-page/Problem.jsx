@@ -197,7 +197,7 @@ const Problem = () => {
   ]
 
   return (
-    <div ref={sectionRef} className='py-16 lg:py-24 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#FFFFFF' }} id='Problem'>
+    <div ref={sectionRef} className='py-10 md:py-16 lg:py-24 font-montserrat px-6 md:px-[150px] lg:px-[230px]' style={{ backgroundColor: '#FFFFFF' }} id='Problem'>
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -228,11 +228,12 @@ const Problem = () => {
         </div>
 
         {/* Chart Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 xl:gap-4 mb-6">
+        {/* Chart Cards - Bento Grid on Mobile */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 xl:gap-4 mb-6">
           {stuntingData.map((stat, index) => (
             <div
               key={index}
-              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
+              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'} ${index === 0 ? 'col-span-2 md:col-span-1' : 'col-span-1'}`}
               style={{ animationDelay: `${200 + index * 100}ms` }}
             >
               <ActivityChartCard
@@ -260,7 +261,7 @@ const Problem = () => {
         <div className={`flex flex-col lg:flex-row gap-4 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '700ms' }}>
           {/* Map - 60% */}
           <div
-            className="w-full lg:w-[60%] h-[350px] md:h-[450px] lg:h-[500px] overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative"
+            className="w-full lg:w-[60%] h-[300px] md:h-[450px] lg:h-[500px] overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative"
             onWheel={(e) => e.stopPropagation()}
           >
             <style>{`
@@ -300,8 +301,8 @@ const Problem = () => {
             />
           </div>
 
-          {/* CTA Box - 40% - Split into 2 cards */}
-          <div className="w-full lg:w-[40%] h-[350px] md:h-[450px] lg:h-[500px] flex flex-col gap-3">
+          {/* CTA Box - 40% - Bento Grid (Side-by-side) on Mobile */}
+          <div className="w-full lg:w-[40%] h-auto md:h-[450px] lg:h-[500px] grid grid-cols-2 md:flex md:flex-col gap-3">
             {/* Card 1: Data Sebagai Bukti */}
             <div className="flex-1 bg-gradient-to-br from-[#00BFEF] to-[#0088c2] rounded-2xl shadow-lg p-5 md:p-6 flex flex-col justify-center">
               <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight mb-3">
