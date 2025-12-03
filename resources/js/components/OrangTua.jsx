@@ -2,18 +2,6 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import SidebarOrangTua from "./sidebars/SidebarOrangTua";
 import MobileBottomNav from "./sidebars/MobileBottomNav";
-import DashboardOrangTuaContent from "./konten/DashboardOrangTua";
-import DataAnakList from "./konten/DataAnakList";
-import DataAnakDetail from "./konten/DataAnakDetail";
-import TambahAnakForm from "./konten/TambahAnakForm";
-import EditAnakForm from "./konten/EditAnakForm";
-import NutriAssistPage from "./konten/NutriAssistPage";
-import JurnalMakanPage from "./konten/JurnalMakanPage";
-import ConsultationList from "./konten/ConsultationList";
-import ConsultationDetail from "./konten/ConsultationDetail";
-import CreateConsultation from "./konten/CreateConsultation";
-import PointsAndBadgesPage from "./konten/PointsAndBadgesPage";
-import HistoryPage from "./konten/HistoryPage";
 import { SettingsModalProvider } from "../contexts/SettingsModalContext";
 import { DataCacheProvider } from "../contexts/DataCacheContext";
 import { ProfileModalProvider } from "../contexts/ProfileModalContext";
@@ -25,6 +13,7 @@ const DataAnakDetail = lazy(() => import("./konten/DataAnakDetail"));
 const TambahAnakForm = lazy(() => import("./konten/TambahAnakForm"));
 const EditAnakForm = lazy(() => import("./konten/EditAnakForm"));
 const NutriAssistPage = lazy(() => import("./konten/NutriAssistPage"));
+const JurnalMakanPage = lazy(() => import("./konten/JurnalMakanPage"));
 const ConsultationList = lazy(() => import("./konten/ConsultationList"));
 const CreateConsultation = lazy(() => import("./konten/CreateConsultation"));
 const PointsAndBadgesPage = lazy(() => import("./konten/PointsAndBadgesPage"));
@@ -55,20 +44,22 @@ export default function OrangTua() {
             <MobileBottomNav />
 
             <div className="flex-1 overflow-auto pb-24 md:pb-0 no-scrollbar">
-              <Routes>
-                <Route index element={<DashboardOrangTuaContent />} />
-                <Route path="anak" element={<DataAnakList />} />
-                <Route path="anak/tambah" element={<TambahAnakForm />} />
-                <Route path="anak/edit/:id" element={<EditAnakForm />} />
-                <Route path="anak/:id" element={<DataAnakDetail />} />
-                <Route path="nutri-assist" element={<NutriAssistPage />} />
-                <Route path="jurnal-makan" element={<JurnalMakanPage />} />
-                <Route path="konsultasi" element={<ConsultationList />} />
-                <Route path="konsultasi/create" element={<CreateConsultation />} />
-                <Route path="konsultasi/:id" element={<ConsultationList />} />
-                <Route path="gamification" element={<PointsAndBadgesPage />} />
-                <Route path="riwayat" element={<HistoryPage />} />
-              </Routes>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route index element={<DashboardOrangTuaContent />} />
+                  <Route path="anak" element={<DataAnakList />} />
+                  <Route path="anak/tambah" element={<TambahAnakForm />} />
+                  <Route path="anak/edit/:id" element={<EditAnakForm />} />
+                  <Route path="anak/:id" element={<DataAnakDetail />} />
+                  <Route path="nutri-assist" element={<NutriAssistPage />} />
+                  <Route path="jurnal-makan" element={<JurnalMakanPage />} />
+                  <Route path="konsultasi" element={<ConsultationList />} />
+                  <Route path="konsultasi/create" element={<CreateConsultation />} />
+                  <Route path="konsultasi/:id" element={<ConsultationList />} />
+                  <Route path="gamification" element={<PointsAndBadgesPage />} />
+                  <Route path="riwayat" element={<HistoryPage />} />
+                </Routes>
+              </Suspense>
             </div>
           </div>
         </SettingsModalProvider>
