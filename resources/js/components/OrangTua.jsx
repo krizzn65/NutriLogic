@@ -8,6 +8,7 @@ import DataAnakDetail from "./konten/DataAnakDetail";
 import TambahAnakForm from "./konten/TambahAnakForm";
 import EditAnakForm from "./konten/EditAnakForm";
 import NutriAssistPage from "./konten/NutriAssistPage";
+import JurnalMakanPage from "./konten/JurnalMakanPage";
 import ConsultationList from "./konten/ConsultationList";
 import ConsultationDetail from "./konten/ConsultationDetail";
 import CreateConsultation from "./konten/CreateConsultation";
@@ -39,6 +40,7 @@ export default function OrangTua() {
                 <Route path="anak/edit/:id" element={<EditAnakForm />} />
                 <Route path="anak/:id" element={<DataAnakDetail />} />
                 <Route path="nutri-assist" element={<NutriAssistPage />} />
+                <Route path="jurnal-makan" element={<JurnalMakanPage />} />
                 <Route path="konsultasi" element={<ConsultationList />} />
                 <Route path="konsultasi/create" element={<CreateConsultation />} />
                 <Route path="konsultasi/:id" element={<ConsultationList />} />

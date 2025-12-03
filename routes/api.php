@@ -12,6 +12,7 @@ use App\Http\Controllers\ParentHistoryController;
 use App\Http\Controllers\ParentPointsController;
 use App\Http\Controllers\ParentProfileController;
 use App\Http\Controllers\ParentSettingsController;
+use App\Http\Controllers\PmtLogController;
 use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\WeighingLogController;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +60,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [MealLogController::class, 'show']);
         Route::put('/{id}', [MealLogController::class, 'update']);
         Route::delete('/{id}', [MealLogController::class, 'destroy']);
+    });
+
+    // PMT logs routes
+    Route::prefix('pmt-logs')->group(function () {
+        Route::get('/child/{childId}', [PmtLogController::class, 'index']);
+        Route::post('/', [PmtLogController::class, 'store']);
+        Route::get('/child/{childId}/stats', [PmtLogController::class, 'stats']);
     });
 
     // Immunization schedules routes

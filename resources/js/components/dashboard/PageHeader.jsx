@@ -44,12 +44,12 @@ export default function PageHeader({ title, subtitle = "Portal Orang Tua", child
     };
 
     return (
-        <div className="flex flex-col gap-2 mb-5 mt-5 pl-2 md:mt-0 md:pl-0">
+        <div className="flex flex-col gap-3 mb-6 mt-6 pl-2 md:mt-0 md:pl-0 md:mb-8">
             <div className="flex flex-row items-center justify-between gap-4">
-                {/* Title & Subtitle */}
-                <div>
-                    <p className="text-gray-500 text-base md:text-sm font-medium">{subtitle}</p>
-                    <h1 className="text-3xl md:text-2xl font-bold text-gray-800">{title}</h1>
+                {/* Title & Subtitle with improved typography hierarchy */}
+                <div className="space-y-1">
+                    <p className="text-sm md:text-xs font-medium text-gray-500 uppercase tracking-wide">{subtitle}</p>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">{title}</h1>
                 </div>
 
                 {/* Right Side: Actions & Profile */}

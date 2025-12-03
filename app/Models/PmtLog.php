@@ -6,29 +6,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class MealLog extends Model
+class PmtLog extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'child_id',
-        'eaten_at',
-        'time_of_day',
-        'description',
-        'ingredients',
-        'portion',
+        'date',
+        'status',
         'notes',
-        'source',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'eaten_at' => 'date',
-        ];
-    }
+    protected $casts = [
+        'date' => 'date',
+    ];
 
-    // Relationships
+    /**
+     * Get the child that owns the PMT log.
+     */
     public function child(): BelongsTo
     {
         return $this->belongsTo(Child::class);
