@@ -104,6 +104,7 @@ class WeighingLogController extends Controller
             'weight_kg' => ['required', 'numeric', 'min:0.5', 'max:50'],
             'height_cm' => ['nullable', 'numeric', 'min:30', 'max:200'],
             'muac_cm' => ['nullable', 'numeric', 'min:5', 'max:30'],
+            'head_circumference_cm' => ['nullable', 'numeric', 'min:25', 'max:60'],
             'is_posyandu_day' => ['sometimes', 'boolean'],
             'notes' => ['nullable', 'string'],
         ]);
@@ -155,6 +156,7 @@ class WeighingLogController extends Controller
             'weight_kg' => $validated['weight_kg'],
             'height_cm' => $validated['height_cm'] ?? null,
             'muac_cm' => $validated['muac_cm'] ?? null,
+            'head_circumference_cm' => $validated['head_circumference_cm'] ?? null,
             'zscore_wfa' => $zScoreWFA,
             'zscore_hfa' => $zScoreHFA,
             'zscore_wfh' => $zScoreWFH,
@@ -194,6 +196,7 @@ class WeighingLogController extends Controller
             'weight_kg' => ['sometimes', 'numeric', 'min:0.5', 'max:50'],
             'height_cm' => ['nullable', 'numeric', 'min:30', 'max:200'],
             'muac_cm' => ['nullable', 'numeric', 'min:5', 'max:30'],
+            'head_circumference_cm' => ['nullable', 'numeric', 'min:25', 'max:60'],
             'is_posyandu_day' => ['sometimes', 'boolean'],
             'notes' => ['nullable', 'string'],
         ]);

@@ -5,6 +5,7 @@ import {
     FileText,
     Baby,
     UtensilsCrossed,
+    Utensils,
     MessageCircle,
     Award,
     ArrowLeft,
@@ -34,6 +35,13 @@ export default function SidebarOrangTua() {
             href: "/dashboard/nutri-assist",
             icon: (
                 <UtensilsCrossed className="text-white h-5 w-5 shrink-0" />
+            ),
+        },
+        {
+            label: "Jurnal Makan",
+            href: "/dashboard/jurnal-makan",
+            icon: (
+                <Utensils className="text-white h-5 w-5 shrink-0" />
             ),
         },
         {

@@ -85,6 +85,8 @@ class MealLogController extends Controller
             'time_of_day' => ['nullable', 'string', 'in:pagi,siang,malam,snack'],
             'description' => ['required', 'string'],
             'ingredients' => ['nullable', 'string'],
+            'portion' => ['nullable', 'string', 'in:habis,setengah,sedikit,tidak_mau'],
+            'notes' => ['nullable', 'string', 'max:500'],
             'source' => ['sometimes', 'string', 'in:ortu,kader,system'],
         ]);
 
@@ -136,6 +138,8 @@ class MealLogController extends Controller
             'time_of_day' => ['nullable', 'string', 'in:pagi,siang,malam,snack'],
             'description' => ['sometimes', 'string'],
             'ingredients' => ['nullable', 'string'],
+            'portion' => ['nullable', 'string', 'in:habis,setengah,sedikit,tidak_mau'],
+            'notes' => ['nullable', 'string', 'max:500'],
             'source' => ['sometimes', 'string', 'in:ortu,kader,system'],
         ]);
 

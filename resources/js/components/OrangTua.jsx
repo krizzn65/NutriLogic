@@ -13,6 +13,7 @@ const DataAnakDetail = lazy(() => import("./konten/DataAnakDetail"));
 const TambahAnakForm = lazy(() => import("./konten/TambahAnakForm"));
 const EditAnakForm = lazy(() => import("./konten/EditAnakForm"));
 const NutriAssistPage = lazy(() => import("./konten/NutriAssistPage"));
+const JurnalMakanPage = lazy(() => import("./konten/JurnalMakanPage"));
 const ConsultationList = lazy(() => import("./konten/ConsultationList"));
 const CreateConsultation = lazy(() => import("./konten/CreateConsultation"));
 const PointsAndBadgesPage = lazy(() => import("./konten/PointsAndBadgesPage"));
@@ -51,6 +52,7 @@ export default function OrangTua() {
                   <Route path="anak/edit/:id" element={<EditAnakForm />} />
                   <Route path="anak/:id" element={<DataAnakDetail />} />
                   <Route path="nutri-assist" element={<NutriAssistPage />} />
+                  <Route path="jurnal-makan" element={<JurnalMakanPage />} />
                   <Route path="konsultasi" element={<ConsultationList />} />
                   <Route path="konsultasi/create" element={<CreateConsultation />} />
                   <Route path="konsultasi/:id" element={<ConsultationList />} />

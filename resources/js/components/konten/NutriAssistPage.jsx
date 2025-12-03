@@ -141,10 +141,49 @@ export default function NutriAssistPage() {
       }
 
       const response = await api.post(`/parent/children/${selectedChildId}/nutri-assist`, payload);
-      const newRecommendations = response.data.data;
+      let newRecommendations = response.data.data;
+
+      // Handle array response from n8n (it returns [{success: true, data: {...}}])
+      if (Array.isArray(newRecommendations) && newRecommendations.length > 0) {
+        newRecommendations = newRecommendations[0].data;
+      }
+
+      // Debug: Log the response structure
+      console.log('Nutri-Assist Response:', newRecommendations);
+      console.log('Recommendations array:', newRecommendations?.recommendations);
+
+      // Normalize the recommendations structure
+      if (newRecommendations?.recommendations) {
+        newRecommendations.recommendations = newRecommendations.recommendations.map((rec, index) => {
+          // Calculate match percentage if not provided
+          let matchPercentage = rec.match_percentage || 0;
+
+          if (!matchPercentage && rec.ingredients && payload.ingredients) {
+            const recIngredientsLower = rec.ingredients.map(i => i.toLowerCase());
+            const providedIngredientsLower = payload.ingredients.map(i => i.toLowerCase());
+            const matchedCount = recIngredientsLower.filter(ing =>
+              providedIngredientsLower.some(provided =>
+                ing.includes(provided) || provided.includes(ing)
+              )
+            ).length;
+            matchPercentage = (matchedCount / rec.ingredients.length) * 100;
+          }
+
+          return {
+            ...rec,
+            match_percentage: matchPercentage,
+            // Normalize nutrition data
+            calories: rec.nutrition?.calories || rec.calories || 0,
+            protein: rec.nutrition?.protein || rec.protein || 0,
+            carbs: rec.nutrition?.carbs || rec.carbs || 0,
+            fat: rec.nutrition?.fat || rec.fat || 0,
+          };
+        });
+      }
+
       setRecommendations(newRecommendations);
-      setCachedData('nutriAssistRecommendations', newRecommendations); // Cache the recommendations
-      setExpandedCardIndex(null); // Reset expanded card when new recommendations arrive
+      setCachedData('nutriAssistRecommendations', newRecommendations);
+      setExpandedCardIndex(null);
 
       // Scroll to recommendations smoothly
       setTimeout(() => {
@@ -154,6 +193,12 @@ export default function NutriAssistPage() {
         });
       }, 200);
     } catch (err) {
+      console.error('Nutri-assist error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+
       if (err.response?.status === 403) {
         setError('Anda tidak memiliki akses untuk mendapatkan rekomendasi untuk anak ini.');
       } else if (err.response?.status === 404) {
@@ -162,7 +207,6 @@ export default function NutriAssistPage() {
         const errorMessage = err.response?.data?.message || 'Gagal mendapatkan rekomendasi. Silakan coba lagi.';
         setError(errorMessage);
       }
-      console.error('Nutri-assist submit error:', err);
     } finally {
       setSubmitting(false);
     }
@@ -592,6 +636,14 @@ export default function NutriAssistPage() {
                         {recommendations.recommendations.map((rec, index) => {
                           const isBest = index === 0 && rec.match_percentage >= 50;
 
+                          // Safe access to menu data with fallbacks
+                          const menuName = rec.menu?.name || rec.name || 'Menu Tidak Diketahui';
+                          const menuCalories = rec.menu?.calories || rec.calories || 0;
+                          const menuProtein = rec.menu?.protein || rec.protein || 0;
+                          const menuDescription = rec.menu?.description || rec.description || 'Tidak ada deskripsi';
+                          const matchPercentage = rec.match_percentage || 0;
+                          const matchedIngredients = rec.matched_ingredients || [];
+
                           return (
                             <motion.div
                               key={index}
@@ -613,39 +665,39 @@ export default function NutriAssistPage() {
                                 <div className="flex justify-between items-start mb-4">
                                   <div>
                                     <h4 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                                      {rec.menu.name}
+                                      {menuName}
                                     </h4>
                                     <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
                                       <span className="flex items-center gap-1 bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md border border-orange-100">
-                                        <span className="font-bold">{rec.menu.calories}</span> kcal
+                                        <span className="font-bold">{menuCalories}</span> kcal
                                       </span>
                                       <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-100">
-                                        <span className="font-bold">{rec.menu.protein}g</span> Protein
+                                        <span className="font-bold">{menuProtein}g</span> Protein
                                       </span>
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col items-end">
-                                    <div className={`text-lg font-bold ${rec.match_percentage >= 70 ? 'text-green-600' :
-                                      rec.match_percentage >= 50 ? 'text-yellow-600' : 'text-gray-400'
+                                    <div className={`text-lg font-bold ${matchPercentage >= 70 ? 'text-green-600' :
+                                      matchPercentage >= 50 ? 'text-yellow-600' : 'text-gray-400'
                                       }`}>
-                                      {rec.match_percentage.toFixed(0)}%
+                                      {matchPercentage.toFixed(0)}%
                                     </div>
                                     <div className="text-xs text-gray-400">Kecocokan</div>
                                   </div>
                                 </div>
 
                                 <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                                  {rec.menu.description}
+                                  {menuDescription}
                                 </p>
 
-                                {rec.matched_ingredients && rec.matched_ingredients.length > 0 && (
+                                {matchedIngredients && matchedIngredients.length > 0 && (
                                   <div className="pt-4 border-t border-gray-100">
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                                       Bahan Terpakai
                                     </p>
                                     <div className="flex flex-wrap gap-2">
-                                      {rec.matched_ingredients.map((ingredient, idx) => (
+                                      {matchedIngredients.map((ingredient, idx) => (
                                         <span
                                           key={idx}
                                           className="px-2.5 py-1 bg-green-100/50 text-green-700 text-xs font-medium rounded-lg border border-green-100 flex items-center gap-1"
@@ -657,6 +709,133 @@ export default function NutriAssistPage() {
                                     </div>
                                   </div>
                                 )}
+
+                                {/* Expand/Collapse Button */}
+                                <button
+                                  onClick={() => setExpandedCardIndex(expandedCardIndex === index ? null : index)}
+                                  className="w-full mt-4 py-2 px-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 text-blue-700 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200"
+                                >
+                                  {expandedCardIndex === index ? (
+                                    <>
+                                      <ChevronDown className="w-4 h-4 rotate-180 transition-transform" />
+                                      Sembunyikan Detail
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="w-4 h-4 transition-transform" />
+                                      Lihat Resep Lengkap
+                                    </>
+                                  )}
+                                </button>
+
+                                {/* Expanded Content */}
+                                <AnimatePresence>
+                                  {expandedCardIndex === index && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.3 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                                        {/* Full Ingredients List */}
+                                        {rec.ingredients && rec.ingredients.length > 0 && (
+                                          <div>
+                                            <h5 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                                              <Leaf className="w-4 h-4 text-green-600" />
+                                              Bahan-Bahan Lengkap
+                                            </h5>
+                                            <ul className="space-y-1">
+                                              {rec.ingredients.map((ing, idx) => (
+                                                <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                                                  <span className="text-blue-500 mt-1">•</span>
+                                                  <span>{ing}</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
+
+                                        {/* Instructions */}
+                                        {rec.instructions && (
+                                          <div>
+                                            <h5 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                                              <ChefHat className="w-4 h-4 text-orange-600" />
+                                              Cara Membuat
+                                            </h5>
+                                            <div className="text-sm text-gray-600 whitespace-pre-line leading-relaxed bg-gray-50 p-3 rounded-lg">
+                                              {rec.instructions}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Nutrition Details */}
+                                        {(rec.carbs || rec.fat) && (
+                                          <div>
+                                            <h5 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                                              <Utensils className="w-4 h-4 text-purple-600" />
+                                              Informasi Gizi Lengkap
+                                            </h5>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                              <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                                <div className="text-xs text-orange-600 font-medium">Kalori</div>
+                                                <div className="text-lg font-bold text-orange-700">{menuCalories}</div>
+                                                <div className="text-xs text-orange-500">kcal</div>
+                                              </div>
+                                              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                                <div className="text-xs text-blue-600 font-medium">Protein</div>
+                                                <div className="text-lg font-bold text-blue-700">{menuProtein}</div>
+                                                <div className="text-xs text-blue-500">gram</div>
+                                              </div>
+                                              {rec.carbs > 0 && (
+                                                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                                  <div className="text-xs text-yellow-600 font-medium">Karbohidrat</div>
+                                                  <div className="text-lg font-bold text-yellow-700">{rec.carbs}</div>
+                                                  <div className="text-xs text-yellow-500">gram</div>
+                                                </div>
+                                              )}
+                                              {rec.fat > 0 && (
+                                                <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                                                  <div className="text-xs text-green-600 font-medium">Lemak</div>
+                                                  <div className="text-lg font-bold text-green-700">{rec.fat}</div>
+                                                  <div className="text-xs text-green-500">gram</div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Additional Info */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                          {rec.portion && (
+                                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                              <div className="text-xs text-purple-600 font-medium mb-1">Porsi</div>
+                                              <div className="text-sm font-bold text-purple-700">{rec.portion}</div>
+                                            </div>
+                                          )}
+                                          {rec.meal_type && (
+                                            <div className="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                              <div className="text-xs text-pink-600 font-medium mb-1">Waktu Makan</div>
+                                              <div className="text-sm font-bold text-pink-700 capitalize">{rec.meal_type.replace(/_/g, ' ')}</div>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Notes */}
+                                        {rec.notes && (
+                                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                            <h5 className="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+                                              <AlertCircle className="w-4 h-4" />
+                                              Catatan Penting
+                                            </h5>
+                                            <p className="text-sm text-blue-700 leading-relaxed">{rec.notes}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             </motion.div>
                           );
