@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import { ArrowLeft, Send, CheckCircle, Clock, User, MoreVertical, Phone, Video, Trash2, AlertTriangle, Paperclip, Image as ImageIcon, FileText, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import { formatAge } from "../../lib/utils";
 
 export default function ConsultationDetail({ selectedId, onBack, onDeleteSuccess, className = "" }) {
   const { id: paramId } = useParams();
@@ -99,7 +100,7 @@ export default function ConsultationDetail({ selectedId, onBack, onDeleteSuccess
 
       const text = `Data Kesehatan Anak:
 Nama: ${data.name}
-Usia: ${data.age_months} bulan
+Usia: ${formatAge(data.age_months)}
 BB: ${data.weight ? data.weight + ' kg' : '-'}
 TB: ${data.height ? data.height + ' cm' : '-'}
 LK: ${data.head_circumference ? data.head_circumference + ' cm' : '-'}

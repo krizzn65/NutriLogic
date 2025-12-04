@@ -246,7 +246,7 @@ export default function ConsultationList() {
                                                     {consultation.last_message ? (
                                                         <>
                                                             <span className="font-medium text-slate-700">
-                                                                {consultation.last_message.sender_name.split(' ')[0]}:
+                                                                {consultation.last_message.sender_name.split(' ')[0]} :
                                                             </span>
                                                             {consultation.last_message.attachment_type === 'image' ? (
                                                                 <span className="flex items-center gap-1 text-slate-500">
@@ -254,7 +254,7 @@ export default function ConsultationList() {
                                                                     Foto
                                                                 </span>
                                                             ) : (
-                                                                consultation.last_message.message
+                                                                " " + consultation.last_message.message
                                                             )}
                                                         </>
                                                     ) : (
