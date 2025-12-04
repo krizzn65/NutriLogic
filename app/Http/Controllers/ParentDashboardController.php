@@ -49,9 +49,8 @@ class ParentDashboardController extends Controller
         foreach ($children as $child) {
             $latestWeighing = $child->weighingLogs->first();
 
-            // Calculate age
+            // Calculate age in days (age_in_months comes from model accessor)
             $ageInDays = $child->birth_date->diffInDays($now);
-            $ageInMonths = $child->birth_date->diffInMonths($now);
 
             // Determine nutritional status
             $nutritionalStatus = [
@@ -72,7 +71,7 @@ class ParentDashboardController extends Controller
             $childrenData[] = [
                 'id' => $child->id,
                 'full_name' => $child->full_name,
-                'age_in_months' => $ageInMonths,
+                'age_in_months' => $child->age_in_months, // Use model accessor
                 'age_in_days' => $ageInDays,
                 'gender' => $child->gender,
                 'weighing_logs' => $latestWeighing ? [[
@@ -85,12 +84,6 @@ class ParentDashboardController extends Controller
                     'nutritional_status' => $latestWeighing->nutritional_status,
                 ]] : [],
                 'latest_nutritional_status' => $nutritionalStatus,
-                'weighing_logs' => $latestWeighing ? [[
-                    'weight_kg' => $latestWeighing->weight_kg,
-                    'height_cm' => $latestWeighing->height_cm,
-                    'muac_cm' => $latestWeighing->muac_cm,
-                    'measured_at' => $latestWeighing->measured_at->format('Y-m-d'),
-                ]] : [],
             ];
         }
 
@@ -221,18 +214,18 @@ class ParentDashboardController extends Controller
 
         foreach ($children as $child) {
             $latestWeighing = $child->weighingLogs->first();
-            $ageInMonths = $child->birth_date->diffInMonths($now);
 
             $childrenData[] = [
                 'id' => $child->id,
                 'full_name' => $child->full_name,
                 'birth_date' => $child->birth_date->format('Y-m-d'),
                 'gender' => $child->gender,
-                'age_in_months' => $ageInMonths,
+                'age_in_months' => $child->age_in_months, // Use model accessor
                 'posyandu' => $child->posyandu ? [
                     'id' => $child->posyandu->id,
                     'name' => $child->posyandu->name,
                 ] : null,
+                'posyandu_id' => $child->posyandu_id, // Add posyandu_id for filtering
                 'weighing_logs' => $child->weighingLogs->map(function ($log) {
                     return [
                         'id' => $log->id,
@@ -305,7 +298,6 @@ class ParentDashboardController extends Controller
 
         $now = Carbon::now();
         $ageInDays = $child->birth_date->diffInDays($now);
-        $ageInMonths = $child->birth_date->diffInMonths($now);
 
         // Format weighing logs
         $weighingLogs = $child->weighingLogs->map(function ($log) {
@@ -355,7 +347,7 @@ class ParentDashboardController extends Controller
                 'gender' => $child->gender,
                 'birth_weight_kg' => $child->birth_weight_kg,
                 'birth_height_cm' => $child->birth_height_cm,
-                'age_in_months' => $ageInMonths,
+                'age_in_months' => $child->age_in_months, // Use model accessor
                 'age_in_days' => $ageInDays,
                 'notes' => $child->notes,
                 'is_active' => $child->is_active,
@@ -413,8 +405,8 @@ class ParentDashboardController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Calculate child age
-        $ageInMonths = $child->birth_date->diffInMonths(now());
+        // Get child age from model accessor
+        $ageInMonths = $child->age_in_months;
 
         // Check if n8n is enabled
         if (!config('services.n8n.enabled')) {

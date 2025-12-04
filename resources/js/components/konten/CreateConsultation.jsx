@@ -5,6 +5,7 @@ import GenericFormSkeleton from "../loading/GenericFormSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { ArrowLeft, MessageSquare, User, AlertCircle, CheckCircle, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { formatAge } from "../../lib/utils";
 
 export default function CreateConsultation() {
   const navigate = useNavigate();
@@ -212,7 +213,7 @@ export default function CreateConsultation() {
                     <option value="">-- Pilih Anak --</option>
                     {children.map((child) => (
                       <option key={child.id} value={child.id}>
-                        {child.full_name} ({child.age_in_months} bulan)
+                        {child.full_name} ({formatAge(child.age_in_months)})
                       </option>
                     ))}
                   </select>

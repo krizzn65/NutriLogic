@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { Baby, Search, X, Building2, User, Calendar, Weight, Ruler } from "lucide-react";
+import { formatAge } from "../../lib/utils";
 
 export default function ChildrenMonitoring() {
     const [loading, setLoading] = useState(true);
@@ -236,7 +237,7 @@ export default function ChildrenMonitoring() {
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-center text-sm text-gray-600">
-                                                {child.age_months ? `${child.age_months} bulan` : '-'}
+                                                {child.age_months ? formatAge(child.age_months) : '-'}
                                             </td>
                                             <td className="py-3 px-4">
                                                 {child.parent ? (
@@ -329,7 +330,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Umur</label>
-                            <p className="text-gray-800">{child.age_months ? `${child.age_months} bulan` : '-'}</p>
+                            <p className="text-gray-800">{child.age_months ? formatAge(child.age_months) : '-'}</p>
                         </div>
                     </div>
 
