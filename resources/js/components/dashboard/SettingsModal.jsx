@@ -12,7 +12,9 @@ import {
     Loader2,
     Bell,
     Lock,
-    Settings as SettingsIcon
+    Settings as SettingsIcon,
+    Eye,
+    EyeOff
 } from "lucide-react";
 
 export default function SettingsModal({ isOpen, onClose }) {
@@ -41,6 +43,9 @@ export default function SettingsModal({ isOpen, onClose }) {
     const [passwordError, setPasswordError] = useState(null);
     const [passwordSaving, setPasswordSaving] = useState(false);
     const [passwordSuccess, setPasswordSuccess] = useState(null);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { getCachedData, setCachedData } = useDataCache();
 
@@ -327,40 +332,67 @@ export default function SettingsModal({ isOpen, onClose }) {
                                     <div className="space-y-4">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-900">Password Saat Ini</label>
-                                            <input
-                                                type="password"
-                                                value={passwordForm.current_password}
-                                                onChange={(e) => handlePasswordInputChange("current_password", e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
-                                                placeholder="Masukkan password saat ini"
-                                                required
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type={showCurrentPassword ? "text" : "password"}
+                                                    value={passwordForm.current_password}
+                                                    onChange={(e) => handlePasswordInputChange("current_password", e.target.value)}
+                                                    className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 placeholder:text-gray-400"
+                                                    placeholder="Masukkan password saat ini"
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                >
+                                                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-900">Password Baru</label>
-                                            <input
-                                                type="password"
-                                                value={passwordForm.new_password}
-                                                onChange={(e) => handlePasswordInputChange("new_password", e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
-                                                placeholder="Minimal 8 karakter"
-                                                required
-                                                minLength={8}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type={showNewPassword ? "text" : "password"}
+                                                    value={passwordForm.new_password}
+                                                    onChange={(e) => handlePasswordInputChange("new_password", e.target.value)}
+                                                    className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 placeholder:text-gray-400"
+                                                    placeholder="Minimal 8 karakter"
+                                                    required
+                                                    minLength={8}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                >
+                                                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-900">Konfirmasi Password Baru</label>
-                                            <input
-                                                type="password"
-                                                value={passwordForm.new_password_confirmation}
-                                                onChange={(e) => handlePasswordInputChange("new_password_confirmation", e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
-                                                placeholder="Ulangi password baru"
-                                                required
-                                                minLength={8}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    value={passwordForm.new_password_confirmation}
+                                                    onChange={(e) => handlePasswordInputChange("new_password_confirmation", e.target.value)}
+                                                    className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 placeholder:text-gray-400"
+                                                    placeholder="Ulangi password baru"
+                                                    required
+                                                    minLength={8}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                >
+                                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 

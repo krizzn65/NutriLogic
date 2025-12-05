@@ -6,7 +6,7 @@ import PosyanduManagement from "./konten/PosyanduManagement";
 import UserManagement from "./konten/UserManagement";
 import ChildrenMonitoring from "./konten/ChildrenMonitoring";
 import SystemReports from "./konten/SystemReports";
-import ContentManagement from "./konten/ContentManagement";
+
 import SystemSettings from "./konten/SystemSettings";
 import ActivityLogs from "./konten/ActivityLogs";
 import AdminProfile from "./konten/AdminProfile";
@@ -23,7 +23,7 @@ export default function Admin() {
                     <Route path="orang-tua" element={<UserManagement />} />
                     <Route path="anak" element={<ChildrenMonitoring />} />
                     <Route path="laporan" element={<SystemReports />} />
-                    <Route path="konten" element={<ContentManagement />} />
+
                     <Route path="settings" element={<SystemSettings />} />
                     <Route path="logs" element={<ActivityLogs />} />
                     <Route path="profile" element={<AdminProfile />} />
