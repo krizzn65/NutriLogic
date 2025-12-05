@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nutrilogic-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    networks:
+      - nutrilogic-network
+    depends_on:
+      - db
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=db
+      - DB_DATABASE=nutrilogic
+      - DB_USERNAME=nutrilogic_user
+      - DB_PASSWORD=nutrilogic_password
+    ports:
+      - "8000:80"
+
+  # Database service
+  db:
+    image: mysql:8.0
+    container_name: nutrilogic-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: nutrilogic
+      MYSQL_USER: nutrilogic_user
+      MYSQL_PASSWORD: nutrilogic_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - nutrilogic-network
+    ports:
+      - "3307:3306"
+
+  # phpMyAdmin service (optional, for development)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: nutrilogic-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "8080:80"
+    networks:
+      - nutrilogic-network
+    depends_on:
+      - db
+
+networks:
+  nutrilogic-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
