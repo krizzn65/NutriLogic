@@ -64,17 +64,25 @@ class AdminChildrenController extends Controller
             return [
                 'id' => $child->id,
                 'full_name' => $child->full_name,
+                'nik' => $child->nik,
                 'gender' => $child->gender,
                 'birth_date' => $child->birth_date->format('Y-m-d'),
                 'age_months' => $ageInMonths,
+                'age_in_months' => $ageInMonths, // Alias for compatibility
+                'birth_weight_kg' => $child->birth_weight_kg,
+                'birth_height_cm' => $child->birth_height_cm,
+                'notes' => $child->notes,
+                'is_active' => $child->is_active,
                 'parent' => $child->parent ? [
                     'id' => $child->parent->id,
                     'name' => $child->parent->name,
                 ] : null,
+                'parent_name' => $child->parent?->name,
                 'posyandu' => $child->posyandu ? [
                     'id' => $child->posyandu->id,
                     'name' => $child->posyandu->name,
                 ] : null,
+                'posyandu_name' => $child->posyandu?->name,
                 'latest_weighing' => $latestWeighing ? [
                     'weight' => $latestWeighing->weight_kg,
                     'height' => $latestWeighing->height_cm,

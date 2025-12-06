@@ -9,6 +9,7 @@ import {
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
 import { motion, AnimatePresence } from "framer-motion";
+import { exportActivityLogsToExcel } from "../../utils/excelExportActivityLogs";
 
 export default function ActivityLogs() {
     const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ export default function ActivityLogs() {
         date_to: '',
     });
     const [autoRefresh, setAutoRefresh] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
@@ -142,27 +144,46 @@ export default function ActivityLogs() {
         });
     };
 
-    const handleExportCSV = () => {
-        const headers = ['Waktu', 'User', 'Aksi', 'Model', 'Deskripsi', 'IP Address'];
-        const rows = logs.map(log => [
-            new Date(log.created_at).toLocaleString('id-ID'),
-            log.user?.name || 'System',
-            log.action,
-            log.model || '-',
-            log.description,
-            log.ip_address || '-'
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `activity-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
+    const handleExportToExcel = async () => {
+        // Validation
+        if (!logs || logs.length === 0) {
+            alert('Tidak ada data untuk diexport');
+            return;
+        }
+        
+        try {
+            setIsExporting(true);
+            
+            // Prepare data - ensure all required fields exist
+            const validLogs = logs.filter(log => log && log.created_at);
+            
+            if (validLogs.length === 0) {
+                throw new Error('Tidak ada data valid untuk diexport');
+            }
+            
+            // Export to Excel with current filters
+            const result = await exportActivityLogsToExcel(validLogs, filters);
+            
+            if (result && result.success) {
+                console.log(`✓ Export berhasil: ${result.filename}`);
+                
+                // Show success notification briefly
+                setTimeout(() => {
+                    setIsExporting(false);
+                }, 1000);
+            } else {
+                throw new Error('Export gagal tanpa pesan error');
+            }
+            
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            
+            // User-friendly error message
+            const errorMessage = error.message || 'Terjadi kesalahan saat mengexport data';
+            alert(`Gagal mengexport data:\n${errorMessage}\n\nSilakan coba lagi atau hubungi administrator.`);
+            
+            setIsExporting(false);
+        }
     };
 
     const getActionColor = (action) => {
@@ -244,12 +265,16 @@ export default function ActivityLogs() {
                                 Auto Refresh {autoRefresh ? 'ON' : 'OFF'}
                             </button>
                             <button
-                                onClick={handleExportCSV}
-                                disabled={logs.length === 0}
+                                onClick={handleExportToExcel}
+                                disabled={logs.length === 0 || isExporting}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                             >
-                                <Download className="w-4 h-4" />
-                                Export CSV
+                                {isExporting ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                    <Download className="w-4 h-4" />
+                                )}
+                                {isExporting ? 'Exporting...' : 'Export Excel'}
                             </button>
                         </div>
                     </div>

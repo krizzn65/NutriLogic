@@ -248,6 +248,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{id}', [App\Http\Controllers\AdminChildrenController::class, 'show']);
         });
         
+        // Weighing Logs (Read-Only)
+        Route::prefix('weighings')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminWeighingController::class, 'index']);
+            Route::get('/{id}', [App\Http\Controllers\AdminWeighingController::class, 'show']);
+        });
+        
         // System Reports
         Route::prefix('reports')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminReportController::class, 'index']);
