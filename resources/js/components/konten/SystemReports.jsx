@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PageHeader from "../ui/PageHeader";
+import { exportSystemReportsToExcel } from "../../utils/excelExport";
+import { exportChildrenToExcel } from "../../utils/excelExportChildren";
+import { exportWeighingsToExcel } from "../../utils/excelExportWeighings";
 // Charts removed in favor of table-centric layout
 
 export default function SystemReports() {
@@ -18,6 +21,10 @@ export default function SystemReports() {
 
     // Custom UI States
     const [isPosyanduDropdownOpen, setIsPosyanduDropdownOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportError, setExportError] = useState(null);
+    const [isExportingChildren, setIsExportingChildren] = useState(false);
+    const [isExportingWeighings, setIsExportingWeighings] = useState(false);
 
     // Refs for click outside
     const posyanduRef = useRef(null);
@@ -119,6 +126,126 @@ export default function SystemReports() {
 
         const url = `${import.meta.env.VITE_API_URL}/admin/reports/export?${params.toString()}`;
         window.open(url, '_blank');
+    };
+
+    const handleExportToExcel = () => {
+        if (!reportData) {
+            setExportError('Tidak ada data yang tersedia untuk di-export. Pastikan data sudah dimuat.');
+            setTimeout(() => setExportError(null), 5000);
+            return;
+        }
+
+        try {
+            setIsExporting(true);
+            setExportError(null);
+            
+            const posyanduName = selectedPosyandu === 'all' 
+                ? 'Semua Posyandu' 
+                : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Semua Posyandu';
+
+            exportSystemReportsToExcel(reportData, posyanduName);
+            
+            // Show success message
+            setTimeout(() => {
+                setIsExporting(false);
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            setExportError('Gagal mengexport data: ' + error.message);
+            setIsExporting(false);
+            setTimeout(() => setExportError(null), 5000);
+        }
+    };
+
+    const handleExportChildrenToExcel = async () => {
+        try {
+            setIsExportingChildren(true);
+            setExportError(null);
+
+            // Fetch children data from API
+            const params = {};
+            if (selectedPosyandu !== 'all') {
+                params.posyandu_id = selectedPosyandu;
+            }
+
+            const response = await api.get('/admin/children', { params });
+            const childrenData = response.data.data;
+
+            if (!childrenData || childrenData.length === 0) {
+                setExportError('Tidak ada data anak yang tersedia untuk di-export.');
+                setTimeout(() => setExportError(null), 5000);
+                setIsExportingChildren(false);
+                return;
+            }
+
+            const posyanduName = selectedPosyandu === 'all'
+                ? 'Semua Posyandu'
+                : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Semua Posyandu';
+
+            // Export to Excel
+            exportChildrenToExcel(childrenData, posyanduName);
+
+            setTimeout(() => {
+                setIsExportingChildren(false);
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error exporting children to Excel:', error);
+            setExportError('Gagal mengexport data anak: ' + (error.message || 'Terjadi kesalahan'));
+            setIsExportingChildren(false);
+            setTimeout(() => setExportError(null), 5000);
+        }
+    };
+
+    const handleExportWeighingsToExcel = async () => {
+        try {
+            setIsExportingWeighings(true);
+            setExportError(null);
+
+            // Fetch weighing data from API
+            const params = {};
+            if (selectedPosyandu !== 'all') {
+                params.posyandu_id = selectedPosyandu;
+            }
+
+            const response = await api.get('/admin/reports/export', { 
+                params: { 
+                    ...params,
+                    type: 'weighings',
+                    format: 'json' // Request JSON format instead of CSV
+                } 
+            });
+            
+            // If API returns CSV, we need to fetch weighing data differently
+            // Let's use a direct weighing endpoint
+            const weighingResponse = await api.get('/admin/weighings', { params });
+            const weighingData = weighingResponse.data.data;
+
+            if (!weighingData || weighingData.length === 0) {
+                setExportError('Tidak ada data penimbangan yang tersedia untuk di-export.');
+                setTimeout(() => setExportError(null), 5000);
+                setIsExportingWeighings(false);
+                return;
+            }
+
+            const posyanduName = selectedPosyandu === 'all'
+                ? 'Semua Posyandu'
+                : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Semua Posyandu';
+
+            // Export to Excel
+            exportWeighingsToExcel(weighingData, posyanduName);
+
+            setTimeout(() => {
+                setIsExportingWeighings(false);
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error exporting weighings to Excel:', error);
+            setExportError('Gagal mengexport data penimbangan: ' + (error.message || 'Terjadi kesalahan'));
+            setIsExportingWeighings(false);
+            setTimeout(() => setExportError(null), 5000);
+        }
     };
 
     const handleClearFilters = () => {
@@ -259,6 +386,34 @@ export default function SystemReports() {
                     </motion.div>
                 )}
 
+                {exportError && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-orange-50 border-l-4 border-orange-500 rounded-xl p-4 flex items-start gap-3"
+                    >
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-semibold text-orange-900 mb-1">Gagal Export Data</h4>
+                            <p className="text-sm text-orange-800">{exportError}</p>
+                            <p className="text-xs text-orange-600 mt-2">Jika masalah berlanjut, silakan refresh halaman atau hubungi administrator.</p>
+                        </div>
+                        <button 
+                            onClick={() => setExportError(null)}
+                            className="text-orange-400 hover:text-orange-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </motion.div>
+                )}
+
                 {reportData && (
                     <motion.div
                         variants={containerVariants}
@@ -346,9 +501,31 @@ export default function SystemReports() {
                                         <p className="text-xs text-gray-500">Unduh data sesuai filter yang dipilih.</p>
                                     </div>
                                 </div>
-                                <ExportButton onClick={() => handleExport('summary')} label="Export Ringkasan" color="blue" />
-                                <ExportButton onClick={() => handleExport('children')} label="Export Data Anak" color="emerald" />
-                                <ExportButton onClick={() => handleExport('weighings')} label="Export Penimbangan" color="violet" />
+                                
+                                <ExportButton 
+                                    onClick={handleExportToExcel} 
+                                    label="Export Ringkasan" 
+                                    color="blue" 
+                                    icon={FileText}
+                                    disabled={isExporting}
+                                    isLoading={isExporting}
+                                />
+                                <ExportButton 
+                                    onClick={handleExportChildrenToExcel} 
+                                    label="Export Data Anak" 
+                                    color="emerald" 
+                                    icon={FileText}
+                                    disabled={isExportingChildren}
+                                    isLoading={isExportingChildren}
+                                />
+                                <ExportButton 
+                                    onClick={handleExportWeighingsToExcel} 
+                                    label="Export Penimbangan" 
+                                    color="violet" 
+                                    icon={FileText}
+                                    disabled={isExportingWeighings}
+                                    isLoading={isExportingWeighings}
+                                />
                             </motion.div>
                         </div>
 
@@ -422,20 +599,27 @@ export default function SystemReports() {
     );
 }
 
-function ExportButton({ onClick, label, color }) {
+function ExportButton({ onClick, label, color, icon: Icon, disabled = false, isLoading = false }) {
     const colorClasses = {
         blue: "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200",
         emerald: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200",
         violet: "bg-violet-50 text-violet-700 hover:bg-violet-100 border-violet-200",
     };
 
+    const disabledClass = disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer";
+
     return (
         <button
-            onClick={onClick}
-            className={`w-full px-4 py-3 rounded-xl border transition-all flex items-center justify-between group ${colorClasses[color]}`}
+            onClick={disabled ? undefined : onClick}
+            disabled={disabled}
+            className={`w-full px-4 py-3 rounded-xl border transition-all flex items-center justify-between group ${colorClasses[color]} ${disabledClass}`}
         >
             <span className="font-medium">{label}</span>
-            <FileText className="w-5 h-5 opacity-70 group-hover:scale-110 transition-transform" />
+            {isLoading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+            ) : (
+                <Icon className="w-5 h-5 opacity-70 group-hover:scale-110 transition-transform" />
+            )}
         </button>
     );
 }

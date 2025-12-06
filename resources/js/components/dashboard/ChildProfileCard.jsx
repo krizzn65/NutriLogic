@@ -1,5 +1,6 @@
 import React from 'react';
-import { formatAge } from "../../lib/utils";
+import { motion } from 'framer-motion';
+import { formatAge, formatAgeFromBirthDate } from "../../lib/utils";
 import { Ruler, Weight, CreditCard, Zap, Circle } from 'lucide-react';
 import { assets } from '../../assets/assets';
 
@@ -40,7 +41,7 @@ export default function ChildProfileCard({ child, onClick, onShowCard }) {
                                     {child.full_name}
                                 </h3>
                                 <p className="text-[10px] md:text-sm text-gray-500 group-hover:text-blue-100 font-medium mt-0.5 md:mt-1 transition-colors">
-                                    {formatAge(child.age_in_months)} • {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                    {child.birth_date ? formatAgeFromBirthDate(child.birth_date) : formatAge(child.age_in_months)} • {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                 </p>
                             </div>
                         </div>

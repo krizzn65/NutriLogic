@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getUser, logoutWithApi } from "../../lib/auth";
 import { getMaintenanceMode } from "../../lib/sessionTimeout";
 import AdminProfileModal from "../dashboard/AdminProfileModal";
+import AdminSettingsModal from "../dashboard/AdminSettingsModal";
 import SettingsModal from "../dashboard/SettingsModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
 
@@ -219,7 +220,11 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
 
             {/* Modals */}
             <AdminProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
-            <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+            {user?.role === 'admin' ? (
+                <AdminSettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+            ) : (
+                <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+            )}
             <ConfirmationModal
                 isOpen={confirmOpen}
                 onClose={() => setConfirmOpen(false)}

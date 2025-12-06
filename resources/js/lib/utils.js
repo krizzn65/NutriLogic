@@ -46,10 +46,33 @@ export function getStatusLabel(status) {
 }
 
 /**
+ * Calculate age in months from birth date (real-time)
+ */
+export function calculateAgeInMonths(birthDate) {
+  if (!birthDate) return 0;
+  
+  const birth = new Date(birthDate);
+  const now = new Date();
+  
+  const years = now.getFullYear() - birth.getFullYear();
+  const months = now.getMonth() - birth.getMonth();
+  const days = now.getDate() - birth.getDate();
+  
+  let totalMonths = years * 12 + months;
+  
+  // Adjust if the current day hasn't reached the birth day yet
+  if (days < 0) {
+    totalMonths--;
+  }
+  
+  return Math.max(0, totalMonths);
+}
+
+/**
  * Format age in months to readable string
  */
 export function formatAge(ageInMonths) {
-  if (ageInMonths < 1) {
+  if (!ageInMonths || ageInMonths < 1) {
     return 'Kurang dari 1 bulan';
   } else if (ageInMonths < 12) {
     return `${Math.floor(ageInMonths)} bulan`;
@@ -62,4 +85,12 @@ export function formatAge(ageInMonths) {
       return `${years} tahun ${months} bulan`;
     }
   }
+}
+
+/**
+ * Format age from birth date directly (real-time calculation)
+ */
+export function formatAgeFromBirthDate(birthDate) {
+  const ageInMonths = calculateAgeInMonths(birthDate);
+  return formatAge(ageInMonths);
 }

@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { Activity, Calendar, User, Filter, Download, RefreshCw, ChevronLeft, ChevronRight, Database, X } from "lucide-react";
+import {
+    Activity, Calendar, User, Filter, Download, RefreshCw, X,
+    ChevronDown, Check, ChevronLeft, ChevronRight
+} from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
 import { motion, AnimatePresence } from "framer-motion";
+import { exportActivityLogsToExcel } from "../../utils/excelExportActivityLogs";
 
 export default function ActivityLogs() {
     const [loading, setLoading] = useState(true);
@@ -18,12 +23,8 @@ export default function ActivityLogs() {
         date_from: '',
         date_to: '',
     });
-    const [pagination, setPagination] = useState({
-        currentPage: 1,
-        perPage: 20,
-        total: 0,
-    });
     const [autoRefresh, setAutoRefresh] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
@@ -37,7 +38,6 @@ export default function ActivityLogs() {
             const cachedLogs = getCachedData('admin_logs');
             if (cachedLogs) {
                 setLogs(cachedLogs);
-                setPagination(prev => ({ ...prev, total: cachedLogs.length }));
                 setLoading(false);
                 return;
             }
@@ -66,7 +66,6 @@ export default function ActivityLogs() {
 
             const logsData = response.data?.data || [];
             setLogs(logsData);
-            setPagination(prev => ({ ...prev, total: logsData.length }));
 
             if (!hasFilter) {
                 setCachedData('admin_logs', logsData, 60);
@@ -115,7 +114,6 @@ export default function ActivityLogs() {
         const cachedLogs = getCachedData('admin_logs');
         if (cachedLogs) {
             setLogs(cachedLogs);
-            setPagination(prev => ({ ...prev, total: cachedLogs.length }));
             setLoading(false);
             fetchLogs({ forceRefresh: true, showLoader: false });
         } else {
@@ -123,18 +121,18 @@ export default function ActivityLogs() {
         }
     }, [fetchLogs, getCachedData]);
 
-    // Pagination logic
-    const paginatedLogs = logs.slice(
-        (pagination.currentPage - 1) * pagination.perPage,
-        pagination.currentPage * pagination.perPage
-    );
-    const totalPages = Math.ceil(pagination.total / pagination.perPage);
-
-    const handlePageChange = (page) => {
-        if (page >= 1 && page <= totalPages) {
-            setPagination(prev => ({ ...prev, currentPage: page }));
+    // Auto-fetch when filters change
+    useEffect(() => {
+        if (!hasHydratedLogs.current) return; // Skip initial render
+        
+        const hasFilter = filters.action || filters.model || filters.user_id || filters.date_from || filters.date_to;
+        if (hasFilter) {
+            fetchLogs({ forceRefresh: true, showLoader: false });
+        } else {
+            // When all filters cleared, fetch all data
+            fetchLogs({ forceRefresh: true, showLoader: false });
         }
-    };
+    }, [filters, fetchLogs]);
 
     const handleClearFilters = () => {
         setFilters({
@@ -144,30 +142,48 @@ export default function ActivityLogs() {
             date_from: '',
             date_to: '',
         });
-        setPagination(prev => ({ ...prev, currentPage: 1 }));
     };
 
-    const handleExportCSV = () => {
-        const headers = ['Waktu', 'User', 'Aksi', 'Model', 'Deskripsi', 'IP Address'];
-        const rows = logs.map(log => [
-            new Date(log.created_at).toLocaleString('id-ID'),
-            log.user?.name || 'System',
-            log.action,
-            log.model || '-',
-            log.description,
-            log.ip_address || '-'
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `activity-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
+    const handleExportToExcel = async () => {
+        // Validation
+        if (!logs || logs.length === 0) {
+            alert('Tidak ada data untuk diexport');
+            return;
+        }
+        
+        try {
+            setIsExporting(true);
+            
+            // Prepare data - ensure all required fields exist
+            const validLogs = logs.filter(log => log && log.created_at);
+            
+            if (validLogs.length === 0) {
+                throw new Error('Tidak ada data valid untuk diexport');
+            }
+            
+            // Export to Excel with current filters
+            const result = await exportActivityLogsToExcel(validLogs, filters);
+            
+            if (result && result.success) {
+                console.log(`✓ Export berhasil: ${result.filename}`);
+                
+                // Show success notification briefly
+                setTimeout(() => {
+                    setIsExporting(false);
+                }, 1000);
+            } else {
+                throw new Error('Export gagal tanpa pesan error');
+            }
+            
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            
+            // User-friendly error message
+            const errorMessage = error.message || 'Terjadi kesalahan saat mengexport data';
+            alert(`Gagal mengexport data:\n${errorMessage}\n\nSilakan coba lagi atau hubungi administrator.`);
+            
+            setIsExporting(false);
+        }
     };
 
     const getActionColor = (action) => {
@@ -187,6 +203,32 @@ export default function ActivityLogs() {
     };
 
     const hasActiveFilters = filters.action || filters.model || filters.user_id || filters.date_from || filters.date_to;
+
+    // Dropdown Options
+    const actionOptions = [
+        { value: '', label: 'Semua Aksi' },
+        { value: 'login', label: 'Login' },
+        { value: 'logout', label: 'Logout' },
+        { value: 'create', label: 'Create' },
+        { value: 'update', label: 'Update' },
+        { value: 'delete', label: 'Delete' },
+    ];
+
+    const modelOptions = [
+        { value: '', label: 'Semua Model' },
+        { value: 'User', label: 'User' },
+        { value: 'Child', label: 'Child' },
+        { value: 'Article', label: 'Article' },
+        { value: 'Posyandu', label: 'Posyandu' },
+        { value: 'WeighingLog', label: 'Weighing Log' },
+        { value: 'MealLog', label: 'Meal Log' },
+        { value: 'Consultation', label: 'Consultation' },
+    ];
+
+    const userOptions = [
+        { value: '', label: 'Semua User' },
+        ...allUsers.map(user => ({ value: user.id, label: `${user.name} (${user.role})` }))
+    ];
 
     if (loading && logs.length === 0) {
         return (
@@ -214,119 +256,70 @@ export default function ActivityLogs() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setAutoRefresh(!autoRefresh)}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                    autoRefresh 
-                                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${autoRefresh
+                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
                                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                                    }`}
                             >
                                 <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
                                 Auto Refresh {autoRefresh ? 'ON' : 'OFF'}
                             </button>
                             <button
-                                onClick={handleExportCSV}
-                                disabled={logs.length === 0}
+                                onClick={handleExportToExcel}
+                                disabled={logs.length === 0 || isExporting}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                             >
-                                <Download className="w-4 h-4" />
-                                Export CSV
+                                {isExporting ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                    <Download className="w-4 h-4" />
+                                )}
+                                {isExporting ? 'Exporting...' : 'Export Excel'}
                             </button>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Aksi
-                            </label>
-                            <select
+                        <div className="relative z-10">
+                            <CustomDropdown
+                                label="Aksi"
                                 value={filters.action}
-                                onChange={(e) => {
-                                    setFilters({ ...filters, action: e.target.value });
-                                    setPagination(prev => ({ ...prev, currentPage: 1 }));
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                                <option value="">Semua Aksi</option>
-                                <option value="login">Login</option>
-                                <option value="logout">Logout</option>
-                                <option value="create">Create</option>
-                                <option value="update">Update</option>
-                                <option value="delete">Delete</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Model
-                            </label>
-                            <select
-                                value={filters.model}
-                                onChange={(e) => {
-                                    setFilters({ ...filters, model: e.target.value });
-                                    setPagination(prev => ({ ...prev, currentPage: 1 }));
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                                <option value="">Semua Model</option>
-                                <option value="User">User</option>
-                                <option value="Child">Child</option>
-                                <option value="Article">Article</option>
-                                <option value="Posyandu">Posyandu</option>
-                                <option value="WeighingLog">Weighing Log</option>
-                                <option value="MealLog">Meal Log</option>
-                                <option value="Consultation">Consultation</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                User
-                            </label>
-                            <select
-                                value={filters.user_id}
-                                onChange={(e) => {
-                                    setFilters({ ...filters, user_id: e.target.value });
-                                    setPagination(prev => ({ ...prev, currentPage: 1 }));
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                                <option value="">Semua User</option>
-                                {allUsers.map(user => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.name} ({user.role})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Dari Tanggal
-                            </label>
-                            <input
-                                type="date"
-                                value={filters.date_from}
-                                onChange={(e) => {
-                                    setFilters({ ...filters, date_from: e.target.value });
-                                    setPagination(prev => ({ ...prev, currentPage: 1 }));
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                options={actionOptions}
+                                onChange={(value) => setFilters({ ...filters, action: value })}
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Sampai Tanggal
-                            </label>
-                            <input
-                                type="date"
+                        <div className="relative z-10">
+                            <CustomDropdown
+                                label="Model"
+                                value={filters.model}
+                                options={modelOptions}
+                                onChange={(value) => setFilters({ ...filters, model: value })}
+                            />
+                        </div>
+
+                        <div className="relative z-10">
+                            <CustomDropdown
+                                label="User"
+                                value={filters.user_id}
+                                options={userOptions}
+                                onChange={(value) => setFilters({ ...filters, user_id: value })}
+                            />
+                        </div>
+
+                        <div className="relative z-10">
+                            <CustomDatePicker
+                                label="Dari Tanggal"
+                                value={filters.date_from}
+                                onChange={(value) => setFilters({ ...filters, date_from: value })}
+                            />
+                        </div>
+
+                        <div className="relative z-10">
+                            <CustomDatePicker
+                                label="Sampai Tanggal"
                                 value={filters.date_to}
-                                onChange={(e) => {
-                                    setFilters({ ...filters, date_to: e.target.value });
-                                    setPagination(prev => ({ ...prev, currentPage: 1 }));
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                onChange={(value) => setFilters({ ...filters, date_to: value })}
                             />
                         </div>
                     </div>
@@ -401,23 +394,18 @@ export default function ActivityLogs() {
                                 </tr>
                             </thead>
                             <tbody>
-                                <AnimatePresence mode="popLayout">
-                                    {paginatedLogs.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="6" className="py-8 text-center text-gray-500">
-                                                {hasActiveFilters ? 'Tidak ada log yang sesuai dengan filter' : 'Belum ada log aktivitas'}
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        paginatedLogs.map((log) => (
-                                            <motion.tr
-                                                key={log.id}
-                                                layout
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                                            >
+                                {logs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="py-8 text-center text-gray-500">
+                                            {hasActiveFilters ? 'Tidak ada log yang sesuai dengan filter' : 'Belum ada log aktivitas'}
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    logs.map((log) => (
+                                        <tr
+                                            key={log.id}
+                                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                                        >
                                                 <td className="py-3 px-4 text-sm text-gray-600">
                                                     <div className="flex items-center gap-1">
                                                         <Calendar className="w-4 h-4 text-gray-400" />
@@ -452,79 +440,256 @@ export default function ActivityLogs() {
                                                 <td className="py-3 px-4 text-sm text-gray-500">
                                                     {log.ip_address || '-'}
                                                 </td>
-                                            </motion.tr>
+                                            </tr>
                                         ))
                                     )}
-                                </AnimatePresence>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-                            <div className="text-sm text-gray-600">
-                                Halaman {pagination.currentPage} dari {totalPages} ({pagination.total} total log)
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                    disabled={pagination.currentPage === 1}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <div className="flex items-center gap-1">
-                                    {[...Array(Math.min(5, totalPages))].map((_, idx) => {
-                                        let pageNum;
-                                        if (totalPages <= 5) {
-                                            pageNum = idx + 1;
-                                        } else if (pagination.currentPage <= 3) {
-                                            pageNum = idx + 1;
-                                        } else if (pagination.currentPage >= totalPages - 2) {
-                                            pageNum = totalPages - 4 + idx;
-                                        } else {
-                                            pageNum = pagination.currentPage - 2 + idx;
-                                        }
-
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => handlePageChange(pageNum)}
-                                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                                    pagination.currentPage === pageNum
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                    disabled={pagination.currentPage === totalPages}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
-                    )}
-                </div>
-
-                {/* Info */}
+                    </div>                {/* Info */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                         <Activity className="w-5 h-5 text-blue-600 mt-0.5" />
                         <div className="text-sm text-blue-800">
-                            <strong>Catatan:</strong> Halaman ini menampilkan maksimal 100 log aktivitas terbaru dari sistem. 
+                            <strong>Catatan:</strong> Halaman ini menampilkan maksimal 100 log aktivitas terbaru dari sistem.
                             Gunakan filter untuk mempersempit pencarian. Auto-refresh dapat diaktifkan untuk pemantauan real-time setiap 30 detik.
+                            {logs.length > 0 && (
+                                <div className="mt-2 text-blue-700">
+                                    Menampilkan <strong>{logs.length}</strong> log aktivitas.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+// Helper Components
+
+function CustomDropdown({ label, value, options, onChange }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const selectedOption = options.find(opt => String(opt.value) === String(value));
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+                {label}
+            </label>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-left flex items-center justify-between hover:bg-gray-50 transition-colors text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+                <span className="truncate">
+                    {selectedOption ? selectedOption.label : `Pilih ${label}`}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden"
+                    >
+                        <div className="max-h-60 overflow-y-auto p-1">
+                            {options.map((option) => (
+                                <div
+                                    key={option.value}
+                                    onClick={() => {
+                                        onChange(option.value);
+                                        setIsOpen(false);
+                                    }}
+                                    className="px-3 py-2 rounded-md hover:bg-blue-50 cursor-pointer flex items-center justify-between group transition-colors"
+                                >
+                                    <span className={`text-sm ${String(value) === String(option.value) ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                        {option.label}
+                                    </span>
+                                    {String(value) === String(option.value) && <Check className="w-4 h-4 text-blue-600" />}
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function CustomDatePicker({ label, value, onChange }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [pickerDate, setPickerDate] = useState(value ? new Date(value) : new Date());
+    const containerRef = useRef(null);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+
+    const toggleDatePicker = (e) => {
+        if (!isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + 5,
+                left: rect.left
+            });
+        }
+        setIsOpen(!isOpen);
+    };
+
+    // Update picker date when value changes externally
+    useEffect(() => {
+        if (value) {
+            setPickerDate(new Date(value));
+        }
+    }, [value]);
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+                {label}
+            </label>
+            <button
+                type="button"
+                onClick={toggleDatePicker}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-left text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all flex items-center justify-between hover:bg-gray-50"
+            >
+                <span className={!value ? "text-gray-400" : ""}>
+                    {value ? new Date(value).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : "dd/mm/yyyy"}
+                </span>
+                <Calendar className="w-4 h-4 text-gray-400" />
+            </button>
+
+            {isOpen && createPortal(
+                <>
+                    <div
+                        className="fixed inset-0 z-[9998] bg-transparent"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                            top: dropdownPos.top,
+                            left: dropdownPos.left,
+                            position: 'fixed'
+                        }}
+                        className="z-[9999] p-4 bg-white border border-gray-200 rounded-xl shadow-xl w-[320px]"
+                    >
+                        {/* Calendar Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() - 1)))}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <ChevronLeft className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <span className="font-semibold text-gray-800 text-sm">
+                                {pickerDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() + 1)))}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <ChevronRight className="w-5 h-5 text-gray-600" />
+                            </button>
+                        </div>
+
+                        {/* Days Header */}
+                        <div className="grid grid-cols-7 mb-2">
+                            {['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'].map((day) => (
+                                <div key={day} className="text-xs font-medium text-gray-400 text-center py-1">
+                                    {day}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-1">
+                            {(() => {
+                                const daysInMonth = new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 0).getDate();
+                                const firstDay = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), 1).getDay();
+                                const days = [];
+
+                                // Empty slots for previous month
+                                for (let i = 0; i < firstDay; i++) {
+                                    days.push(<div key={`empty-${i}`} className="w-8 h-8" />);
+                                }
+
+                                // Days of current month
+                                for (let i = 1; i <= daysInMonth; i++) {
+                                    const currentDateStr = `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                                    const isSelected = value === currentDateStr;
+                                    const isToday = new Date().toISOString().split('T')[0] === currentDateStr;
+
+                                    days.push(
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => {
+                                                onChange(currentDateStr);
+                                                setIsOpen(false);
+                                            }}
+                                            className={`w-8 h-8 text-xs rounded-full flex items-center justify-center transition-all
+                                                ${isSelected
+                                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                                                    : isToday
+                                                        ? 'text-blue-600 font-bold bg-blue-50'
+                                                        : 'text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            {i}
+                                        </button>
+                                    );
+                                }
+                                return days;
+                            })()}
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onChange("");
+                                    setIsOpen(false);
+                                }}
+                                className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const today = new Date();
+                                    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                    onChange(todayStr);
+                                    setPickerDate(today);
+                                    setIsOpen(false);
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                            >
+                                Today
+                            </button>
+                        </div>
+                    </motion.div>
+                </>
+                , document.body)}
         </div>
     );
 }

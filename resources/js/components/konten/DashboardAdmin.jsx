@@ -456,6 +456,7 @@ export default function DashboardAdmin() {
             gradient: "from-blue-500 to-blue-600",
             shadow: "shadow-blue-500/20",
             iconColor: "text-blue-100",
+            link: "/dashboard/posyandu",
         },
         {
             title: "Total Kader",
@@ -464,6 +465,7 @@ export default function DashboardAdmin() {
             gradient: "from-emerald-500 to-emerald-600",
             shadow: "shadow-emerald-500/20",
             iconColor: "text-emerald-100",
+            link: "/dashboard/kader",
         },
         {
             title: "Total Orang Tua",
@@ -472,6 +474,7 @@ export default function DashboardAdmin() {
             gradient: "from-purple-500 to-purple-600",
             shadow: "shadow-purple-500/20",
             iconColor: "text-purple-100",
+            link: "/dashboard/orang-tua",
         },
         {
             title: "Total Anak",
@@ -480,6 +483,7 @@ export default function DashboardAdmin() {
             gradient: "from-orange-500 to-orange-600",
             shadow: "shadow-orange-500/20",
             iconColor: "text-orange-100",
+            link: "/dashboard/anak",
         },
     ];
 
@@ -657,6 +661,7 @@ export default function DashboardAdmin() {
                                 transition={{ delay: index * 0.05, duration: 0.2 }} // OPTIMIZED: Reduced delay and duration
                                 whileHover={{ y: -4, scale: 1.01 }} // OPTIMIZED: Reduced movement
                                 whileTap={{ scale: 0.99 }}
+                                onClick={() => navigate(card.link)}
                                 className={`relative overflow-hidden rounded-2xl p-5 bg-linear-to-br ${card.gradient} ${card.shadow} shadow-lg cursor-pointer group`}
                             >
                                 {/* OPTIMIZED: Removed animated blob for better performance */}
@@ -791,7 +796,7 @@ export default function DashboardAdmin() {
                                                             fill={colorMap[name] || '#94a3b8'}
                                                             strokeWidth={0}
                                                             opacity={hoveredLegend === null || hoveredLegend === name ? 1 : 0.3}
-                                                            style={{ 
+                                                            style={{
                                                                 cursor: 'pointer',
                                                                 transition: 'opacity 0.3s ease'
                                                             }}
@@ -807,8 +812,8 @@ export default function DashboardAdmin() {
                                                     padding: '12px 16px',
                                                     backgroundColor: 'rgba(255, 255, 255, 0.98)'
                                                 }}
-                                                itemStyle={{ 
-                                                    color: '#1e293b', 
+                                                itemStyle={{
+                                                    color: '#1e293b',
                                                     fontWeight: '600',
                                                     fontSize: '14px'
                                                 }}
@@ -836,7 +841,7 @@ export default function DashboardAdmin() {
                                 </div>
 
                                 {/* Custom Legend with Hover Effects */}
-                                <div className="w-full md:w-1/2 grid grid-cols-2 gap-x-4 gap-y-2 overflow-y-auto max-h-64 pr-2">
+                                <div className="w-full md:w-1/2 grid grid-cols-2 gap-x-4 gap-y-2">
                                     {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count], index) => {
                                         const colorMap = {
                                             'normal': 'bg-emerald-500',
@@ -891,7 +896,7 @@ export default function DashboardAdmin() {
                                 <p className="text-[10px] text-gray-500">Posyandu dengan risiko tertinggi</p>
                             </div>
 
-                            <div className="flex-1 overflow-auto">
+                            <div className="flex-1">
                                 {stats?.top_risk_posyandu && stats.top_risk_posyandu.length > 0 ? (
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-gray-50/50 sticky top-0 z-10">
@@ -937,9 +942,14 @@ export default function DashboardAdmin() {
                                 )}
                             </div>
                             <div className="p-2 border-t border-gray-50 bg-gray-50/30 text-center mt-auto">
-                                <button className="text-[10px] font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                <motion.button
+                                    onClick={() => navigate('/dashboard/laporan')}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="text-[10px] font-medium text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+                                >
                                     Lihat Semua Laporan
-                                </button>
+                                </motion.button>
                             </div>
                         </div>
 

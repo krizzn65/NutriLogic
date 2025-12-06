@@ -12,6 +12,7 @@ import {
     Database,
     LogOut,
     Activity,
+    ArrowLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
@@ -76,6 +77,17 @@ export default function SidebarSuperAdmin() {
                         {links.map((link, idx) => (
                             <SidebarLink key={idx} link={link} />
                         ))}
+                        <div className="mt-4 border-t border-white/20 pt-4">
+                            <SidebarLink
+                                link={{
+                                    label: "Kembali",
+                                    href: "/",
+                                    icon: (
+                                        <ArrowLeft className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
+                                    ),
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
                 <div>
