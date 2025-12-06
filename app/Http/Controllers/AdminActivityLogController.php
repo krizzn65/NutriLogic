@@ -20,6 +20,11 @@ class AdminActivityLogController extends Controller
             $query->where('action', $request->action);
         }
 
+        // Filter by model
+        if ($request->has('model') && $request->model) {
+            $query->where('model', $request->model);
+        }
+
         // Filter by user
         if ($request->has('user_id') && $request->user_id) {
             $query->where('user_id', $request->user_id);

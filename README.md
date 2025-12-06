@@ -339,8 +339,6 @@ Kami menyambut kontribusi dari komunitas! Jika Anda ingin berkontribusi:
 4. Push ke branch (`git push origin feature/AmazingFeature`)
 5. Buat Pull Request
 
----
-
 ## 👥 Tim Pengembang
 
 1. Krisna Panca Dewa

@@ -2,16 +2,12 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
-    FileText, Download, Calendar, TrendingUp, BarChart3,
-    Building2, Users, User, Baby, Scale, Activity, Filter,
-    ChevronDown, Check
+    FileText, Download, Calendar, TrendingUp,
+    Activity, ChevronDown, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PageHeader from "../ui/PageHeader";
-import {
-    AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-    Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell
-} from "recharts";
+// Charts removed in favor of table-centric layout
 
 export default function SystemReports() {
     const [loading, setLoading] = useState(true);
@@ -19,20 +15,12 @@ export default function SystemReports() {
     const [reportData, setReportData] = useState(null);
     const [posyandus, setPosyandus] = useState([]);
     const [selectedPosyandu, setSelectedPosyandu] = useState('all');
-    const [dateRange, setDateRange] = useState({
-        date_from: '',
-        date_to: '',
-    });
 
     // Custom UI States
     const [isPosyanduDropdownOpen, setIsPosyanduDropdownOpen] = useState(false);
-    const [isDateFromOpen, setIsDateFromOpen] = useState(false);
-    const [isDateToOpen, setIsDateToOpen] = useState(false);
 
     // Refs for click outside
     const posyanduRef = useRef(null);
-    const dateFromRef = useRef(null);
-    const dateToRef = useRef(null);
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
@@ -45,12 +33,6 @@ export default function SystemReports() {
             if (posyanduRef.current && !posyanduRef.current.contains(event.target)) {
                 setIsPosyanduDropdownOpen(false);
             }
-            if (dateFromRef.current && !dateFromRef.current.contains(event.target)) {
-                setIsDateFromOpen(false);
-            }
-            if (dateToRef.current && !dateToRef.current.contains(event.target)) {
-                setIsDateToOpen(false);
-            }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
@@ -58,10 +40,9 @@ export default function SystemReports() {
     }, []);
 
     const fetchReportData = useCallback(async ({ forceRefresh = false, showLoader = false } = {}) => {
-        const hasDateFilter = dateRange.date_from || dateRange.date_to;
         const cacheKey = `admin_reports_${selectedPosyandu}`;
 
-        if (!hasDateFilter && !forceRefresh) {
+        if (!forceRefresh) {
             const cachedReports = getCachedData(cacheKey);
             if (cachedReports) {
                 setReportData(cachedReports);
@@ -77,8 +58,6 @@ export default function SystemReports() {
         setError(null);
         const params = {};
         if (selectedPosyandu !== 'all') params.posyandu_id = selectedPosyandu;
-        if (dateRange.date_from) params.date_from = dateRange.date_from;
-        if (dateRange.date_to) params.date_to = dateRange.date_to;
         const requestId = ++activeReportRequestId.current;
 
         try {
@@ -89,10 +68,7 @@ export default function SystemReports() {
             }
 
             setReportData(response.data.data);
-
-            if (!hasDateFilter) {
-                setCachedData(cacheKey, response.data.data);
-            }
+            setCachedData(cacheKey, response.data.data);
         } catch (err) {
             if (activeReportRequestId.current !== requestId) {
                 return;
@@ -106,7 +82,7 @@ export default function SystemReports() {
                 setLoading(false);
             }
         }
-    }, [dateRange, selectedPosyandu, getCachedData, setCachedData]);
+    }, [selectedPosyandu, getCachedData, setCachedData]);
 
     // Fetch posyandus list
     useEffect(() => {
@@ -136,32 +112,18 @@ export default function SystemReports() {
         }
     }, [fetchReportData, getCachedData, selectedPosyandu]);
 
-
     const handleExport = (type) => {
         const params = new URLSearchParams();
         params.append('type', type);
         if (selectedPosyandu !== 'all') params.append('posyandu_id', selectedPosyandu);
-        if (dateRange.date_from) params.append('date_from', dateRange.date_from);
-        if (dateRange.date_to) params.append('date_to', dateRange.date_to);
 
-        const token = localStorage.getItem('token');
         const url = `${import.meta.env.VITE_API_URL}/admin/reports/export?${params.toString()}`;
         window.open(url, '_blank');
     };
 
-    const getStatusColor = (status) => {
-        const colorMap = {
-            'normal': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            'kurang': 'bg-[#FDC700] text-gray-900 border-[#FDC700]',
-            'sangat_kurang': 'bg-[#F43F5E] text-white border-[#F43F5E]',
-            'pendek': 'bg-[#FFE06D] text-gray-900 border-[#FFE06D]',
-            'sangat_pendek': 'bg-[#FE7189] text-white border-[#FE7189]',
-            'kurus': 'bg-[#D9C990] text-gray-900 border-[#D9C990]',
-            'sangat_kurus': 'bg-[#FB9FAF] text-rose-950 border-[#FB9FAF]',
-            'lebih': 'bg-[#FFF8D2] text-gray-900 border-[#FFF8D2]',
-            'gemuk': 'bg-[#FFCCD5] text-rose-900 border-[#FFCCD5]',
-        };
-        return colorMap[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    const handleClearFilters = () => {
+        setSelectedPosyandu('all');
+        hasHydratedReports.current = false;
     };
 
     const getStatusLabel = (status) => {
@@ -178,6 +140,10 @@ export default function SystemReports() {
         };
         return labels[status] || status;
     };
+
+    const statusDistribution = reportData?.status_distribution || {};
+    const monthlyTrend = reportData?.monthly_trend || [];
+    const growthByPosyandu = reportData?.growth_by_posyandu || [];
 
     // Animation variants
     const containerVariants = {
@@ -214,66 +180,71 @@ export default function SystemReports() {
             <PageHeader title="Laporan Sistem" subtitle="Ringkasan statistik dan performa NutriLogic" />
             <div className="flex-1 overflow-auto p-6 space-y-6">
 
-                {/* Posyandu Filter */}
-                <div className="flex justify-start">
-                    <div className="relative" ref={posyanduRef}>
-                        <label className="text-xs font-medium text-gray-500 mb-1 block">
-                            Filter Posyandu
-                        </label>
-                        <button
-                            onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
-                            className="w-56 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:bg-gray-50 transition-colors text-gray-900 shadow-sm"
-                        >
-                            <span className="truncate">
-                                {selectedPosyandu === 'all'
-                                    ? 'Semua Posyandu'
-                                    : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                {/* Filter Bar */}
+                <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 lg:p-5">
+                    <div>
+                        <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Filter Posyandu</p>
+                        <p className="text-sm text-gray-600">Saring laporan berdasarkan posyandu yang ingin dianalisis.</p>
+                    </div>
 
-                        <AnimatePresence>
-                            {isPosyanduDropdownOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
-                                >
-                                    <div className="max-h-64 overflow-y-auto p-1">
-                                        <div
-                                            onClick={() => {
-                                                setSelectedPosyandu('all');
-                                                setIsPosyanduDropdownOpen(false);
-                                                hasHydratedReports.current = false;
-                                            }}
-                                            className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
-                                        >
-                                            <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                Semua Posyandu
-                                            </span>
-                                            {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
-                                        </div>
-                                        {posyandus.map((posyandu) => (
+                    <div className="mt-3">
+                        <div className="relative w-64" ref={posyanduRef}>
+                            <label className="text-[11px] font-semibold text-gray-500 mb-1 block">Posyandu</label>
+                            <button
+                                onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:bg-white transition-colors text-gray-900 shadow-sm"
+                            >
+                                <span className="truncate">
+                                    {selectedPosyandu === 'all'
+                                        ? 'Semua Posyandu'
+                                        : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isPosyanduDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
+                                    >
+                                        <div className="max-h-64 overflow-y-auto p-1">
                                             <div
-                                                key={posyandu.id}
                                                 onClick={() => {
-                                                    setSelectedPosyandu(posyandu.id);
+                                                    setSelectedPosyandu('all');
                                                     setIsPosyanduDropdownOpen(false);
                                                     hasHydratedReports.current = false;
                                                 }}
                                                 className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                             >
-                                                <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                    {posyandu.name}
+                                                <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                    Semua Posyandu
                                                 </span>
-                                                {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
+                                                {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
                                             </div>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                            {posyandus.map((posyandu) => (
+                                                <div
+                                                    key={posyandu.id}
+                                                    onClick={() => {
+                                                        setSelectedPosyandu(posyandu.id);
+                                                        setIsPosyanduDropdownOpen(false);
+                                                        hasHydratedReports.current = false;
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                >
+                                                    <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                        {posyandu.name}
+                                                    </span>
+                                                    {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
 
@@ -295,270 +266,151 @@ export default function SystemReports() {
                         animate="visible"
                         className="space-y-8"
                     >
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <SummaryCard
-                                title="Total Posyandu"
-                                value={reportData.summary.total_posyandu}
-                                icon={Building2}
-                                color="blue"
-                            />
-                            <SummaryCard
-                                title="Total Kader"
-                                value={reportData.summary.total_kader}
-                                icon={Users}
-                                color="indigo"
-                            />
-                            <SummaryCard
-                                title="Total Orang Tua"
-                                value={reportData.summary.total_ibu}
-                                icon={User}
-                                color="violet"
-                            />
-                            <SummaryCard
-                                title="Total Anak"
-                                value={reportData.summary.total_anak}
-                                icon={Baby}
-                                color="pink"
-                            />
-                            <SummaryCard
-                                title="Total Penimbangan"
-                                value={reportData.summary.total_weighings}
-                                icon={Scale}
-                                color="emerald"
-                            />
+                        {/* Summary Table */}
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Keterangan</th>
+                                        <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 text-sm">
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="py-3 px-4 font-medium text-gray-800">Total Posyandu</td>
+                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_posyandu ?? 0}</td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="py-3 px-4 font-medium text-gray-800">Total Kader</td>
+                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_kader ?? 0}</td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="py-3 px-4 font-medium text-gray-800">Total Orang Tua</td>
+                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_ibu ?? 0}</td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="py-3 px-4 font-medium text-gray-800">Total Anak</td>
+                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_anak ?? 0}</td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="py-3 px-4 font-medium text-gray-800">Total Penimbangan</td>
+                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_weighings ?? 0}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Nutritional Status Distribution */}
+                            {/* Nutritional Status Distribution - Table */}
                             <motion.div variants={itemVariants} className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                                <div className="flex items-center gap-3 mb-6">
+                                <div className="flex items-center gap-3 mb-4">
                                     <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
                                         <Activity className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-lg font-bold text-gray-800">Distribusi Status Gizi</h2>
                                 </div>
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
-                                    <div className="w-full md:w-1/2 h-64 relative">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={Object.entries(reportData.status_distribution).map(([name, value]) => ({ name: getStatusLabel(name), value, rawName: name }))}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
-                                                    paddingAngle={5}
-                                                    dataKey="value"
-                                                >
-                                                    {Object.entries(reportData.status_distribution).map(([name, value], index) => {
-                                                        const colorMap = {
-                                                            normal: '#10b981', // emerald-500
-                                                            kurang: '#FDC700',
-                                                            sangat_kurang: '#F43F5E',
-                                                            pendek: '#FFE06D',
-                                                            sangat_pendek: '#FE7189',
-                                                            kurus: '#D9C990',
-                                                            sangat_kurus: '#FB9FAF',
-                                                            lebih: '#FFF8D2',
-                                                            gemuk: '#FFCCD5',
-                                                        };
-                                                        return <Cell key={`cell-${index}`} fill={colorMap[name] || '#94a3b8'} strokeWidth={0} />;
-                                                    })}
-                                                </Pie>
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                                    itemStyle={{ color: '#1e293b', fontWeight: '600' }}
-                                                />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        {/* Center Text */}
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-3xl font-bold text-gray-800">
-                                                {Object.values(reportData.status_distribution).reduce((a, b) => a + b, 0)}
-                                            </span>
-                                            <span className="text-xs text-gray-500 font-medium">Total Anak</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Custom Legend */}
-                                    <div className="w-full md:w-1/2 grid grid-cols-2 gap-3">
-                                        {Object.entries(reportData.status_distribution).map(([status, count]) => {
-                                            const colorMap = {
-                                                normal: 'bg-emerald-500',
-                                                kurang: 'bg-[#FDC700]',
-                                                sangat_kurang: 'bg-[#F43F5E]',
-                                                pendek: 'bg-[#FFE06D]',
-                                                sangat_pendek: 'bg-[#FE7189]',
-                                                kurus: 'bg-[#D9C990]',
-                                                sangat_kurus: 'bg-[#FB9FAF]',
-                                                lebih: 'bg-[#FFF8D2]',
-                                                gemuk: 'bg-[#FFCCD5]',
-                                            };
-                                            return (
-                                                <div key={status} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`w-3 h-3 rounded-full ${colorMap[status] || 'bg-gray-400'}`} />
-                                                        <span className="text-sm text-gray-600 font-medium">{getStatusLabel(status)}</span>
-                                                    </div>
-                                                    <span className="text-sm font-bold text-gray-900">{count}</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="bg-gray-50">
+                                                <th className="text-left px-4 py-2 font-semibold text-gray-600">Status</th>
+                                                <th className="text-left px-4 py-2 font-semibold text-gray-600">Jumlah</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {Object.entries(statusDistribution).map(([status, count]) => (
+                                                <tr key={status} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-2 font-medium text-gray-800">{getStatusLabel(status)}</td>
+                                                    <td className="px-4 py-2 text-gray-700">{count}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr className="bg-gray-50">
+                                                <td className="px-4 py-2 font-bold text-gray-800">Total Anak</td>
+                                                <td className="px-4 py-2 font-bold text-gray-900">{Object.values(statusDistribution).reduce((a, b) => a + b, 0)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </motion.div>
 
                             {/* Export Actions */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col">
-                                <div className="flex items-center gap-3 mb-6">
+                            <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
                                     <div className="p-2 bg-gray-100 text-gray-600 rounded-lg">
                                         <Download className="w-5 h-5" />
                                     </div>
-                                    <h2 className="text-lg font-bold text-gray-800">Export Data</h2>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-gray-800">Export Data</h2>
+                                        <p className="text-xs text-gray-500">Unduh data sesuai filter yang dipilih.</p>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-3 flex-1 justify-center">
-                                    <ExportButton
-                                        onClick={() => handleExport('summary')}
-                                        label="Export Ringkasan"
-                                        color="blue"
-                                    />
-                                    <ExportButton
-                                        onClick={() => handleExport('children')}
-                                        label="Export Data Anak"
-                                        color="emerald"
-                                    />
-                                    <ExportButton
-                                        onClick={() => handleExport('weighings')}
-                                        label="Export Penimbangan"
-                                        color="violet"
-                                    />
-                                </div>
+                                <ExportButton onClick={() => handleExport('summary')} label="Export Ringkasan" color="blue" />
+                                <ExportButton onClick={() => handleExport('children')} label="Export Data Anak" color="emerald" />
+                                <ExportButton onClick={() => handleExport('weighings')} label="Export Penimbangan" color="violet" />
                             </motion.div>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Monthly Trend - Area Chart */}
+                            {/* Monthly Trend - Table */}
                             <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                                <div className="flex items-center gap-3 mb-6">
+                                <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                                         <TrendingUp className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-lg font-bold text-gray-800">Tren Penimbangan</h2>
                                 </div>
-                                <div className="h-72">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart
-                                            data={reportData.monthly_trend}
-                                            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                        >
-                                            <defs>
-                                                <linearGradient id="colorWeighings" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                            <XAxis
-                                                dataKey="month"
-                                                tick={{ fontSize: 12, fill: '#64748b' }}
-                                                tickLine={false}
-                                                axisLine={{ stroke: '#e2e8f0' }}
-                                            />
-                                            <YAxis
-                                                tick={{ fontSize: 12, fill: '#64748b' }}
-                                                tickLine={false}
-                                                axisLine={false}
-                                            />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    borderRadius: '12px',
-                                                    border: 'none',
-                                                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                                                    backgroundColor: 'white'
-                                                }}
-                                                labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="weighings_count"
-                                                name="Penimbangan"
-                                                stroke="#3b82f6"
-                                                strokeWidth={3}
-                                                fillOpacity={1}
-                                                fill="url(#colorWeighings)"
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="bg-gray-50">
+                                                <th className="text-left px-4 py-2 font-semibold text-gray-600">Bulan</th>
+                                                <th className="text-left px-4 py-2 font-semibold text-gray-600">Jumlah Penimbangan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {monthlyTrend.map((row) => (
+                                                <tr key={row.month} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-2 font-medium text-gray-800">{row.month}</td>
+                                                    <td className="px-4 py-2 text-gray-700">{row.weighings_count}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </motion.div>
 
-                            {/* Monthly Statistics - Bar Chart */}
+                            {/* Monthly Statistics - Table */}
                             <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                                <div className="flex items-center gap-3 mb-6">
+                                <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                                         <Calendar className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-lg font-bold text-gray-800">Statistik Bulanan</h2>
                                 </div>
-                                <div className="h-72">
-                                    {reportData.growth_by_posyandu.length === 0 ? (
-                                        <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                                            Tidak ada data tersedia
-                                        </div>
+                                <div className="overflow-x-auto">
+                                    {growthByPosyandu.length === 0 ? (
+                                        <div className="py-8 text-center text-gray-400 text-sm">Tidak ada data tersedia</div>
                                     ) : (
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart
-                                                data={reportData.growth_by_posyandu}
-                                                margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-                                                barGap={8}
-                                            >
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                                                <XAxis
-                                                    dataKey="month"
-                                                    tick={{ fontSize: 11, fill: '#64748b' }}
-                                                    tickLine={false}
-                                                    axisLine={{ stroke: '#e2e8f0' }}
-                                                    angle={-45}
-                                                    textAnchor="end"
-                                                    height={60}
-                                                />
-                                                <YAxis
-                                                    tick={{ fontSize: 12, fill: '#64748b' }}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                />
-                                                <Tooltip
-                                                    cursor={{ fill: '#f8fafc' }}
-                                                    contentStyle={{
-                                                        borderRadius: '12px',
-                                                        border: 'none',
-                                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                                                        backgroundColor: 'white',
-                                                        padding: '12px'
-                                                    }}
-                                                    labelStyle={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}
-                                                />
-                                                <Legend
-                                                    wrapperStyle={{ paddingTop: '20px' }}
-                                                    iconType="circle"
-                                                />
-                                                <Bar
-                                                    dataKey="children_count"
-                                                    name="Anak Ditimbang"
-                                                    fill="#8b5cf6"
-                                                    radius={[6, 6, 0, 0]}
-                                                    barSize={20}
-                                                />
-                                                <Bar
-                                                    dataKey="weighings_count"
-                                                    name="Total Penimbangan"
-                                                    fill="#3b82f6"
-                                                    radius={[6, 6, 0, 0]}
-                                                    barSize={20}
-                                                />
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                        <table className="min-w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-50">
+                                                    <th className="text-left px-4 py-2 font-semibold text-gray-600">Bulan</th>
+                                                    <th className="text-left px-4 py-2 font-semibold text-gray-600">Anak Ditimbang</th>
+                                                    <th className="text-left px-4 py-2 font-semibold text-gray-600">Total Penimbangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {growthByPosyandu.map((row) => (
+                                                    <tr key={`${row.month}-${row.children_count}`} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-2 font-medium text-gray-800">{row.month}</td>
+                                                        <td className="px-4 py-2 text-gray-700">{row.children_count}</td>
+                                                        <td className="px-4 py-2 text-gray-700">{row.weighings_count}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     )}
                                 </div>
                             </motion.div>
@@ -567,36 +419,6 @@ export default function SystemReports() {
                 )}
             </div>
         </div>
-    );
-}
-
-// Helper Components
-
-
-function SummaryCard({ title, value, icon: Icon, color }) {
-    const colorClasses = {
-        blue: "bg-blue-50 text-blue-600",
-        indigo: "bg-indigo-50 text-indigo-600",
-        violet: "bg-violet-50 text-violet-600",
-        pink: "bg-pink-50 text-pink-600",
-        emerald: "bg-emerald-50 text-emerald-600",
-    };
-
-    return (
-        <motion.div
-            variants={{ hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1 } }}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-        >
-            <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
-                    <Icon className="w-6 h-6" />
-                </div>
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-500">{title}</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
-            </div>
-        </motion.div>
     );
 }
 

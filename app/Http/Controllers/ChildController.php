@@ -101,6 +101,9 @@ class ChildController extends Controller
 
         $child = Child::create($validated);
 
+        // Log activity
+        AdminActivityLogController::log('create', "{$user->name} mendaftarkan anak: {$child->full_name}", 'Child', $child->id);
+
         return response()->json([
             'data' => $child->load(['parent', 'posyandu']),
             'message' => 'Child registered successfully.',
@@ -141,6 +144,11 @@ class ChildController extends Controller
 
         $child->update($validated);
 
+        $child->update($validated);
+
+        // Log activity
+        AdminActivityLogController::log('update', "{$user->name} memperbarui data anak: {$child->full_name}", 'Child', $child->id);
+
         return response()->json([
             'data' => $child->load(['parent', 'posyandu']),
             'message' => 'Child updated successfully.',
@@ -169,6 +177,9 @@ class ChildController extends Controller
         }
 
         $child->update(['is_active' => false]);
+
+        // Log activity
+        AdminActivityLogController::log('delete', "{$user->name} menonaktifkan anak: {$child->full_name}", 'Child', $child->id);
 
         return response()->json([
             'message' => 'Child deactivated successfully.',

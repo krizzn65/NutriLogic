@@ -42,6 +42,9 @@ class AuthController extends Controller
         // Create user
         $user = User::create($validated);
 
+        // Log activity
+        AdminActivityLogController::log('create', "User baru registrasi: {$user->name}", 'User', $user->id);
+
         // Generate Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -66,6 +69,11 @@ class AuthController extends Controller
 
         // Check password
         if (!$user || !Hash::check($request->password, $user->password)) {
+            // Log failed login attempt
+            if ($user) {
+                AdminActivityLogController::log('login', "Login gagal untuk user: {$user->name}", 'User', $user->id);
+            }
+            
             return response()->json([
                 'message' => 'Email atau password salah.',
             ], 401);
@@ -76,6 +84,9 @@ class AuthController extends Controller
 
         // Generate Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Log successful login
+        AdminActivityLogController::log('login', "User login: {$user->name} ({$user->role})", 'User', $user->id);
 
         // Add points and check badges for login (only for ibu role)
         if ($user->isIbu()) {
@@ -95,8 +106,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        $user = $request->user();
+        
+        // Log logout
+        AdminActivityLogController::log('logout', "User logout: {$user->name} ({$user->role})", 'User', $user->id);
+        
         // Delete current access token
-        $request->user()->currentAccessToken()->delete();
+        $user->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logged out successfully.',

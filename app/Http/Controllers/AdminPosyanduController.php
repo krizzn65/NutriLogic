@@ -61,6 +61,9 @@ class AdminPosyanduController extends Controller
 
         $posyandu = Posyandu::create($validated);
 
+        // Log activity
+        AdminActivityLogController::log('create', "Admin membuat posyandu baru: {$posyandu->name}", 'Posyandu', $posyandu->id);
+
         return response()->json([
             'data' => $posyandu,
             'message' => 'Posyandu berhasil ditambahkan.',
@@ -92,6 +95,9 @@ class AdminPosyanduController extends Controller
 
         $posyandu->update($validated);
 
+        // Log activity
+        AdminActivityLogController::log('update', "Admin memperbarui posyandu: {$posyandu->name}", 'Posyandu', $posyandu->id);
+
         return response()->json([
             'data' => $posyandu,
             'message' => 'Posyandu berhasil diperbarui.',
@@ -113,6 +119,10 @@ class AdminPosyanduController extends Controller
 
         $posyandu->is_active = !$posyandu->is_active;
         $posyandu->save();
+
+        // Log activity
+        $status = $posyandu->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        AdminActivityLogController::log('update', "Admin {$status} posyandu: {$posyandu->name}", 'Posyandu', $posyandu->id);
 
         return response()->json([
             'data' => $posyandu,
