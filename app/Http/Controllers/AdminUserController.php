@@ -82,6 +82,9 @@ class AdminUserController extends Controller
 
         $user = User::create($validated);
 
+        // Log activity
+        AdminActivityLogController::log('create', "Admin membuat user baru: {$user->name} ({$user->role})", 'User', $user->id);
+
         return response()->json([
             'data' => $user,
             'password' => $password, // Return password for first-time setup
@@ -119,6 +122,9 @@ class AdminUserController extends Controller
 
         $user->update($validated);
 
+        // Log activity
+        AdminActivityLogController::log('update', "Admin memperbarui user: {$user->name} ({$user->role})", 'User', $user->id);
+
         return response()->json([
             'data' => $user,
             'message' => 'User berhasil diperbarui.',
@@ -140,6 +146,10 @@ class AdminUserController extends Controller
 
         $user->is_active = !($user->is_active ?? true);
         $user->save();
+
+        // Log activity
+        $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        AdminActivityLogController::log('update', "Admin {$status} user: {$user->name}", 'User', $user->id);
 
         return response()->json([
             'data' => $user,

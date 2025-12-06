@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { logoutWithApi } from "../../lib/auth";
 import { getMaintenanceMode } from "../../lib/sessionTimeout";
@@ -6,14 +6,60 @@ import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
     Users, Building2, Baby, UserCog, AlertTriangle,
-    Shield, Bell, Calendar, ChevronDown, MoreHorizontal, Settings, LogOut, TrendingUp
+    Shield, Bell, Calendar, ChevronDown, MoreHorizontal, Settings, LogOut, TrendingUp, Check, ArrowUpRight, Activity
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
 import DashboardAdminSkeleton from "../loading/DashboardAdminSkeleton";
 import AdminProfileModal from "../dashboard/AdminProfileModal";
 import AdminSettingsModal from "../dashboard/AdminSettingsModal";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
+
+// Static color maps to avoid re-creation on every render
+const STATUS_COLOR_MAP = {
+    'normal': '#10b981',
+    'kurang': '#FDC700',
+    'sangat_kurang': '#F43F5E',
+    'pendek': '#FFE06D',
+    'sangat_pendek': '#FE7189',
+    'kurus': '#D9C990',
+    'sangat_kurus': '#FB9FAF',
+    'lebih': '#FFF8D2',
+    'gemuk': '#FFCCD5',
+};
+
+const STATUS_BG_COLOR_MAP = {
+    'normal': 'bg-emerald-500',
+    'kurang': 'bg-[#FDC700]',
+    'sangat_kurang': 'bg-[#F43F5E]',
+    'pendek': 'bg-[#FFE06D]',
+    'sangat_pendek': 'bg-[#FE7189]',
+    'kurus': 'bg-[#D9C990]',
+    'sangat_kurus': 'bg-[#FB9FAF]',
+    'lebih': 'bg-[#FFF8D2]',
+    'gemuk': 'bg-[#FFCCD5]',
+};
+
+const STATUS_LABELS = {
+    normal: 'Normal',
+    kurang: 'Kurang',
+    sangat_kurang: 'Sangat Kurang',
+    pendek: 'Pendek',
+    sangat_pendek: 'Sangat Pendek',
+    kurus: 'Kurus',
+    sangat_kurus: 'Sangat Kurus',
+    lebih: 'Lebih',
+    gemuk: 'Gemuk',
+};
+
+// Static card config (icons and gradients don't change)
+const STAT_CARD_CONFIG = [
+    { title: "Total Posyandu", key: 'total_posyandu', icon: Building2, gradient: "from-blue-500 to-blue-600", shadow: "shadow-blue-500/20", iconColor: "text-blue-100" },
+    { title: "Total Kader", key: 'total_kader', icon: UserCog, gradient: "from-emerald-500 to-emerald-600", shadow: "shadow-emerald-500/20", iconColor: "text-emerald-100" },
+    { title: "Total Orang Tua", key: 'total_ibu', icon: Users, gradient: "from-purple-500 to-purple-600", shadow: "shadow-purple-500/20", iconColor: "text-purple-100" },
+    { title: "Total Anak", key: 'total_anak', icon: Baby, gradient: "from-orange-500 to-orange-600", shadow: "shadow-orange-500/20", iconColor: "text-orange-100" },
+];
 
 export default function DashboardAdmin() {
     const [loading, setLoading] = useState(true);
@@ -23,6 +69,22 @@ export default function DashboardAdmin() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+    // Posyandu Filter State
+    const [posyandus, setPosyandus] = useState([]);
+    const [selectedPosyandu, setSelectedPosyandu] = useState('all');
+    const [isPosyanduDropdownOpen, setIsPosyanduDropdownOpen] = useState(false);
+    const posyanduRef = React.useRef(null);
+
+    // Interactive state for charts
+    const [activeIndex, setActiveIndex] = useState(null);
+    const [hoveredLegend, setHoveredLegend] = useState(null);
+
+    // Motion & render controls
+    const [shouldReduceMotion, setShouldReduceMotion] = useState(false);
+    const [chartAnimationEnabled, setChartAnimationEnabled] = useState(false);
+    const [showCharts, setShowCharts] = useState(false);
+
     const navigate = useNavigate();
 
     // Confirmation Modal State
@@ -71,13 +133,38 @@ export default function DashboardAdmin() {
 
         window.addEventListener('storage', handleStorageChange);
 
-        // Also check periodically in case same-tab changes
-        const interval = setInterval(checkMaintenanceMode, 1000);
+        // OPTIMIZED: Check every 30 seconds instead of every second
+        const interval = setInterval(checkMaintenanceMode, 30000);
 
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             clearInterval(interval);
         };
+    }, []);
+
+    // Click outside handler for Posyandu dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (posyanduRef.current && !posyanduRef.current.contains(event.target)) {
+                setIsPosyanduDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Fetch posyandus list
+    useEffect(() => {
+        const fetchPosyandus = async () => {
+            try {
+                const response = await api.get('/admin/posyandus', { params: { status: 'active' } });
+                setPosyandus(response.data.data || []);
+            } catch (err) {
+                console.error('Failed to fetch posyandus:', err);
+            }
+        };
+        fetchPosyandus();
     }, []);
 
     // Data caching
@@ -97,6 +184,33 @@ export default function DashboardAdmin() {
         }, 5 * 60 * 1000); // 5 minutes
 
         return () => clearInterval(heartbeat);
+    }, []);
+
+    // Respect prefers-reduced-motion and disable mount animations on first paint
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const updateMotionPreference = () => setShouldReduceMotion(mediaQuery.matches);
+
+        updateMotionPreference();
+        mediaQuery.addEventListener('change', updateMotionPreference);
+
+        return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+    }, []);
+
+    // Enable chart animations only after initial paint (and only if motion allowed)
+    useEffect(() => {
+        if (shouldReduceMotion) {
+            setChartAnimationEnabled(false);
+            return;
+        }
+        const timer = setTimeout(() => setChartAnimationEnabled(true), 300);
+        return () => clearTimeout(timer);
+    }, [shouldReduceMotion]);
+
+    // Defer rendering heavy charts to avoid blocking first paint
+    useEffect(() => {
+        const timer = setTimeout(() => setShowCharts(true), 250);
+        return () => clearTimeout(timer);
     }, []);
 
     const handleLogout = () => {
@@ -139,8 +253,10 @@ export default function DashboardAdmin() {
     }, [getCachedData, setCachedData]);
 
     const fetchDashboardData = useCallback(async ({ forceRefresh = false, showLoader = false } = {}) => {
+        const cacheKey = `admin_dashboard_${selectedPosyandu}`;
+
         if (!forceRefresh) {
-            const cachedStats = getCachedData('admin_dashboard');
+            const cachedStats = getCachedData(cacheKey);
             if (cachedStats) {
                 setStats(cachedStats);
                 setLoading(false);
@@ -156,14 +272,17 @@ export default function DashboardAdmin() {
         const requestId = ++activeDashboardRequestId.current;
 
         try {
-            const response = await api.get('/admin/dashboard');
+            const params = {};
+            if (selectedPosyandu !== 'all') params.posyandu_id = selectedPosyandu;
+
+            const response = await api.get('/admin/dashboard', { params });
 
             if (activeDashboardRequestId.current !== requestId) {
                 return;
             }
 
             setStats(response.data.data);
-            setCachedData('admin_dashboard', response.data.data);
+            setCachedData(cacheKey, response.data.data);
         } catch (err) {
             if (activeDashboardRequestId.current !== requestId) {
                 return;
@@ -177,10 +296,11 @@ export default function DashboardAdmin() {
                 setLoading(false);
             }
         }
-    }, [getCachedData, setCachedData]);
+    }, [getCachedData, setCachedData, selectedPosyandu]);
 
     useEffect(() => {
-        const cachedStats = getCachedData('admin_dashboard');
+        const cacheKey = `admin_dashboard_${selectedPosyandu}`;
+        const cachedStats = getCachedData(cacheKey);
         const cachedUser = getCachedData('admin_user_profile');
 
         if (cachedStats) {
@@ -192,31 +312,18 @@ export default function DashboardAdmin() {
             setUser(cachedUser);
         }
 
-        if (cachedStats) {
-            fetchDashboardData({ forceRefresh: true, showLoader: false });
-        } else {
-            fetchDashboardData({ forceRefresh: false, showLoader: true });
-        }
+        // OPTIMIZED: Only force refresh if no cache exists
+        const shouldForceRefresh = !cachedStats;
+        fetchDashboardData({ forceRefresh: shouldForceRefresh, showLoader: shouldForceRefresh });
 
-        if (cachedUser) {
-            fetchUserProfile({ forceRefresh: true });
-        } else {
+        // OPTIMIZED: Only fetch user if not cached
+        if (!cachedUser) {
             fetchUserProfile({ forceRefresh: false });
         }
-    }, [fetchDashboardData, fetchUserProfile, getCachedData]);
+    }, [selectedPosyandu]); // OPTIMIZED: Removed fetchDashboardData and fetchUserProfile from deps
 
-    // Generate "AI-based" notifications when stats are loaded
-    useEffect(() => {
-        if (stats) {
-            const allNotifications = generateSmartNotifications(stats);
-            // Filter out dismissed notifications from localStorage
-            const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-            const filteredNotifications = allNotifications.filter(n => !dismissedIds.includes(n.id));
-            setNotifications(filteredNotifications);
-        }
-    }, [stats]);
-
-    const generateSmartNotifications = (data) => {
+    // OPTIMIZED: Memoize notification generation to prevent recalculation
+    const generateSmartNotifications = useMemo(() => (data) => {
         const notifs = [];
         let idCounter = 1;
 
@@ -274,7 +381,23 @@ export default function DashboardAdmin() {
         });
 
         return notifs;
-    };
+    }, []);
+
+    // OPTIMIZED: Generate notifications only when stats change, with memoization
+    useEffect(() => {
+        if (stats) {
+            const allNotifications = generateSmartNotifications(stats);
+            // OPTIMIZED: Get dismissed IDs once
+            const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+            const filteredNotifications = allNotifications.filter(n => !dismissedIds.includes(n.id));
+            setNotifications(prev => {
+                // OPTIMIZED: Only update if changed
+                const prevIds = prev.map(n => n.id).sort().join(',');
+                const newIds = filteredNotifications.map(n => n.id).sort().join(',');
+                return prevIds !== newIds ? filteredNotifications : prev;
+            });
+        }
+    }, [stats, generateSmartNotifications]);
 
     const handleNotificationClick = (notification) => {
         // Handle maintenance notification - open settings modal
@@ -330,29 +453,33 @@ export default function DashboardAdmin() {
             title: "Total Posyandu",
             value: stats?.total_posyandu || 0,
             icon: Building2,
-            color: "text-blue-600",
-            bgColor: "bg-blue-50",
+            gradient: "from-blue-500 to-blue-600",
+            shadow: "shadow-blue-500/20",
+            iconColor: "text-blue-100",
         },
         {
             title: "Total Kader",
             value: stats?.total_kader || 0,
             icon: UserCog,
-            color: "text-emerald-600",
-            bgColor: "bg-emerald-50",
+            gradient: "from-emerald-500 to-emerald-600",
+            shadow: "shadow-emerald-500/20",
+            iconColor: "text-emerald-100",
         },
         {
             title: "Total Orang Tua",
             value: stats?.total_ibu || 0,
             icon: Users,
-            color: "text-purple-600",
-            bgColor: "bg-purple-50",
+            gradient: "from-purple-500 to-purple-600",
+            shadow: "shadow-purple-500/20",
+            iconColor: "text-purple-100",
         },
         {
             title: "Total Anak",
             value: stats?.total_anak || 0,
             icon: Baby,
-            color: "text-orange-600",
-            bgColor: "bg-orange-50",
+            gradient: "from-orange-500 to-orange-600",
+            shadow: "shadow-orange-500/20",
+            iconColor: "text-orange-100",
         },
     ];
 
@@ -521,19 +648,45 @@ export default function DashboardAdmin() {
                 <div className="flex flex-col gap-4 w-full h-full">
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {statCards.map((card, index) => (
-                            <div key={index} className="bg-white rounded-xl border border-gray-100 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-shadow duration-300 flex flex-col justify-between">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className={`p-2 rounded-lg ${card.bgColor} ${card.color}`}>
-                                        <card.icon className="w-4 h-4" />
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05, duration: 0.2 }} // OPTIMIZED: Reduced delay and duration
+                                whileHover={{ y: -4, scale: 1.01 }} // OPTIMIZED: Reduced movement
+                                whileTap={{ scale: 0.99 }}
+                                className={`relative overflow-hidden rounded-2xl p-5 bg-linear-to-br ${card.gradient} ${card.shadow} shadow-lg cursor-pointer group`}
+                            >
+                                {/* OPTIMIZED: Removed animated blob for better performance */}
+
+                                <div className="relative z-10 flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <p className="text-xs font-medium text-white/80 uppercase tracking-wider mb-2">{card.title}</p>
+                                        <h3 className="text-3xl font-bold text-white tracking-tight">
+                                            {card.value}
+                                        </h3>
+                                    </div>
+                                    <motion.div
+                                        className={`p-3 rounded-xl bg-white/20 backdrop-blur-sm ${card.iconColor}`}
+                                        whileHover={{ rotate: 15, scale: 1.05 }} // OPTIMIZED: Reduced rotation
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <card.icon className="w-6 h-6 text-white" />
+                                    </motion.div>
+                                </div>
+
+                                <div className="relative z-10 mt-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-1 text-xs text-white/70 font-medium">
+                                        <Activity className="w-3 h-3" />
+                                        <span>Aktif</span>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ArrowUpRight className="w-4 h-4 text-white/70" />
                                     </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-800 tracking-tight">{card.value}</h3>
-                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-1">{card.title}</p>
-                                </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
 
@@ -547,22 +700,78 @@ export default function DashboardAdmin() {
                                     <h2 className="text-base font-bold text-gray-800">Distribusi Status Gizi</h2>
                                     <p className="text-[10px] text-gray-500 mt-0.5">Gambaran umum kesehatan anak</p>
                                 </div>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                </button>
+                                <div className="relative" ref={posyanduRef}>
+                                    <button
+                                        onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-xs font-medium text-gray-600 transition-colors"
+                                    >
+                                        <span className="max-w-[100px] truncate">
+                                            {selectedPosyandu === 'all'
+                                                ? 'Semua Posyandu'
+                                                : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
+                                        </span>
+                                        <ChevronDown className={`w-3 h-3 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isPosyanduDropdownOpen && (
+                                        <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
+                                            <div className="max-h-64 overflow-y-auto p-1">
+                                                <div
+                                                    onClick={() => {
+                                                        setSelectedPosyandu('all');
+                                                        setIsPosyanduDropdownOpen(false);
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                >
+                                                    <span className={`text-xs ${selectedPosyandu === 'all' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
+                                                        Semua Posyandu
+                                                    </span>
+                                                    {selectedPosyandu === 'all' && <Check className="w-3 h-3 text-blue-600" />}
+                                                </div>
+                                                {posyandus.map((posyandu) => (
+                                                    <div
+                                                        key={posyandu.id}
+                                                        onClick={() => {
+                                                            setSelectedPosyandu(posyandu.id);
+                                                            setIsPosyanduDropdownOpen(false);
+                                                        }}
+                                                        className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                    >
+                                                        <span className={`text-xs ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
+                                                            {posyandu.name}
+                                                        </span>
+                                                        {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-3 h-3 text-blue-600" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-6 flex-1 overflow-hidden">
-                                <div className="w-full md:w-1/2 h-48 relative">
+                            <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-8 flex-1 overflow-hidden">
+                                <div className="w-full md:w-1/2 h-64 relative">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
                                                 data={stats?.status_distribution ? Object.entries(stats.status_distribution).map(([name, value]) => ({ name: getStatusLabel(name), value, rawName: name })) : []}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={50}
-                                                outerRadius={70}
-                                                paddingAngle={5}
+                                                innerRadius={70}
+                                                outerRadius={100}
+                                                paddingAngle={3}
                                                 dataKey="value"
+                                                activeIndex={activeIndex}
+                                                activeShape={{
+                                                    outerRadius: 108, // OPTIMIZED: Reduced from 110
+                                                    strokeWidth: 2,
+                                                    stroke: '#fff',
+                                                }}
+                                                onMouseEnter={(_, index) => setActiveIndex(index)}
+                                                onMouseLeave={() => setActiveIndex(null)}
+                                                animationBegin={0}
+                                                animationDuration={400} // OPTIMIZED: Reduced from 800ms
+                                                animationEasing="ease-out"
+                                                isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
                                             >
                                                 {stats?.status_distribution && Object.entries(stats.status_distribution).map(([name, value], index) => {
                                                     const colorMap = {
@@ -576,27 +785,59 @@ export default function DashboardAdmin() {
                                                         'lebih': '#FFF8D2',
                                                         'gemuk': '#FFCCD5',
                                                     };
-                                                    return <Cell key={`cell-${index}`} fill={colorMap[name] || '#94a3b8'} strokeWidth={0} />;
+                                                    return (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={colorMap[name] || '#94a3b8'}
+                                                            strokeWidth={0}
+                                                            opacity={hoveredLegend === null || hoveredLegend === name ? 1 : 0.3}
+                                                            style={{ 
+                                                                cursor: 'pointer',
+                                                                transition: 'opacity 0.3s ease'
+                                                            }}
+                                                        />
+                                                    );
                                                 })}
                                             </Pie>
                                             <Tooltip
-                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                                itemStyle={{ color: '#1e293b', fontWeight: '600' }}
+                                                contentStyle={{
+                                                    borderRadius: '12px',
+                                                    border: 'none',
+                                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                                    padding: '12px 16px',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.98)'
+                                                }}
+                                                itemStyle={{ 
+                                                    color: '#1e293b', 
+                                                    fontWeight: '600',
+                                                    fontSize: '14px'
+                                                }}
+                                                labelStyle={{
+                                                    color: '#64748b',
+                                                    fontWeight: '500',
+                                                    marginBottom: '4px'
+                                                }}
                                             />
                                         </PieChart>
                                     </ResponsiveContainer>
-                                    {/* Center Text */}
+                                    {/* Center Text with Animation */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-2xl font-bold text-gray-800">
+                                        <motion.span
+                                            className="text-4xl font-bold text-gray-800"
+                                            key={stats?.status_distribution ? Object.values(stats.status_distribution).reduce((a, b) => a + b, 0) : 0}
+                                            initial={{ scale: 0.8, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ duration: 0.3 }} // OPTIMIZED: Reduced duration, removed spring
+                                        >
                                             {stats?.status_distribution ? Object.values(stats.status_distribution).reduce((a, b) => a + b, 0) : 0}
-                                        </span>
-                                        <span className="text-[10px] text-gray-500 font-medium">Total Anak</span>
+                                        </motion.span>
+                                        <span className="text-sm text-gray-500 font-medium mt-1">Total Anak</span>
                                     </div>
                                 </div>
 
-                                {/* Custom Legend */}
-                                <div className="w-full md:w-1/2 grid grid-cols-2 gap-2 overflow-y-auto max-h-48 pr-1">
-                                    {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count]) => {
+                                {/* Custom Legend with Hover Effects */}
+                                <div className="w-full md:w-1/2 grid grid-cols-2 gap-x-4 gap-y-2 overflow-y-auto max-h-64 pr-2">
+                                    {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count], index) => {
                                         const colorMap = {
                                             'normal': 'bg-emerald-500',
                                             'kurang': 'bg-[#FDC700]',
@@ -609,13 +850,31 @@ export default function DashboardAdmin() {
                                             'gemuk': 'bg-[#FFCCD5]',
                                         };
                                         return (
-                                            <div key={status} className="flex items-center justify-between p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={`w-2.5 h-2.5 rounded-full ${colorMap[status] || 'bg-gray-400'}`} />
-                                                    <span className="text-xs text-gray-600 font-medium">{getStatusLabel(status)}</span>
+                                            <motion.div
+                                                key={status}
+                                                initial={{ opacity: 0, x: -10 }} // OPTIMIZED: Reduced movement
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: index * 0.03, duration: 0.2 }} // OPTIMIZED: Reduced delay and duration
+                                                whileHover={{ scale: 1.03, x: 2 }} // OPTIMIZED: Reduced scale and movement
+                                                whileTap={{ scale: 0.98 }}
+                                                onMouseEnter={() => {
+                                                    setHoveredLegend(status);
+                                                    setActiveIndex(index);
+                                                }}
+                                                onMouseLeave={() => {
+                                                    setHoveredLegend(null);
+                                                    setActiveIndex(null);
+                                                }}
+                                                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-3 h-3 rounded-full ${colorMap[status] || 'bg-gray-400'} transition-transform ${hoveredLegend === status ? 'scale-110' : ''}`} />
+                                                    <span className="text-sm text-gray-600 font-medium">{getStatusLabel(status)}</span>
                                                 </div>
-                                                <span className="text-xs font-bold text-gray-900">{count}</span>
-                                            </div>
+                                                <span className={`text-sm font-bold text-gray-900 transition-transform ${hoveredLegend === status ? 'scale-105' : ''}`}>
+                                                    {count}
+                                                </span>
+                                            </motion.div>
                                         );
                                     })}
                                 </div>
@@ -635,7 +894,7 @@ export default function DashboardAdmin() {
                             <div className="flex-1 overflow-auto">
                                 {stats?.top_risk_posyandu && stats.top_risk_posyandu.length > 0 ? (
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="bg-gray-50/50 sticky top-0">
+                                        <thead className="bg-gray-50/50 sticky top-0 z-10">
                                             <tr>
                                                 <th className="py-2 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Posyandu</th>
                                                 <th className="py-2 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Risiko</th>
@@ -643,23 +902,30 @@ export default function DashboardAdmin() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
                                             {stats.top_risk_posyandu.map((posyandu, index) => (
-                                                <tr key={posyandu.id} className="hover:bg-gray-50/80 transition-colors group cursor-pointer">
-                                                    <td className="py-2 px-3">
+                                                <motion.tr
+                                                    key={posyandu.id}
+                                                    initial={{ opacity: 0, x: -10 }} // OPTIMIZED: Reduced movement
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: index * 0.05, duration: 0.2 }} // OPTIMIZED: Reduced delay and duration
+                                                    whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', x: 2 }} // OPTIMIZED: Reduced movement
+                                                    className="group cursor-pointer"
+                                                >
+                                                    <td className="py-2.5 px-3">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                            <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
                                                                 {index + 1}
                                                             </div>
-                                                            <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
+                                                            <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
                                                                 {posyandu.name}
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="py-2 px-3 text-right">
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700 group-hover:bg-orange-200 transition-colors">
+                                                    <td className="py-2.5 px-3 text-right">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700 group-hover:bg-orange-200 transition-colors duration-200">
                                                             {posyandu.risk_count}
                                                         </span>
                                                     </td>
-                                                </tr>
+                                                </motion.tr>
                                             ))}
                                         </tbody>
                                     </table>
@@ -681,126 +947,138 @@ export default function DashboardAdmin() {
 
                     {/* New Charts Section */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {/* Monthly Trend - Area Chart */}
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
-                                    <TrendingUp className="w-4 h-4" />
-                                </div>
-                                <h2 className="text-base font-bold text-gray-800">Tren Penimbangan</h2>
+                        {!showCharts ? (
+                            <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 animate-pulse h-64" />
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 animate-pulse h-64" />
                             </div>
-                            <div className="h-56">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart
-                                        data={stats?.monthly_trend || []}
-                                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                                    >
-                                        <defs>
-                                            <linearGradient id="colorWeighings" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                        <XAxis
-                                            dataKey="month"
-                                            tick={{ fontSize: 10, fill: '#64748b' }}
-                                            tickLine={false}
-                                            axisLine={{ stroke: '#e2e8f0' }}
-                                        />
-                                        <YAxis
-                                            tick={{ fontSize: 10, fill: '#64748b' }}
-                                            tickLine={false}
-                                            axisLine={false}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                borderRadius: '12px',
-                                                border: 'none',
-                                                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                                                backgroundColor: 'white'
-                                            }}
-                                            labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="weighings_count"
-                                            name="Penimbangan"
-                                            stroke="#3b82f6"
-                                            strokeWidth={3}
-                                            fillOpacity={1}
-                                            fill="url(#colorWeighings)"
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* Monthly Statistics - Bar Chart */}
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
-                                    <Calendar className="w-4 h-4" />
-                                </div>
-                                <h2 className="text-base font-bold text-gray-800">Statistik Bulanan</h2>
-                            </div>
-                            <div className="h-56">
-                                {!stats?.growth_by_posyandu || stats.growth_by_posyandu.length === 0 ? (
-                                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                                        Tidak ada data tersedia
+                        ) : (
+                            <>
+                                {/* Monthly Trend - Area Chart */}
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
+                                            <TrendingUp className="w-4 h-4" />
+                                        </div>
+                                        <h2 className="text-base font-bold text-gray-800">Tren Penimbangan</h2>
                                     </div>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart
-                                            data={stats.growth_by_posyandu}
-                                            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                                            barGap={4}
-                                        >
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                                            <XAxis
-                                                dataKey="month"
-                                                tick={{ fontSize: 10, fill: '#64748b' }}
-                                                tickLine={false}
-                                                axisLine={{ stroke: '#e2e8f0' }}
-                                                angle={-45}
-                                                textAnchor="end"
-                                                height={50}
-                                            />
-                                            <YAxis
-                                                tick={{ fontSize: 10, fill: '#64748b' }}
-                                                tickLine={false}
-                                                axisLine={false}
-                                            />
-                                            <Tooltip
-                                                cursor={{ fill: '#f8fafc' }}
-                                                contentStyle={{
-                                                    borderRadius: '12px',
-                                                    border: 'none',
-                                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                                                    backgroundColor: 'white',
-                                                    padding: '12px'
-                                                }}
-                                                labelStyle={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}
-                                            />
-                                            <Bar
-                                                dataKey="children_count"
-                                                name="Anak Ditimbang"
-                                                fill="#8b5cf6"
-                                                radius={[4, 4, 0, 0]}
-                                                maxBarSize={30}
-                                            />
-                                            <Bar
-                                                dataKey="weighings_count"
-                                                name="Total Penimbangan"
-                                                fill="#3b82f6"
-                                                radius={[4, 4, 0, 0]}
-                                                maxBarSize={30}
-                                            />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </div>
-                        </div>
+                                    <div className="h-56">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart
+                                                data={stats?.monthly_trend || []}
+                                                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                                            >
+                                                <defs>
+                                                    <linearGradient id="colorWeighings" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                                <XAxis
+                                                    dataKey="month"
+                                                    tick={{ fontSize: 10, fill: '#64748b' }}
+                                                    tickLine={false}
+                                                    axisLine={{ stroke: '#e2e8f0' }}
+                                                />
+                                                <YAxis
+                                                    tick={{ fontSize: 10, fill: '#64748b' }}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        borderRadius: '12px',
+                                                        border: 'none',
+                                                        boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                    labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                                                />
+                                                <Area
+                                                    isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
+                                                    type="monotone"
+                                                    dataKey="weighings_count"
+                                                    name="Penimbangan"
+                                                    stroke="#3b82f6"
+                                                    strokeWidth={3}
+                                                    fillOpacity={1}
+                                                    fill="url(#colorWeighings)"
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Monthly Statistics - Bar Chart */}
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
+                                            <Calendar className="w-4 h-4" />
+                                        </div>
+                                        <h2 className="text-base font-bold text-gray-800">Statistik Bulanan</h2>
+                                    </div>
+                                    <div className="h-56">
+                                        {!stats?.growth_by_posyandu || stats.growth_by_posyandu.length === 0 ? (
+                                            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                                                Tidak ada data tersedia
+                                            </div>
+                                        ) : (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart
+                                                    data={stats.growth_by_posyandu}
+                                                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                                                    barGap={4}
+                                                >
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                                    <XAxis
+                                                        dataKey="month"
+                                                        tick={{ fontSize: 10, fill: '#64748b' }}
+                                                        tickLine={false}
+                                                        axisLine={{ stroke: '#e2e8f0' }}
+                                                        angle={-45}
+                                                        textAnchor="end"
+                                                        height={50}
+                                                    />
+                                                    <YAxis
+                                                        tick={{ fontSize: 10, fill: '#64748b' }}
+                                                        tickLine={false}
+                                                        axisLine={false}
+                                                    />
+                                                    <Tooltip
+                                                        cursor={{ fill: '#f8fafc' }}
+                                                        contentStyle={{
+                                                            borderRadius: '12px',
+                                                            border: 'none',
+                                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                                                            backgroundColor: 'white',
+                                                            padding: '12px'
+                                                        }}
+                                                        labelStyle={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}
+                                                    />
+                                                    <Bar
+                                                        isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
+                                                        dataKey="children_count"
+                                                        name="Anak Ditimbang"
+                                                        fill="#8b5cf6"
+                                                        radius={[4, 4, 0, 0]}
+                                                        maxBarSize={30}
+                                                    />
+                                                    <Bar
+                                                        isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
+                                                        dataKey="weighings_count"
+                                                        name="Total Penimbangan"
+                                                        fill="#3b82f6"
+                                                        radius={[4, 4, 0, 0]}
+                                                        maxBarSize={30}
+                                                    />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </main>

@@ -69,6 +69,9 @@ class AdminArticleController extends Controller
 
         $article = Article::create($validated);
 
+        // Log activity
+        AdminActivityLogController::log('create', "Admin membuat artikel baru: {$article->title}", 'Article', $article->id);
+
         return response()->json([
             'data' => $article,
             'message' => 'Artikel berhasil ditambahkan.',
@@ -128,6 +131,9 @@ class AdminArticleController extends Controller
 
         $article->update($validated);
 
+        // Log activity
+        AdminActivityLogController::log('update', "Admin memperbarui artikel: {$article->title}", 'Article', $article->id);
+
         return response()->json([
             'data' => $article,
             'message' => 'Artikel berhasil diperbarui.',
@@ -147,7 +153,13 @@ class AdminArticleController extends Controller
             ], 404);
         }
 
+        $articleTitle = $article->title;
+        $articleId = $article->id;
+        
         $article->delete();
+
+        // Log activity
+        AdminActivityLogController::log('delete', "Admin menghapus artikel: {$articleTitle}", 'Article', $articleId);
 
         return response()->json([
             'message' => 'Artikel berhasil dihapus.',
@@ -169,6 +181,10 @@ class AdminArticleController extends Controller
 
         $article->is_published = !$article->is_published;
         $article->save();
+
+        // Log activity
+        $status = $article->is_published ? 'mempublikasikan' : 'meng-unpublish';
+        AdminActivityLogController::log('update', "Admin {$status} artikel: {$article->title}", 'Article', $article->id);
 
         return response()->json([
             'data' => $article,

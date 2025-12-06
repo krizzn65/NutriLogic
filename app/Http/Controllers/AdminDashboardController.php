@@ -17,17 +17,33 @@ class AdminDashboardController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $posyanduId = $request->query('posyandu_id');
+
         // Total counts
-        $totalPosyandu = Posyandu::where('is_active', true)->count();
-        $totalKader = User::where('role', 'kader')->count();
-        $totalIbu = User::where('role', 'ibu')->count();
-        $totalAnak = Child::count();
+        $posyanduQuery = Posyandu::where('is_active', true);
+        $kaderQuery = User::where('role', 'kader');
+        $ibuQuery = User::where('role', 'ibu');
+        $anakQuery = Child::query();
+
+        if ($posyanduId) {
+            $posyanduQuery->where('id', $posyanduId);
+            $kaderQuery->where('posyandu_id', $posyanduId);
+            $ibuQuery->where('posyandu_id', $posyanduId);
+            $anakQuery->where('posyandu_id', $posyanduId);
+        }
+
+        $totalPosyandu = $posyanduQuery->count();
+        $totalKader = $kaderQuery->count();
+        $totalIbu = $ibuQuery->count();
+        $totalAnak = $anakQuery->count();
 
         // Get nutritional status distribution
-        $statusDistribution = $this->getNutritionalStatusDistribution();
+        $statusDistribution = $this->getNutritionalStatusDistribution($posyanduId);
 
         // Get top 5 posyandu with highest risk children
-        $topRiskPosyandu = $this->getTopRiskPosyandu();
+        // If specific posyandu is selected, this might just return that one if it has risks, or we can keep showing top 5 globally or filter.
+        // Let's filter it to show risks for the selected posyandu if selected, or top 5 if not.
+        $topRiskPosyandu = $this->getTopRiskPosyandu($posyanduId);
 
         return response()->json([
             'data' => [
@@ -37,8 +53,8 @@ class AdminDashboardController extends Controller
                 'total_anak' => $totalAnak,
                 'status_distribution' => $statusDistribution,
                 'top_risk_posyandu' => $topRiskPosyandu,
-                'monthly_trend' => $this->getMonthlyTrend(),
-                'growth_by_posyandu' => $this->getGrowthByPosyandu(),
+                'monthly_trend' => $this->getMonthlyTrend($posyanduId),
+                'growth_by_posyandu' => $this->getGrowthByPosyandu($posyanduId),
             ],
         ], 200);
     }
@@ -46,7 +62,7 @@ class AdminDashboardController extends Controller
     /**
      * Get nutritional status distribution across all children
      */
-    private function getNutritionalStatusDistribution(): array
+    private function getNutritionalStatusDistribution($posyanduId = null): array
     {
         $distribution = [
             'normal' => 0,
@@ -61,13 +77,19 @@ class AdminDashboardController extends Controller
         ];
 
         // Get latest weighing for each child
-        $latestWeighings = WeighingLog::select('child_id', 'nutritional_status')
-            ->whereIn('id', function ($query) {
+        $latestWeighingsQuery = WeighingLog::select('weighing_logs.child_id', 'weighing_logs.nutritional_status')
+            ->join('children', 'weighing_logs.child_id', '=', 'children.id')
+            ->whereIn('weighing_logs.id', function ($query) {
                 $query->select(DB::raw('MAX(id)'))
                     ->from('weighing_logs')
                     ->groupBy('child_id');
-            })
-            ->get();
+            });
+
+        if ($posyanduId) {
+            $latestWeighingsQuery->where('children.posyandu_id', $posyanduId);
+        }
+
+        $latestWeighings = $latestWeighingsQuery->get();
 
         foreach ($latestWeighings as $weighing) {
             $status = $weighing->nutritional_status;
@@ -82,10 +104,10 @@ class AdminDashboardController extends Controller
     /**
      * Get top 5 posyandu with highest number of at-risk children
      */
-    private function getTopRiskPosyandu(): array
+    private function getTopRiskPosyandu($posyanduId = null): array
     {
         // Get latest weighing for each child with their posyandu
-        $riskCounts = DB::table('weighing_logs as wl')
+        $riskCountsQuery = DB::table('weighing_logs as wl')
             ->select('p.id', 'p.name', DB::raw('COUNT(DISTINCT c.id) as risk_count'))
             ->join(DB::raw('(SELECT child_id, MAX(id) as max_id FROM weighing_logs GROUP BY child_id) as latest'), 
                 'wl.id', '=', 'latest.max_id')
@@ -98,8 +120,13 @@ class AdminDashboardController extends Controller
                 'sangat_pendek', 
                 'kurus', 
                 'sangat_kurus'
-            ])
-            ->groupBy('p.id', 'p.name')
+            ]);
+
+        if ($posyanduId) {
+            $riskCountsQuery->where('p.id', $posyanduId);
+        }
+
+        $riskCounts = $riskCountsQuery->groupBy('p.id', 'p.name')
             ->orderByDesc('risk_count')
             ->limit(5)
             ->get();
@@ -115,7 +142,7 @@ class AdminDashboardController extends Controller
     /**
      * Get growth statistics by posyandu (monthly breakdown for last 12 months)
      */
-    private function getGrowthByPosyandu(): array
+    private function getGrowthByPosyandu($posyanduId = null): array
     {
         // Generate monthly data for last 12 months
         $monthlyData = [];
@@ -132,6 +159,10 @@ class AdminDashboardController extends Controller
                 ->join('children as c', 'wl.child_id', '=', 'c.id')
                 ->whereBetween('wl.measured_at', [$monthStart, $monthEnd]);
 
+            if ($posyanduId) {
+                $query->where('c.posyandu_id', $posyanduId);
+            }
+
             $result = $query->first();
 
             $monthlyData[] = [
@@ -147,7 +178,7 @@ class AdminDashboardController extends Controller
     /**
      * Get monthly trend for last 12 months
      */
-    private function getMonthlyTrend(): array
+    private function getMonthlyTrend($posyanduId = null): array
     {
         $months = [];
         for ($i = 11; $i >= 0; $i--) {
@@ -155,7 +186,14 @@ class AdminDashboardController extends Controller
             $monthStart = $date->copy()->startOfMonth()->format('Y-m-d');
             $monthEnd = $date->copy()->endOfMonth()->format('Y-m-d');
 
-            $weighingsCount = WeighingLog::whereBetween('measured_at', [$monthStart, $monthEnd])->count();
+            $query = WeighingLog::whereBetween('measured_at', [$monthStart, $monthEnd]);
+
+            if ($posyanduId) {
+                $query->join('children', 'weighing_logs.child_id', '=', 'children.id')
+                    ->where('children.posyandu_id', $posyanduId);
+            }
+
+            $weighingsCount = $query->count();
 
             $months[] = [
                 'month' => $date->format('M Y'),
