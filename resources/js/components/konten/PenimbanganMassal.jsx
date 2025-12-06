@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, ChevronLeft, ChevronRight, Search, Save, ArrowLeft, Check } from "lucide-react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import PageHeader from "../dashboard/PageHeader";
 import PenimbanganMassalSkeleton from "../loading/PenimbanganMassalSkeleton";
@@ -13,6 +14,7 @@ export default function PenimbanganMassal() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [children, setChildren] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Date State
     const [weighingDate, setWeighingDate] = useState(new Date().toISOString().split('T')[0]);
@@ -25,11 +27,34 @@ export default function PenimbanganMassal() {
     const [results, setResults] = useState(null);
     const navigate = useNavigate();
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchChildren();
     }, []);
 
     const fetchChildren = async () => {
+        // Check cache first
+        const cachedChildren = getCachedData('kader_weighing_children');
+        if (cachedChildren) {
+            setChildren(cachedChildren);
+            // Initialize weighing data state
+            const initialData = {};
+            cachedChildren.forEach(child => {
+                initialData[child.id] = {
+                    weight_kg: '',
+                    height_cm: '',
+                    muac_cm: '',
+                    head_circumference_cm: '',
+                    notes: '',
+                };
+            });
+            setWeighingData(initialData);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -37,6 +62,7 @@ export default function PenimbanganMassal() {
             const response = await api.get('/kader/weighings/today');
             const childrenData = response.data.data;
             setChildren(childrenData);
+            setCachedData('kader_weighing_children', childrenData);
 
             // Initialize weighing data state
             const initialData = {};
@@ -45,6 +71,7 @@ export default function PenimbanganMassal() {
                     weight_kg: '',
                     height_cm: '',
                     muac_cm: '',
+                    head_circumference_cm: '',
                     notes: '',
                 };
             });
@@ -115,6 +142,11 @@ export default function PenimbanganMassal() {
             const response = await api.post('/kader/weighings/bulk', { weighings });
             setResults(response.data);
 
+            // Invalidate related caches
+            invalidateCache('kader_weighing_children');
+            invalidateCache('kader_dashboard');
+            invalidateCache('kader_priority_children');
+
             // Clear form
             const clearedData = {};
             children.forEach(child => {
@@ -122,6 +154,7 @@ export default function PenimbanganMassal() {
                     weight_kg: '',
                     height_cm: '',
                     muac_cm: '',
+                    head_circumference_cm: '',
                     notes: '',
                 };
             });

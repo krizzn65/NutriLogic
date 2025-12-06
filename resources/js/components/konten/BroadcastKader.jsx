@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,16 +18,27 @@ export default function BroadcastKader() {
         message: "",
     });
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchBroadcasts();
     }, []);
 
     const fetchBroadcasts = async () => {
+        // Check cache first
+        const cachedBroadcasts = getCachedData('kader_broadcasts');
+        if (cachedBroadcasts) {
+            setBroadcasts(cachedBroadcasts);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
             const response = await api.get('/kader/broadcast');
             setBroadcasts(response.data.data);
+            setCachedData('kader_broadcasts', response.data.data);
         } catch (err) {
             console.error('Failed to fetch broadcasts:', err);
             setError('Gagal memuat riwayat broadcast. Silakan coba lagi.');
@@ -53,6 +65,7 @@ export default function BroadcastKader() {
             await api.post('/kader/broadcast', formData);
             setSuccess('Broadcast berhasil dikirim!');
             setFormData({ type: "pengumuman_umum", message: "" });
+            invalidateCache('kader_broadcasts');
             fetchBroadcasts(); // Refresh history
 
             // Auto hide success after 3s
@@ -77,6 +90,7 @@ export default function BroadcastKader() {
         try {
             await api.delete(`/kader/broadcast/${deleteModal.id}`);
             setSuccess('Broadcast berhasil dihapus');
+            invalidateCache('kader_broadcasts');
             fetchBroadcasts();
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
