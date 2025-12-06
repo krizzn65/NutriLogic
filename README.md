@@ -341,27 +341,8 @@ Kami menyambut kontribusi dari komunitas! Jika Anda ingin berkontribusi:
 
 ---
 
-## 📄 Lisensi
-
-Project ini dilisensikan di bawah [MIT License](LICENSE).
-
----
-
 ## 👥 Tim Pengembang
 
-Dikembangkan dengan ❤️ oleh tim NutriLogic
-
----
-
-## 📞 Kontak & Dukungan
-
--   📧 Email: support@nutrilogic.id
--   🌐 Website: https://nutrilogic.id
--   📱 WhatsApp: +62-xxx-xxxx-xxxx
-
----
-
-<div align="center">
-  <p><strong>⭐ Jangan lupa berikan star jika project ini bermanfaat! ⭐</strong></p>
-  <p><em>Bersama wujudkan generasi Indonesia bebas stunting</em></p>
-</div>
+1. Krisna Panca Dewa
+2. Devantara Adani Nazal
+3. Azrieal Akbar Zackiansyah

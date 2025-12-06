@@ -4,6 +4,7 @@ import { useDataCache } from "../../contexts/DataCacheContext";
 import { Baby, Search, X, Building2, User, Calendar, Weight, Ruler, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatAge } from "../../lib/utils";
+import PageHeader from "../ui/PageHeader";
 
 export default function ChildrenMonitoring() {
     const [loading, setLoading] = useState(true);
@@ -194,13 +195,10 @@ export default function ChildrenMonitoring() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Monitoring Data Anak</h1>
-                    <p className="text-gray-600 mt-2">Pantau data anak di seluruh posyandu</p>
-                </div>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Monitoring Data Anak" subtitle="Pantau data anak di seluruh posyandu" />
+
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Filters */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">

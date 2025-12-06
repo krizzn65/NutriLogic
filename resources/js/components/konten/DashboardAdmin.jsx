@@ -6,8 +6,9 @@ import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
     Users, Building2, Baby, UserCog, AlertTriangle,
-    Shield, Bell, Calendar, ChevronDown, MoreHorizontal, Settings, LogOut
+    Shield, Bell, Calendar, ChevronDown, MoreHorizontal, Settings, LogOut, TrendingUp
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import DashboardAdminSkeleton from "../loading/DashboardAdminSkeleton";
 import AdminProfileModal from "../dashboard/AdminProfileModal";
 import AdminSettingsModal from "../dashboard/AdminSettingsModal";
@@ -300,7 +301,7 @@ export default function DashboardAdmin() {
         }
     };
 
-    
+
 
 
     if (loading) {
@@ -520,17 +521,17 @@ export default function DashboardAdmin() {
                 <div className="flex flex-col gap-4 w-full h-full">
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         {statCards.map((card, index) => (
-                            <div key={index} className="bg-white rounded-xl border border-gray-100 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-shadow duration-300 flex flex-col justify-between">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={`p-2.5 rounded-lg ${card.bgColor} ${card.color}`}>
-                                        <card.icon className="w-5 h-5" />
+                            <div key={index} className="bg-white rounded-xl border border-gray-100 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-shadow duration-300 flex flex-col justify-between">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className={`p-2 rounded-lg ${card.bgColor} ${card.color}`}>
+                                        <card.icon className="w-4 h-4" />
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-bold text-gray-800 tracking-tight">{card.value}</h3>
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mt-1">{card.title}</p>
+                                    <h3 className="text-xl font-bold text-gray-800 tracking-tight">{card.value}</h3>
+                                    <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mt-1">{card.title}</p>
                                 </div>
                             </div>
                         ))}
@@ -541,45 +542,94 @@ export default function DashboardAdmin() {
 
                         {/* Status Distribution - Bento Box Style */}
                         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col h-full">
-                            <div className="p-5 border-b border-gray-50 flex justify-between items-center">
+                            <div className="p-4 border-b border-gray-50 flex justify-between items-center">
                                 <div>
-                                    <h2 className="text-lg font-bold text-gray-800">Distribusi Status Gizi</h2>
-                                    <p className="text-xs text-gray-500 mt-1">Gambaran umum kesehatan anak</p>
+                                    <h2 className="text-base font-bold text-gray-800">Distribusi Status Gizi</h2>
+                                    <p className="text-[10px] text-gray-500 mt-0.5">Gambaran umum kesehatan anak</p>
                                 </div>
                                 <button className="text-gray-400 hover:text-gray-600">
-                                    <MoreHorizontal className="w-5 h-5" />
+                                    <MoreHorizontal className="w-4 h-4" />
                                 </button>
                             </div>
-                            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 flex-1 overflow-auto">
-                                {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count]) => (
-                                    <div key={status} className="group">
-                                        <div className="flex justify-between items-end mb-2">
-                                            <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-                                                {getStatusLabel(status)}
-                                            </span>
-                                            <span className="text-sm font-bold text-gray-900">
-                                                {count} <span className="text-xs text-gray-400 font-normal">Anak</span>
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${getStatusColor(status)} transition-all duration-1000 ease-out`}
-                                                style={{ width: `${(count / maxStatusCount) * 100}%` }}
-                                            ></div>
-                                        </div>
+                            <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-6 flex-1 overflow-hidden">
+                                <div className="w-full md:w-1/2 h-48 relative">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={stats?.status_distribution ? Object.entries(stats.status_distribution).map(([name, value]) => ({ name: getStatusLabel(name), value, rawName: name })) : []}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {stats?.status_distribution && Object.entries(stats.status_distribution).map(([name, value], index) => {
+                                                    const colorMap = {
+                                                        'normal': '#10b981',
+                                                        'kurang': '#FDC700',
+                                                        'sangat_kurang': '#F43F5E',
+                                                        'pendek': '#FFE06D',
+                                                        'sangat_pendek': '#FE7189',
+                                                        'kurus': '#D9C990',
+                                                        'sangat_kurus': '#FB9FAF',
+                                                        'lebih': '#FFF8D2',
+                                                        'gemuk': '#FFCCD5',
+                                                    };
+                                                    return <Cell key={`cell-${index}`} fill={colorMap[name] || '#94a3b8'} strokeWidth={0} />;
+                                                })}
+                                            </Pie>
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                                itemStyle={{ color: '#1e293b', fontWeight: '600' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    {/* Center Text */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span className="text-2xl font-bold text-gray-800">
+                                            {stats?.status_distribution ? Object.values(stats.status_distribution).reduce((a, b) => a + b, 0) : 0}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 font-medium">Total Anak</span>
                                     </div>
-                                ))}
+                                </div>
+
+                                {/* Custom Legend */}
+                                <div className="w-full md:w-1/2 grid grid-cols-2 gap-2 overflow-y-auto max-h-48 pr-1">
+                                    {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count]) => {
+                                        const colorMap = {
+                                            'normal': 'bg-emerald-500',
+                                            'kurang': 'bg-[#FDC700]',
+                                            'sangat_kurang': 'bg-[#F43F5E]',
+                                            'pendek': 'bg-[#FFE06D]',
+                                            'sangat_pendek': 'bg-[#FE7189]',
+                                            'kurus': 'bg-[#D9C990]',
+                                            'sangat_kurus': 'bg-[#FB9FAF]',
+                                            'lebih': 'bg-[#FFF8D2]',
+                                            'gemuk': 'bg-[#FFCCD5]',
+                                        };
+                                        return (
+                                            <div key={status} className="flex items-center justify-between p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`w-2.5 h-2.5 rounded-full ${colorMap[status] || 'bg-gray-400'}`} />
+                                                    <span className="text-xs text-gray-600 font-medium">{getStatusLabel(status)}</span>
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-900">{count}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
                         {/* Risk Analysis - Compact Table */}
                         <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col h-full overflow-hidden">
-                            <div className="p-5 border-b border-gray-50 bg-orange-50/30">
+                            <div className="p-4 border-b border-gray-50 bg-orange-50/30">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <AlertTriangle className="w-4 h-4 text-orange-600" />
-                                    <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Area Perhatian</h2>
+                                    <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                                    <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wide">Area Perhatian</h2>
                                 </div>
-                                <p className="text-xs text-gray-500">Posyandu dengan risiko tertinggi</p>
+                                <p className="text-[10px] text-gray-500">Posyandu dengan risiko tertinggi</p>
                             </div>
 
                             <div className="flex-1 overflow-auto">
@@ -587,25 +637,25 @@ export default function DashboardAdmin() {
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-gray-50/50 sticky top-0">
                                             <tr>
-                                                <th className="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Posyandu</th>
-                                                <th className="py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Risiko</th>
+                                                <th className="py-2 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Posyandu</th>
+                                                <th className="py-2 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Risiko</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
                                             {stats.top_risk_posyandu.map((posyandu, index) => (
                                                 <tr key={posyandu.id} className="hover:bg-gray-50/80 transition-colors group cursor-pointer">
-                                                    <td className="py-3 px-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                    <td className="py-2 px-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                                                 {index + 1}
                                                             </div>
-                                                            <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                                                            <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
                                                                 {posyandu.name}
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="py-3 px-4 text-right">
-                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-orange-100 text-orange-700 group-hover:bg-orange-200 transition-colors">
+                                                    <td className="py-2 px-3 text-right">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700 group-hover:bg-orange-200 transition-colors">
                                                             {posyandu.risk_count}
                                                         </span>
                                                     </td>
@@ -615,18 +665,142 @@ export default function DashboardAdmin() {
                                     </table>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                                        <Shield className="w-8 h-8 mb-2 opacity-20" />
-                                        <p className="text-sm">Tidak ada data risiko</p>
+                                        <Shield className="w-6 h-6 mb-2 opacity-20" />
+                                        <p className="text-xs">Tidak ada data risiko</p>
                                     </div>
                                 )}
                             </div>
-                            <div className="p-3 border-t border-gray-50 bg-gray-50/30 text-center mt-auto">
-                                <button className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                            <div className="p-2 border-t border-gray-50 bg-gray-50/30 text-center mt-auto">
+                                <button className="text-[10px] font-medium text-blue-600 hover:text-blue-700 transition-colors">
                                     Lihat Semua Laporan
                                 </button>
                             </div>
                         </div>
 
+                    </div>
+
+                    {/* New Charts Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Monthly Trend - Area Chart */}
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
+                                    <TrendingUp className="w-4 h-4" />
+                                </div>
+                                <h2 className="text-base font-bold text-gray-800">Tren Penimbangan</h2>
+                            </div>
+                            <div className="h-56">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart
+                                        data={stats?.monthly_trend || []}
+                                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                                    >
+                                        <defs>
+                                            <linearGradient id="colorWeighings" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 10, fill: '#64748b' }}
+                                            tickLine={false}
+                                            axisLine={{ stroke: '#e2e8f0' }}
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 10, fill: '#64748b' }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                borderRadius: '12px',
+                                                border: 'none',
+                                                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                                                backgroundColor: 'white'
+                                            }}
+                                            labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="weighings_count"
+                                            name="Penimbangan"
+                                            stroke="#3b82f6"
+                                            strokeWidth={3}
+                                            fillOpacity={1}
+                                            fill="url(#colorWeighings)"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Monthly Statistics - Bar Chart */}
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
+                                    <Calendar className="w-4 h-4" />
+                                </div>
+                                <h2 className="text-base font-bold text-gray-800">Statistik Bulanan</h2>
+                            </div>
+                            <div className="h-56">
+                                {!stats?.growth_by_posyandu || stats.growth_by_posyandu.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                                        Tidak ada data tersedia
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={stats.growth_by_posyandu}
+                                            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                                            barGap={4}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                            <XAxis
+                                                dataKey="month"
+                                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                                tickLine={false}
+                                                axisLine={{ stroke: '#e2e8f0' }}
+                                                angle={-45}
+                                                textAnchor="end"
+                                                height={50}
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                                tickLine={false}
+                                                axisLine={false}
+                                            />
+                                            <Tooltip
+                                                cursor={{ fill: '#f8fafc' }}
+                                                contentStyle={{
+                                                    borderRadius: '12px',
+                                                    border: 'none',
+                                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                                                    backgroundColor: 'white',
+                                                    padding: '12px'
+                                                }}
+                                                labelStyle={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}
+                                            />
+                                            <Bar
+                                                dataKey="children_count"
+                                                name="Anak Ditimbang"
+                                                fill="#8b5cf6"
+                                                radius={[4, 4, 0, 0]}
+                                                maxBarSize={30}
+                                            />
+                                            <Bar
+                                                dataKey="weighings_count"
+                                                name="Total Penimbangan"
+                                                fill="#3b82f6"
+                                                radius={[4, 4, 0, 0]}
+                                                maxBarSize={30}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Settings, Save } from "lucide-react";
+import PageHeader from "../ui/PageHeader";
 
 export default function SystemSettings() {
     const [settings, setSettings] = useState({
@@ -21,13 +22,18 @@ export default function SystemSettings() {
     };
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Pengaturan Sistem</h1>
-                    <p className="text-gray-600 mt-2">Konfigurasi sistem NutriLogic</p>
-                </div>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Pengaturan Sistem" subtitle="Konfigurasi sistem NutriLogic">
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                >
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
+                </button>
+            </PageHeader>
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Settings Form */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -97,17 +103,6 @@ export default function SystemSettings() {
                             <label htmlFor="allow_registration" className="text-sm text-gray-700">
                                 Izinkan Registrasi Baru
                             </label>
-                        </div>
-
-                        <div className="pt-4">
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                            >
-                                <Save className="w-4 h-4" />
-                                {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
-                            </button>
                         </div>
                     </div>
                 </div>
