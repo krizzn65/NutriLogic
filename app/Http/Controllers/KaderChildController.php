@@ -52,7 +52,14 @@ class KaderChildController extends Controller
             });
         }
 
-        $children = $query->orderBy('created_at', 'desc')->get();
+        // Validate pagination parameter
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $perPage = $request->input('per_page', 20);
+
+        $children = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         // Add latest nutritional status to each child
         $children->each(function ($child) {
@@ -69,7 +76,13 @@ class KaderChildController extends Controller
         });
 
         return response()->json([
-            'data' => $children,
+            'data' => $children->items(),
+            'meta' => [
+                'current_page' => $children->currentPage(),
+                'per_page' => $children->perPage(),
+                'total' => $children->total(),
+                'last_page' => $children->lastPage(),
+            ],
         ], 200);
     }
 

@@ -24,6 +24,12 @@ export default function DataAnakKader() {
     const [selectedChildId, setSelectedChildId] = useState(null);
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
     const [isActiveDropdownOpen, setIsActiveDropdownOpen] = useState(false);
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        per_page: 10,
+        total: 0,
+        last_page: 1,
+    });
 
     const statusOptions = [
         { value: "", label: "Semua Status" },
@@ -53,32 +59,61 @@ export default function DataAnakKader() {
     }, [location]);
 
     useEffect(() => {
-        fetchChildren();
+        setPagination(prev => ({ ...prev, current_page: 1 })); // Reset to page 1
+        fetchChildren(1); // Always start from page 1 when filters change
     }, [filterStatus, filterActive]);
 
-    const fetchChildren = async () => {
+    const fetchChildren = async (page = 1) => {
         try {
             setLoading(true);
             setError(null);
 
-            const params = {};
+            const params = {
+                page,
+                per_page: pagination.per_page,
+            };
             if (searchTerm) params.search = searchTerm;
             if (filterStatus) params.status = filterStatus;
             if (filterActive) params.is_active = filterActive;
 
+            console.log('Fetching children with params:', params);
             const response = await api.get('/kader/children', { params });
-            setChildren(response.data.data);
+            console.log('Response:', response.data);
+
+            setChildren(response.data.data || []);
+
+            // Ensure pagination is always set from response
+            if (response.data.meta) {
+                setPagination(response.data.meta);
+                console.log('Pagination updated:', response.data.meta);
+            } else {
+                // Fallback: update pagination based on data length
+                setPagination(prev => ({
+                    ...prev,
+                    current_page: page,
+                    total: response.data.data?.length || 0,
+                    last_page: response.data.data?.length > 0 ? 1 : 0
+                }));
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
             setError(errorMessage);
+            console.error('Error fetching children:', err);
         } finally {
             setLoading(false);
         }
     };
 
+    const handlePageChange = (page) => {
+        fetchChildren(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleSearch = (e) => {
         e.preventDefault();
-        fetchChildren();
+        console.log('Search initiated with term:', searchTerm);
+        setPagination(prev => ({ ...prev, current_page: 1 })); // Reset to page 1
+        fetchChildren(1); // Always fetch from page 1 when searching
     };
 
     if (loading && children.length === 0) {
@@ -86,7 +121,7 @@ export default function DataAnakKader() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto no-scrollbar bg-gray-50/50">
+        <div className="w-full min-h-full bg-gray-50/50">
             <div className="w-full flex flex-col gap-6 p-4">
                 {/* Success Message */}
                 {successMessage && (
@@ -112,8 +147,8 @@ export default function DataAnakKader() {
                 {/* Filters & Search */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div className="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between mb-4 md:mb-0">
-                        {/* This div wrapper is needed if we want to separate the form and the button, 
-                             but looking at the code below, the form is the container. 
+                        {/* This div wrapper is needed if we want to separate the form and the button,
+                             but looking at the code below, the form is the container.
                              Let's just insert the button into the form or alongside it.
                              The user wants it "pantes". Putting it next to filters is standard.
                           */}
@@ -450,6 +485,73 @@ export default function DataAnakKader() {
                             </div>
                         </div>
                     </>
+                )}
+
+                {/* Pagination */}
+                {children.length > 0 && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                        <button
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={pagination.current_page === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                            {[...Array(pagination.last_page)].map((_, index) => {
+                                const pageNum = index + 1;
+                                const isCurrentPage = pageNum === pagination.current_page;
+
+                                // Show first page, last page, current page, and pages around current
+                                const showPage =
+                                    pageNum === 1 ||
+                                    pageNum === pagination.last_page ||
+                                    (pageNum >= pagination.current_page - 1 && pageNum <= pagination.current_page + 1);
+
+                                if (!showPage) {
+                                    // Show ellipsis
+                                    if (pageNum === pagination.current_page - 2 || pageNum === pagination.current_page + 2) {
+                                        return (
+                                            <span key={pageNum} className="px-2 text-gray-400">
+                                                ...
+                                            </span>
+                                        );
+                                    }
+                                    return null;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => handlePageChange(pageNum)}
+                                        className={`min-w-[40px] h-10 rounded-xl font-medium transition-all ${isCurrentPage
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={pagination.current_page === pagination.last_page}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+
+                        <div className="ml-4 text-sm text-gray-600 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                            Halaman {pagination.current_page} dari {pagination.last_page} • Total: {pagination.total} anak
+                        </div>
+                    </div>
                 )}
 
                 <EditChildModal

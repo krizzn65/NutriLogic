@@ -46,6 +46,7 @@ export default function PenimbanganMassal() {
                     weight_kg: '',
                     height_cm: '',
                     muac_cm: '',
+                    head_circumference_cm: '',
                     notes: '',
                 };
             });
@@ -99,6 +100,7 @@ export default function PenimbanganMassal() {
                     weight_kg: parseFloat(data.weight_kg),
                     height_cm: parseFloat(data.height_cm),
                     muac_cm: data.muac_cm ? parseFloat(data.muac_cm) : null,
+                    head_circumference_cm: data.head_circumference_cm ? parseFloat(data.head_circumference_cm) : null,
                     notes: data.notes || null,
                 });
             }
@@ -123,6 +125,7 @@ export default function PenimbanganMassal() {
                     weight_kg: '',
                     height_cm: '',
                     muac_cm: '',
+                    head_circumference_cm: '',
                     notes: '',
                 };
             });
@@ -416,7 +419,7 @@ export default function PenimbanganMassal() {
                                             </div>
 
                                             {/* Inputs */}
-                                            <div className="grid grid-cols-3 gap-3">
+                                            <div className="grid grid-cols-4 gap-3">
                                                 <div>
                                                     <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Berat (kg)</label>
                                                     <input
@@ -456,6 +459,19 @@ export default function PenimbanganMassal() {
                                                         placeholder="0.0"
                                                     />
                                                 </div>
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Kepala (cm)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="60"
+                                                        value={weighingData[child.id]?.head_circumference_cm || ''}
+                                                        onChange={(e) => handleInputChange(child.id, 'head_circumference_cm', e.target.value)}
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
+                                                        placeholder="0.0"
+                                                    />
+                                                </div>
                                             </div>
                                             <div>
                                                 <input
@@ -482,13 +498,14 @@ export default function PenimbanganMassal() {
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Berat (kg)</th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Tinggi (cm)</th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Lengan (cm)</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Kepala (cm)</th>
                                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Catatan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
                                         {filteredChildren.length === 0 ? (
                                             <tr>
-                                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                                                <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                                                     {searchQuery ? `Tidak ada anak dengan nama "${searchQuery}"` : 'Belum ada data anak yang terdaftar.'}
                                                 </td>
                                             </tr>
@@ -560,6 +577,18 @@ export default function PenimbanganMassal() {
                                                             max="50"
                                                             value={weighingData[child.id]?.muac_cm || ''}
                                                             onChange={(e) => handleInputChange(child.id, 'muac_cm', e.target.value)}
+                                                            className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
+                                                            placeholder="0.0"
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            max="60"
+                                                            value={weighingData[child.id]?.head_circumference_cm || ''}
+                                                            onChange={(e) => handleInputChange(child.id, 'head_circumference_cm', e.target.value)}
                                                             className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                             placeholder="0.0"
                                                         />

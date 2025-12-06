@@ -155,6 +155,8 @@ class KaderReportController extends Controller
                 'data' => [
                     'weight_kg' => $weighing->weight_kg,
                     'height_cm' => $weighing->height_cm,
+                    'muac_cm' => $weighing->muac_cm,
+                    'head_circumference_cm' => $weighing->head_circumference_cm,
                     'nutritional_status' => $weighing->nutritional_status,
                     'notes' => $weighing->notes,
                 ],
@@ -252,15 +254,17 @@ class KaderReportController extends Controller
             ->get();
 
         // Generate CSV
-        $csvData = "Tanggal,Nama Anak,Berat (kg),Tinggi (cm),Status Gizi,Catatan\n";
+        $csvData = "Tanggal,Nama Anak,Berat (kg),Tinggi (cm),Lengan (cm),Kepala (cm),Status Gizi,Catatan\n";
         
         foreach ($weighings as $weighing) {
             $csvData .= sprintf(
-                "%s,%s,%.1f,%.1f,%s,%s\n",
+                "%s,%s,%.1f,%.1f,%s,%s,%s,%s\n",
                 Carbon::parse($weighing->measured_at)->format('Y-m-d'),
                 $this->escapeCsv($weighing->child->full_name),
                 $weighing->weight_kg,
                 $weighing->height_cm,
+                $weighing->muac_cm ? sprintf('%.1f', $weighing->muac_cm) : '-',
+                $weighing->head_circumference_cm ? sprintf('%.1f', $weighing->head_circumference_cm) : '-',
                 $weighing->nutritional_status,
                 $this->escapeCsv($weighing->notes ?? '-')
             );

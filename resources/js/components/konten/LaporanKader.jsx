@@ -201,14 +201,22 @@ export default function LaporanKader() {
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-xl p-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 rounded-xl p-3">
                     <div>
-                        <p className="text-xs text-gray-500 mb-0.5">Berat Badan</p>
+                        <p className="text-xs text-gray-500 mb-0.5">Berat</p>
                         <p className="text-sm font-bold text-gray-900">{data.weight_kg} kg</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 mb-0.5">Tinggi Badan</p>
+                        <p className="text-xs text-gray-500 mb-0.5">Tinggi</p>
                         <p className="text-sm font-bold text-gray-900">{data.height_cm ? `${data.height_cm} cm` : '-'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Lengan</p>
+                        <p className="text-sm font-bold text-gray-900">{data.muac_cm ? `${data.muac_cm} cm` : '-'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Kepala</p>
+                        <p className="text-sm font-bold text-gray-900">{data.head_circumference_cm ? `${data.head_circumference_cm} cm` : '-'}</p>
                     </div>
                 </div>
 
@@ -351,6 +359,8 @@ export default function LaporanKader() {
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal & Waktu</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Berat</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Tinggi</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Lengan</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Kepala</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status Gizi</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Catatan</th>
                                         </tr>
@@ -387,6 +397,16 @@ export default function LaporanKader() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <span className="text-sm font-bold text-gray-900">
                                                         {item.data.height_cm ? `${item.data.height_cm} cm` : '-'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className="text-sm font-bold text-gray-900">
+                                                        {item.data.muac_cm ? `${item.data.muac_cm} cm` : '-'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className="text-sm font-bold text-gray-900">
+                                                        {item.data.head_circumference_cm ? `${item.data.head_circumference_cm} cm` : '-'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
