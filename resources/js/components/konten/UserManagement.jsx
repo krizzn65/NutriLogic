@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { UserCog, Users, Plus, Edit2, Power, Key, Building2 } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 
@@ -14,6 +15,9 @@ export default function UserManagement() {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [newPassword, setNewPassword] = useState(null);
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchPosyandus();
     }, []);
@@ -22,22 +26,47 @@ export default function UserManagement() {
         fetchUsers();
     }, [activeTab]);
 
-    const fetchPosyandus = async () => {
+    const fetchPosyandus = async (forceRefresh = false) => {
+        // Check cache first (skip if forceRefresh)
+        if (!forceRefresh) {
+            const cachedPosyandus = getCachedData('admin_posyandus');
+            if (cachedPosyandus) {
+                setPosyandus(cachedPosyandus);
+                return;
+            }
+        }
+
         try {
             const response = await api.get('/admin/posyandus');
             setPosyandus(response.data.data);
+            setCachedData('admin_posyandus', response.data.data);
         } catch (err) {
             console.error('Posyandus fetch error:', err);
         }
     };
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (forceRefresh = false) => {
+        // Check cache first based on activeTab (skip if forceRefresh)
+        const cacheKey = `admin_users_${activeTab}`;
+        if (!forceRefresh) {
+            const cachedUsers = getCachedData(cacheKey);
+            if (cachedUsers) {
+                setUsers(cachedUsers);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
-            setLoading(true);
+            // Only show loading on initial load
+            if (!forceRefresh) {
+                setLoading(true);
+            }
             setError(null);
             const params = { role: activeTab };
             const response = await api.get('/admin/users', { params });
             setUsers(response.data.data);
+            setCachedData(cacheKey, response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data user.';
             setError(errorMessage);
@@ -63,10 +92,19 @@ export default function UserManagement() {
             return;
         }
 
+        // Optimistic update
+        const previousUsers = [...users];
+        setUsers(prev => prev.map(u =>
+            u.id === user.id ? { ...u, is_active: !u.is_active } : u
+        ));
+
         try {
             await api.patch(`/admin/users/${user.id}/toggle-active`);
-            fetchUsers();
+            invalidateCache(`admin_users_${activeTab}`);
+            invalidateCache('admin_dashboard');
+            fetchUsers(true);
         } catch (err) {
+            setUsers(previousUsers);
             alert(err.response?.data?.message || 'Gagal mengubah status user.');
         }
     };
@@ -84,6 +122,7 @@ export default function UserManagement() {
             alert(err.response?.data?.message || 'Gagal reset password.');
         }
     };
+
 
     if (loading) {
         return (
@@ -196,8 +235,8 @@ export default function UserManagement() {
                                             )}
                                             <td className="py-3 px-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {user.is_active ? 'Aktif' : 'Nonaktif'}
                                                 </span>
@@ -221,8 +260,8 @@ export default function UserManagement() {
                                                     <button
                                                         onClick={() => handleToggleActive(user)}
                                                         className={`p-1.5 rounded transition-colors ${user.is_active
-                                                                ? 'text-red-600 hover:bg-red-50'
-                                                                : 'text-green-600 hover:bg-green-50'
+                                                            ? 'text-red-600 hover:bg-red-50'
+                                                            : 'text-green-600 hover:bg-green-50'
                                                             }`}
                                                         title={user.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                                                     >
@@ -248,7 +287,7 @@ export default function UserManagement() {
                     onClose={() => setShowModal(false)}
                     onSuccess={(password) => {
                         setShowModal(false);
-                        fetchUsers();
+                        fetchUsers(true);
                         if (password) {
                             setNewPassword(password);
                             setShowPasswordModal(true);
@@ -305,7 +344,7 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-md w-full">
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
@@ -329,7 +368,7 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                             required
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                     </div>
 
@@ -342,7 +381,7 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                             required
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                     </div>
 
@@ -355,7 +394,7 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                             required
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         />
                     </div>
 
@@ -368,7 +407,7 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                                 required
                                 value={formData.posyandu_id}
                                 onChange={(e) => setFormData({ ...formData, posyandu_id: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             >
                                 <option value="">Pilih Posyandu</option>
                                 {posyandus.map((posyandu) => (

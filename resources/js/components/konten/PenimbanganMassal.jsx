@@ -34,29 +34,34 @@ export default function PenimbanganMassal() {
         fetchChildren();
     }, []);
 
-    const fetchChildren = async () => {
-        // Check cache first
-        const cachedChildren = getCachedData('kader_weighing_children');
-        if (cachedChildren) {
-            setChildren(cachedChildren);
-            // Initialize weighing data state
-            const initialData = {};
-            cachedChildren.forEach(child => {
-                initialData[child.id] = {
-                    weight_kg: '',
-                    height_cm: '',
-                    muac_cm: '',
-                    head_circumference_cm: '',
-                    notes: '',
-                };
-            });
-            setWeighingData(initialData);
-            setLoading(false);
-            return;
+    const fetchChildren = async (forceRefresh = false) => {
+        // Check cache first (skip if forceRefresh)
+        if (!forceRefresh) {
+            const cachedChildren = getCachedData('kader_weighing_children');
+            if (cachedChildren) {
+                setChildren(cachedChildren);
+                // Initialize weighing data state
+                const initialData = {};
+                cachedChildren.forEach(child => {
+                    initialData[child.id] = {
+                        weight_kg: '',
+                        height_cm: '',
+                        muac_cm: '',
+                        head_circumference_cm: '',
+                        notes: '',
+                    };
+                });
+                setWeighingData(initialData);
+                setLoading(false);
+                return;
+            }
         }
 
         try {
-            setLoading(true);
+            // Only show loading on initial load
+            if (!forceRefresh) {
+                setLoading(true);
+            }
             setError(null);
 
             const response = await api.get('/kader/weighings/today');
@@ -162,7 +167,7 @@ export default function PenimbanganMassal() {
             setWeighingData(clearedData);
 
             // Refresh children data to show latest weighing
-            fetchChildren();
+            fetchChildren(true);
         } catch (err) {
             console.error('Submit error:', err);
             setError(err.response?.data?.message || 'Gagal menyimpan data penimbangan. Silakan coba lagi.');

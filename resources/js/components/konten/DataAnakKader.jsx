@@ -3,12 +3,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter, Plus, ChevronDown, MoreHorizontal, User, Calendar, Activity, Check } from "lucide-react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import TableSkeleton from "../loading/TableSkeleton";
 import PageHeader from "../dashboard/PageHeader";
 import { assets } from "../../assets/assets";
 import EditChildModal from "./EditChildModal";
+import AddChildKaderModal from "./AddChildKaderModal";
 
 export default function DataAnakKader() {
     const [loading, setLoading] = useState(true);
@@ -24,12 +26,16 @@ export default function DataAnakKader() {
     const [selectedChildId, setSelectedChildId] = useState(null);
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
     const [isActiveDropdownOpen, setIsActiveDropdownOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
         per_page: 10,
         total: 0,
         last_page: 1,
     });
+
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
 
     const statusOptions = [
         { value: "", label: "Semua Status" },
@@ -64,6 +70,19 @@ export default function DataAnakKader() {
     }, [filterStatus, filterActive]);
 
     const fetchChildren = async (page = 1) => {
+        // Cache key based on filters (no search to avoid too many cache entries)
+        const cacheKey = `kader_children_status_${filterStatus || 'all'}_active_${filterActive || 'all'}`;
+
+        // Only use cache when there's no search term
+        if (!searchTerm && page === 1) {
+            const cachedChildren = getCachedData(cacheKey);
+            if (cachedChildren) {
+                setChildren(cachedChildren);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -94,6 +113,11 @@ export default function DataAnakKader() {
                     total: response.data.data?.length || 0,
                     last_page: response.data.data?.length > 0 ? 1 : 0
                 }));
+            }
+
+            // Cache only when no search term and on first page
+            if (!searchTerm && page === 1) {
+                setCachedData(cacheKey, response.data.data);
             }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
@@ -267,7 +291,7 @@ export default function DataAnakKader() {
                             <label className="text-xs font-semibold text-transparent uppercase tracking-wider mb-1.5 block ml-1 select-none">Action</label>
                             <button
                                 className="w-full xl:w-auto px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center justify-center gap-2 font-medium"
-                                onClick={() => navigate('/dashboard/data-anak/tambah')}
+                                onClick={() => setIsAddModalOpen(true)}
                             >
                                 <Plus className="w-5 h-5" />
                                 <span className="whitespace-nowrap">Tambah Anak</span>
@@ -278,7 +302,7 @@ export default function DataAnakKader() {
 
                 {/* Mobile Floating Action Button */}
                 <button
-                    onClick={() => navigate('/dashboard/data-anak/tambah')}
+                    onClick={() => setIsAddModalOpen(true)}
                     className="md:hidden fixed bottom-24 right-4 z-40 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center hover:bg-blue-700 transition-all active:scale-95"
                     aria-label="Tambah Anak"
                 >
@@ -562,6 +586,16 @@ export default function DataAnakKader() {
                         fetchChildren();
                     }}
                     childId={selectedChildId}
+                />
+
+                <AddChildKaderModal
+                    isOpen={isAddModalOpen}
+                    onClose={() => setIsAddModalOpen(false)}
+                    onSuccess={(msg) => {
+                        setSuccessMessage(msg);
+                        fetchChildren();
+                        setTimeout(() => setSuccessMessage(null), 5000);
+                    }}
                 />
             </div>
         </div>

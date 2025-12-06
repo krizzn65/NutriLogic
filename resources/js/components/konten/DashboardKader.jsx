@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, Calendar as CalendarIcon, X } from "lucide-react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import DashboardKaderSkeleton from "../loading/DashboardKaderSkeleton";
 import PageHeader from "../dashboard/PageHeader";
 import { Calendar } from "../ui/calendar";
@@ -13,6 +14,9 @@ export default function DashboardKaderContent() {
   const [allSchedules, setAllSchedules] = useState([]);
   const [calendarDate, setCalendarDate] = useState(new Date()); // Track calendar's current month
   const [showMobileCalendar, setShowMobileCalendar] = useState(false);
+  
+  // Data caching
+  const { getCachedData, setCachedData } = useDataCache();
 
   useEffect(() => {
     fetchDashboardData();
@@ -20,12 +24,21 @@ export default function DashboardKaderContent() {
   }, []);
 
   const fetchDashboardData = async () => {
+    // Check cache first
+    const cachedDashboard = getCachedData('kader_dashboard');
+    if (cachedDashboard) {
+      setDashboardData(cachedDashboard);
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
 
       const response = await api.get('/kader/dashboard');
       setDashboardData(response.data.data);
+      setCachedData('kader_dashboard', response.data.data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data dashboard. Silakan coba lagi.';
       setError(errorMessage);
@@ -36,14 +49,24 @@ export default function DashboardKaderContent() {
   };
 
   const fetchAllSchedules = async () => {
+    // Check cache first
+    const cachedSchedules = getCachedData('kader_schedules');
+    if (cachedSchedules) {
+      setAllSchedules(cachedSchedules);
+      return;
+    }
+    
     try {
       const response = await api.get('/kader/schedules');
-      setAllSchedules(response.data.data || []);
+      const schedulesData = response.data.data || [];
+      setAllSchedules(schedulesData);
+      setCachedData('kader_schedules', schedulesData);
     } catch (err) {
       console.error('Schedules fetch error:', err);
       setAllSchedules([]);
     }
   };
+
 
   // Loading state
   if (loading) {

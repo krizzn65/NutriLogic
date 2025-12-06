@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import PageHeader from "../dashboard/PageHeader";
 import { assets } from "../../assets/assets";
@@ -14,17 +15,30 @@ export default function DetailAnakKader() {
     const [error, setError] = useState(null);
     const [childData, setChildData] = useState(null);
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchChildData();
     }, [id]);
 
     const fetchChildData = async () => {
+        // Check cache first with ID-based key
+        const cacheKey = `kader_child_${id}`;
+        const cachedChild = getCachedData(cacheKey);
+        if (cachedChild) {
+            setChildData(cachedChild);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
 
             const response = await api.get(`/kader/children/${id}`);
             setChildData(response.data.data);
+            setCachedData(cacheKey, response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
             setError(errorMessage);
@@ -33,6 +47,7 @@ export default function DetailAnakKader() {
             setLoading(false);
         }
     };
+
 
     if (loading) {
         return <DetailAnakKaderSkeleton />;

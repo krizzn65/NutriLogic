@@ -37,17 +37,10 @@ export default function SidebarSuperAdmin() {
             ),
         },
         {
-            label: "Manajemen Kader",
+            label: "Manajemen Pengguna",
             href: "/dashboard/kader",
             icon: (
                 <UserCog className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Manajemen Orang Tua",
-            href: "/dashboard/orang-tua",
-            icon: (
-                <Users className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
             ),
         },
         {
