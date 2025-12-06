@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import ChildProfileCard from '../dashboard/ChildProfileCard';
 import ChildCardModal from '../dashboard/ChildCardModal';
 
@@ -17,13 +18,19 @@ export function DataAnakTable({ data, onAdd }) {
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {data.map((child) => (
-                    <ChildProfileCard
+                {data.map((child, index) => (
+                    <motion.div
                         key={child.id}
-                        child={child}
-                        onClick={() => navigate(`/dashboard/anak/${child.id}`)}
-                        onShowCard={handleShowCard}
-                    />
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.4 }}
+                    >
+                        <ChildProfileCard
+                            child={child}
+                            onClick={() => navigate(`/dashboard/anak/${child.id}`)}
+                            onShowCard={handleShowCard}
+                        />
+                    </motion.div>
                 ))}
 
                 {/* Add Child Card */}

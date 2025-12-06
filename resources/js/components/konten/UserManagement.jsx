@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check } from "lucide-react";
@@ -7,11 +8,21 @@ import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
 
 export default function UserManagement() {
+    const location = useLocation();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [users, setUsers] = useState([]);
     const [posyandus, setPosyandus] = useState([]);
-    const [activeTab, setActiveTab] = useState("kader");
+    
+    // Determine initial tab based on current route
+    const getInitialTab = () => {
+        if (location.pathname.includes('/orang-tua')) {
+            return 'ibu';
+        }
+        return 'kader';
+    };
+    
+    const [activeTab, setActiveTab] = useState(getInitialTab());
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -68,6 +79,14 @@ export default function UserManagement() {
     useEffect(() => {
         fetchPosyandus();
     }, []);
+
+    // Update activeTab when route changes
+    useEffect(() => {
+        const newTab = location.pathname.includes('/orang-tua') ? 'ibu' : 'kader';
+        if (newTab !== activeTab) {
+            setActiveTab(newTab);
+        }
+    }, [location.pathname]);
 
     useEffect(() => {
         const cacheKey = `admin_users_${activeTab}`;
@@ -189,7 +208,12 @@ export default function UserManagement() {
             <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Tabs with Add Button */}
-                <div className="flex items-center justify-between border-b border-gray-200">
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center justify-between border-b border-gray-200"
+                >
                     <div className="flex gap-2">
                         <button
                             onClick={() => handleTabChange('kader')}
@@ -219,7 +243,7 @@ export default function UserManagement() {
                         <Plus className="w-4 h-4" />
                         Tambah {activeTab === 'kader' ? 'Kader' : 'Orang Tua'}
                     </button>
-                </div>
+                </motion.div>
 
                 {/* Error State */}
                 {error && (
@@ -258,8 +282,14 @@ export default function UserManagement() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user) => (
-                                        <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                    users.map((user, index) => (
+                                        <motion.tr 
+                                            key={user.id} 
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                                            className="border-b border-gray-100 hover:bg-gray-50"
+                                        >
                                             <td className="py-3 px-4">
                                                 <span className="font-medium text-gray-800">{user.name}</span>
                                             </td>
@@ -313,7 +343,7 @@ export default function UserManagement() {
                                                     </button>
                                                 </div>
                                             </td>
-                                        </tr>
+                                        </motion.tr>
                                     ))
                                 )}
                             </tbody>

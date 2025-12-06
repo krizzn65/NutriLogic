@@ -44,10 +44,10 @@ class AdminChildrenController extends Controller
 
         // Filter by age range (in months)
         if ($request->has('age_min') && $request->age_min) {
-            $query->whereRaw('TIMESTAMPDIFF(MONTH, date_of_birth, CURDATE()) >= ?', [$request->age_min]);
+            $query->whereRaw('TIMESTAMPDIFF(MONTH, birth_date, CURDATE()) >= ?', [$request->age_min]);
         }
         if ($request->has('age_max') && $request->age_max) {
-            $query->whereRaw('TIMESTAMPDIFF(MONTH, date_of_birth, CURDATE()) <= ?', [$request->age_max]);
+            $query->whereRaw('TIMESTAMPDIFF(MONTH, birth_date, CURDATE()) <= ?', [$request->age_max]);
         }
 
         $children = $query->orderBy('created_at', 'desc')->get()->map(function ($child) {
@@ -57,15 +57,15 @@ class AdminChildrenController extends Controller
                 ->first();
 
             // Calculate age in months
-            $ageInMonths = $child->date_of_birth 
-                ? now()->diffInMonths($child->date_of_birth) 
+            $ageInMonths = $child->birth_date 
+                ? $child->birth_date->diffInMonths(now()) 
                 : null;
 
             return [
                 'id' => $child->id,
                 'full_name' => $child->full_name,
                 'gender' => $child->gender,
-                'date_of_birth' => $child->date_of_birth,
+                'birth_date' => $child->birth_date->format('Y-m-d'),
                 'age_months' => $ageInMonths,
                 'parent' => $child->parent ? [
                     'id' => $child->parent->id,
@@ -119,8 +119,8 @@ class AdminChildrenController extends Controller
             });
 
         // Calculate age
-        $ageInMonths = $child->date_of_birth 
-            ? now()->diffInMonths($child->date_of_birth) 
+        $ageInMonths = $child->birth_date 
+            ? $child->birth_date->diffInMonths(now()) 
             : null;
 
         return response()->json([
@@ -128,7 +128,7 @@ class AdminChildrenController extends Controller
                 'id' => $child->id,
                 'full_name' => $child->full_name,
                 'gender' => $child->gender,
-                'date_of_birth' => $child->date_of_birth,
+                'birth_date' => $child->birth_date->format('Y-m-d'),
                 'age_months' => $ageInMonths,
                 'parent' => $child->parent ? [
                     'id' => $child->parent->id,
@@ -139,6 +139,7 @@ class AdminChildrenController extends Controller
                 'posyandu' => $child->posyandu ? [
                     'id' => $child->posyandu->id,
                     'name' => $child->posyandu->name,
+                    'address' => $child->posyandu->address,
                     'village' => $child->posyandu->village,
                     'city' => $child->posyandu->city,
                 ] : null,

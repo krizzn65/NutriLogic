@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { formatAge } from "../../lib/utils";
 import { Ruler, Weight, CreditCard, Zap, Circle } from 'lucide-react';
 import { assets } from '../../assets/assets';

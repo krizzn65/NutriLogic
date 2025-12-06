@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PageHeader from "../ui/PageHeader";
+import { exportSystemReportsToExcel } from "../../utils/excelExport";
 // Charts removed in favor of table-centric layout
 
 export default function SystemReports() {
@@ -119,6 +120,19 @@ export default function SystemReports() {
 
         const url = `${import.meta.env.VITE_API_URL}/admin/reports/export?${params.toString()}`;
         window.open(url, '_blank');
+    };
+
+    const handleExportToExcel = () => {
+        if (!reportData) {
+            alert('Tidak ada data yang tersedia untuk di-export');
+            return;
+        }
+
+        const posyanduName = selectedPosyandu === 'all' 
+            ? 'Semua Posyandu' 
+            : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Semua Posyandu';
+
+        exportSystemReportsToExcel(reportData, posyanduName);
     };
 
     const handleClearFilters = () => {
@@ -346,9 +360,9 @@ export default function SystemReports() {
                                         <p className="text-xs text-gray-500">Unduh data sesuai filter yang dipilih.</p>
                                     </div>
                                 </div>
-                                <ExportButton onClick={() => handleExport('summary')} label="Export Ringkasan" color="blue" />
-                                <ExportButton onClick={() => handleExport('children')} label="Export Data Anak" color="emerald" />
-                                <ExportButton onClick={() => handleExport('weighings')} label="Export Penimbangan" color="violet" />
+                                <ExportButton onClick={handleExportToExcel} label="Export Ringkasan" color="blue" icon={FileText} />
+                                <ExportButton onClick={() => handleExport('children')} label="Export Data Anak" color="emerald" icon={FileText} />
+                                <ExportButton onClick={() => handleExport('weighings')} label="Export Penimbangan" color="violet" icon={FileText} />
                             </motion.div>
                         </div>
 
@@ -422,7 +436,7 @@ export default function SystemReports() {
     );
 }
 
-function ExportButton({ onClick, label, color }) {
+function ExportButton({ onClick, label, color, icon: Icon }) {
     const colorClasses = {
         blue: "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200",
         emerald: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200",
@@ -435,7 +449,7 @@ function ExportButton({ onClick, label, color }) {
             className={`w-full px-4 py-3 rounded-xl border transition-all flex items-center justify-between group ${colorClasses[color]}`}
         >
             <span className="font-medium">{label}</span>
-            <FileText className="w-5 h-5 opacity-70 group-hover:scale-110 transition-transform" />
+            <Icon className="w-5 h-5 opacity-70 group-hover:scale-110 transition-transform" />
         </button>
     );
 }

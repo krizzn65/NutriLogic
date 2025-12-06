@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { Building2, Plus, Edit2, Power, MapPin, Users, Baby } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
 
@@ -195,7 +196,12 @@ export default function PosyanduManagement() {
             <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Filter Tabs with Add Button */}
-                <div className="flex items-center justify-between border-b border-gray-200">
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center justify-between border-b border-gray-200"
+                >
                     <div className="flex gap-2">
                         <button
                             onClick={() => handleFilterChange('all')}
@@ -232,7 +238,7 @@ export default function PosyanduManagement() {
                         <Plus className="w-4 h-4" />
                         Tambah Posyandu
                     </button>
-                </div>
+                </motion.div>
 
                 {/* Error State */}
                 {error && (
@@ -269,8 +275,14 @@ export default function PosyanduManagement() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    posyandus.map((posyandu) => (
-                                        <tr key={posyandu.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                    posyandus.map((posyandu, index) => (
+                                        <motion.tr 
+                                            key={posyandu.id} 
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                                            className="border-b border-gray-100 hover:bg-gray-50"
+                                        >
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <Building2 className="w-5 h-5 text-blue-600" />
@@ -327,7 +339,7 @@ export default function PosyanduManagement() {
                                                     </button>
                                                 </div>
                                             </td>
-                                        </tr>
+                                        </motion.tr>
                                     ))
                                 )}
                             </tbody>

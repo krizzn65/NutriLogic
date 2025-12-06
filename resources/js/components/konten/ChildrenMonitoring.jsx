@@ -201,7 +201,12 @@ export default function ChildrenMonitoring() {
             <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Filters */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                >
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -342,7 +347,7 @@ export default function ChildrenMonitoring() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Error State */}
                 {error && (
@@ -379,8 +384,14 @@ export default function ChildrenMonitoring() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    children.map((child) => (
-                                        <tr key={child.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                    children.map((child, index) => (
+                                        <motion.tr
+                                            key={child.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                                            className="border-b border-gray-100 hover:bg-gray-50"
+                                        >
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <Baby className="w-5 h-5 text-blue-600" />
@@ -429,7 +440,7 @@ export default function ChildrenMonitoring() {
                                                     Lihat Detail
                                                 </button>
                                             </td>
-                                        </tr>
+                                        </motion.tr>
                                     ))
                                 )}
                             </tbody>
@@ -456,124 +467,175 @@ export default function ChildrenMonitoring() {
 
 // Child Detail Modal
 function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
+    // Helper for date formatting
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800">Detail Anak</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            >
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
+                    <h2 className="text-xl font-bold text-gray-800">Detail Anak</h2>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
 
-                <div className="p-6 space-y-6">
+                {/* Content - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-8">
                     {/* Basic Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Nama Lengkap</label>
-                            <p className="text-gray-800 font-medium">{child.full_name}</p>
+                    <section>
+                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Informasi Dasar</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Nama Lengkap</label>
+                                <p className="text-base font-medium text-gray-900">{child.full_name}</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Jenis Kelamin</label>
+                                <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}`}>
+                                        {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Tanggal Lahir</label>
+                                <p className="text-base text-gray-900">{formatDate(child.birth_date)}</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Umur</label>
+                                <p className="text-base text-gray-900">{child.age_months ? formatAge(child.age_months) : '-'}</p>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Jenis Kelamin</label>
-                            <p className="text-gray-800">{child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Tanggal Lahir</label>
-                            <p className="text-gray-800">{child.date_of_birth || '-'}</p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Umur</label>
-                            <p className="text-gray-800">{child.age_months ? formatAge(child.age_months) : '-'}</p>
-                        </div>
-                    </div>
+                    </section>
 
                     {/* Parent Info */}
                     {child.parent && (
-                        <div className="border-t pt-4">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3">Informasi Orang Tua</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <section className="border-t border-gray-100 pt-6">
+                            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Informasi Orang Tua</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-600 mb-1">Nama</label>
-                                    <p className="text-gray-800">{child.parent.name}</p>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nama Orang Tua</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                            <User className="w-4 h-4" />
+                                        </div>
+                                        <p className="text-base font-medium text-gray-900">{child.parent.name}</p>
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-                                    <p className="text-gray-800">{child.parent.email}</p>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                                    <p className="text-base text-gray-900">{child.parent.email || '-'}</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-600 mb-1">Telepon</label>
-                                    <p className="text-gray-800">{child.parent.phone}</p>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nomor Telepon</label>
+                                    <p className="text-base text-gray-900">{child.parent.phone || '-'}</p>
                                 </div>
                             </div>
-                        </div>
+                        </section>
                     )}
 
                     {/* Posyandu Info */}
                     {child.posyandu && (
-                        <div className="border-t pt-4">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3">Informasi Posyandu</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600 mb-1">Nama Posyandu</label>
-                                    <p className="text-gray-800">{child.posyandu.name}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-600 mb-1">Lokasi</label>
-                                    <p className="text-gray-800">{child.posyandu.village}, {child.posyandu.city}</p>
+                        <section className="border-t border-gray-100 pt-6">
+                            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Lokasi Posyandu</h3>
+                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                                        <Building2 className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-gray-900">{child.posyandu.name}</h4>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            {child.posyandu.address && `${child.posyandu.address}, `}
+                                            {child.posyandu.village}, {child.posyandu.city}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
                     )}
 
                     {/* Weighing History */}
-                    <div className="border-t pt-4">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Riwayat Penimbangan (10 Terakhir)</h3>
-                        {child.weighing_history && child.weighing_history.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-gray-50 border-b">
-                                        <tr>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-600">Tanggal</th>
-                                            <th className="text-center py-2 px-3 font-medium text-gray-600">Berat (kg)</th>
-                                            <th className="text-center py-2 px-3 font-medium text-gray-600">Tinggi (cm)</th>
-                                            <th className="text-center py-2 px-3 font-medium text-gray-600">Status Gizi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {child.weighing_history.map((weighing) => (
-                                            <tr key={weighing.id} className="border-b hover:bg-gray-50">
-                                                <td className="py-2 px-3 text-gray-700">{weighing.weighing_date}</td>
-                                                <td className="py-2 px-3 text-center text-gray-700">{weighing.weight}</td>
-                                                <td className="py-2 px-3 text-center text-gray-700">{weighing.height}</td>
-                                                <td className="py-2 px-3 text-center">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(weighing.nutritional_status)
-                                                        }`}>
-                                                        {getStatusLabel(weighing.nutritional_status)}
-                                                    </span>
-                                                </td>
+                    <section className="border-t border-gray-100 pt-6">
+                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Riwayat Penimbangan (10 Terakhir)</h3>
+                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                            {child.weighing_history && child.weighing_history.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50/50 border-b border-gray-100">
+                                            <tr>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
+                                                <th className="text-center py-3 px-4 font-medium text-gray-500">Berat (kg)</th>
+                                                <th className="text-center py-3 px-4 font-medium text-gray-500">Tinggi (cm)</th>
+                                                <th className="text-center py-3 px-4 font-medium text-gray-500">Status Gizi</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <p className="text-gray-500 text-sm">Belum ada riwayat penimbangan</p>
-                        )}
-                    </div>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {child.weighing_history.map((weighing) => (
+                                                <tr key={weighing.id} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="py-3 px-4 text-gray-900 font-medium">
+                                                        {formatDate(weighing.weighing_date)}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-center text-gray-700">{weighing.weight}</td>
+                                                    <td className="py-3 px-4 text-center text-gray-700">{weighing.height}</td>
+                                                    <td className="py-3 px-4 text-center">
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(weighing.nutritional_status)}`}>
+                                                            {getStatusLabel(weighing.nutritional_status)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="p-8 text-center">
+                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+                                        <Weight className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                    <p className="text-gray-500 font-medium">Belum ada riwayat penimbangan</p>
+                                    <p className="text-gray-400 text-sm mt-1">Data penimbangan akan muncul di sini setelah ditambahkan.</p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
                 </div>
 
-                <div className="p-6 border-t">
+                {/* Footer */}
+                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm"
                     >
                         Tutup
                     </button>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
