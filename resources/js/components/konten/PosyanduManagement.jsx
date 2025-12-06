@@ -94,21 +94,21 @@ export default function PosyanduManagement() {
 
     useEffect(() => {
         const cacheKey = `admin_posyandus_${filterStatus}`;
-
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            fetchPosyandus(filterStatus, { forceRefresh: true, showLoader: true });
-            preloadAllFilters();
-            return;
-        }
-
         const cachedPosyandus = getCachedData(cacheKey);
 
         if (cachedPosyandus) {
             setPosyandus(cachedPosyandus);
             setLoading(false);
-        } else {
-            setLoading(true);
+        }
+
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            fetchPosyandus(filterStatus, {
+                forceRefresh: !cachedPosyandus,
+                showLoader: !cachedPosyandus,
+            });
+            preloadAllFilters();
+            return;
         }
 
         fetchPosyandus(filterStatus, {
@@ -351,8 +351,8 @@ export default function PosyanduManagement() {
                         invalidateCache('admin_posyandus_active');
                         invalidateCache('admin_posyandus_inactive');
                         invalidateCache('admin_dashboard');
-                        // Force refresh to bypass cache
-                        fetchPosyandus(true);
+                        // Force refresh current filter to bypass cache
+                        fetchPosyandus(filterStatus, { forceRefresh: true, showLoader: false });
                     }}
                 />
             )}

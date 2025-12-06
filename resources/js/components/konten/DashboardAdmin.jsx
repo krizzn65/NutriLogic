@@ -179,9 +179,30 @@ export default function DashboardAdmin() {
     }, [getCachedData, setCachedData]);
 
     useEffect(() => {
-        fetchDashboardData({ forceRefresh: true, showLoader: true });
-        fetchUserProfile({ forceRefresh: true });
-    }, [fetchDashboardData, fetchUserProfile]);
+        const cachedStats = getCachedData('admin_dashboard');
+        const cachedUser = getCachedData('admin_user_profile');
+
+        if (cachedStats) {
+            setStats(cachedStats);
+            setLoading(false);
+        }
+
+        if (cachedUser) {
+            setUser(cachedUser);
+        }
+
+        if (cachedStats) {
+            fetchDashboardData({ forceRefresh: true, showLoader: false });
+        } else {
+            fetchDashboardData({ forceRefresh: false, showLoader: true });
+        }
+
+        if (cachedUser) {
+            fetchUserProfile({ forceRefresh: true });
+        } else {
+            fetchUserProfile({ forceRefresh: false });
+        }
+    }, [fetchDashboardData, fetchUserProfile, getCachedData]);
 
     // Generate "AI-based" notifications when stats are loaded
     useEffect(() => {

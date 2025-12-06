@@ -16,6 +16,7 @@ export default function ActivityLogs() {
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
+    const hasHydratedLogs = React.useRef(false);
     const activeLogsRequestId = React.useRef(0);
 
     const fetchLogs = useCallback(async ({ forceRefresh = false, showLoader = false } = {}) => {
@@ -69,8 +70,18 @@ export default function ActivityLogs() {
     }, [filters, getCachedData, setCachedData]);
 
     useEffect(() => {
-        fetchLogs({ forceRefresh: true, showLoader: true });
-    }, [fetchLogs]);
+        if (hasHydratedLogs.current) return;
+        hasHydratedLogs.current = true;
+
+        const cachedLogs = getCachedData('admin_logs');
+        if (cachedLogs) {
+            setLogs(cachedLogs);
+            setLoading(false);
+            fetchLogs({ forceRefresh: true, showLoader: false });
+        } else {
+            fetchLogs({ forceRefresh: false, showLoader: true });
+        }
+    }, [fetchLogs, getCachedData]);
 
 
     const getActionColor = (action) => {

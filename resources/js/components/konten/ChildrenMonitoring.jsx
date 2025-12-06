@@ -20,6 +20,7 @@ export default function ChildrenMonitoring() {
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
     const activeChildrenRequestId = React.useRef(0);
+    const hasHydratedOnce = React.useRef(false);
 
     const fetchPosyandus = useCallback(async (forceRefresh = false) => {
         // Check cache first (skip if forceRefresh)
@@ -92,9 +93,25 @@ export default function ChildrenMonitoring() {
     }, [filters, getCachedData, setCachedData]);
 
     useEffect(() => {
+        if (hasHydratedOnce.current) return;
+        hasHydratedOnce.current = true;
+
+        const cachedPosyandus = getCachedData('admin_posyandus');
+        if (cachedPosyandus) {
+            setPosyandus(cachedPosyandus);
+        }
+
+        const cachedChildren = getCachedData('admin_children');
+        if (cachedChildren) {
+            setChildren(cachedChildren);
+            setLoading(false);
+            fetchChildren({ forceRefresh: true, showLoader: false });
+        } else {
+            fetchChildren({ forceRefresh: true, showLoader: true });
+        }
+
         fetchPosyandus();
-        fetchChildren({ forceRefresh: true, showLoader: true });
-    }, [fetchPosyandus, fetchChildren]);
+    }, [fetchPosyandus, fetchChildren, getCachedData]);
 
 
     const handleSearch = () => {

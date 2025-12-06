@@ -15,6 +15,7 @@ export default function SystemReports() {
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
+    const hasHydratedReports = React.useRef(false);
     const activeReportRequestId = React.useRef(0);
 
     const fetchReportData = useCallback(async ({ forceRefresh = false, showLoader = false } = {}) => {
@@ -67,8 +68,18 @@ export default function SystemReports() {
     }, [dateRange, getCachedData, setCachedData]);
 
     useEffect(() => {
-        fetchReportData({ forceRefresh: true, showLoader: true });
-    }, [fetchReportData]);
+        if (hasHydratedReports.current) return;
+        hasHydratedReports.current = true;
+
+        const cachedReports = getCachedData('admin_reports');
+        if (cachedReports) {
+            setReportData(cachedReports);
+            setLoading(false);
+            fetchReportData({ forceRefresh: true, showLoader: false });
+        } else {
+            fetchReportData({ forceRefresh: false, showLoader: true });
+        }
+    }, [fetchReportData, getCachedData]);
 
 
     const handleExport = (type) => {
