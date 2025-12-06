@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { Activity, Calendar, User, Filter } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
+import PageHeader from "../ui/PageHeader";
 
 export default function ActivityLogs() {
     const [loading, setLoading] = useState(true);
@@ -107,13 +108,9 @@ export default function ActivityLogs() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Log Aktivitas</h1>
-                    <p className="text-gray-600 mt-2">Riwayat aktivitas pengguna sistem</p>
-                </div>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Log Aktivitas" subtitle="Riwayat aktivitas pengguna sistem" />
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Filters */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">

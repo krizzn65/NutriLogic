@@ -4,6 +4,7 @@ import { useDataCache } from "../../contexts/DataCacheContext";
 import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
+import PageHeader from "../ui/PageHeader";
 
 export default function UserManagement() {
     const [loading, setLoading] = useState(true);
@@ -182,44 +183,41 @@ export default function UserManagement() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Manajemen Pengguna</h1>
-                        <p className="text-gray-600 mt-2">Kelola data kader dan orang tua</p>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Manajemen Pengguna" subtitle="Kelola data kader dan orang tua" />
+
+            <div className="flex-1 overflow-auto p-6 space-y-6">
+
+                {/* Tabs with Add Button */}
+                <div className="flex items-center justify-between border-b border-gray-200">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleTabChange('kader')}
+                            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'kader'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                        >
+                            <UserCog className="w-4 h-4" />
+                            Kader
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('ibu')}
+                            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'ibu'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                        >
+                            <Users className="w-4 h-4" />
+                            Orang Tua
+                        </button>
                     </div>
                     <button
                         onClick={handleAddNew}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-sm mb-0.5"
                     >
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-4 h-4" />
                         Tambah {activeTab === 'kader' ? 'Kader' : 'Orang Tua'}
-                    </button>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex gap-2 border-b border-gray-200">
-                    <button
-                        onClick={() => handleTabChange('kader')}
-                        className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'kader'
-                            ? 'text-blue-600 border-b-2 border-blue-600'
-                            : 'text-gray-600 hover:text-gray-800'
-                            }`}
-                    >
-                        <UserCog className="w-4 h-4" />
-                        Kader
-                    </button>
-                    <button
-                        onClick={() => handleTabChange('ibu')}
-                        className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'ibu'
-                            ? 'text-blue-600 border-b-2 border-blue-600'
-                            : 'text-gray-600 hover:text-gray-800'
-                            }`}
-                    >
-                        <Users className="w-4 h-4" />
-                        Orang Tua
                     </button>
                 </div>
 

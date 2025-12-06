@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { Building2, Plus, Edit2, Power, MapPin, Users, Baby } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
+import PageHeader from "../ui/PageHeader";
 
 export default function PosyanduManagement() {
     const [loading, setLoading] = useState(true);
@@ -188,39 +189,28 @@ export default function PosyanduManagement() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Manajemen Posyandu</h1>
-                        <p className="text-gray-600 mt-2">Kelola data posyandu di sistem</p>
-                    </div>
-                    <button
-                        onClick={handleAddNew}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Tambah Posyandu
-                    </button>
-                </div>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Manajemen Posyandu" subtitle="Kelola data posyandu di sistem" />
 
-                {/* Filter Tabs */}
-                <div className="flex gap-2 border-b border-gray-200">
-                    <button
-                        onClick={() => handleFilterChange('all')}
-                        className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'all'
-                            ? 'text-blue-600 border-b-2 border-blue-600'
-                            : 'text-gray-600 hover:text-gray-800'
-                            }`}
-                    >
-                        Semua
-                    </button>
-                    <button
-                        onClick={() => handleFilterChange('active')}
-                        className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'active'
-                            ? 'text-blue-600 border-b-2 border-blue-600'
-                            : 'text-gray-600 hover:text-gray-800'
+            <div className="flex-1 overflow-auto p-6 space-y-6">
+
+                {/* Filter Tabs with Add Button */}
+                <div className="flex items-center justify-between border-b border-gray-200">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleFilterChange('all')}
+                            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'all'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                        >
+                            Semua
+                        </button>
+                        <button
+                            onClick={() => handleFilterChange('active')}
+                            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'active'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
                         Aktif
@@ -233,6 +223,14 @@ export default function PosyanduManagement() {
                             }`}
                     >
                         Nonaktif
+                    </button>
+                    </div>
+                    <button
+                        onClick={handleAddNew}
+                        className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-sm mb-0.5"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Tambah Posyandu
                     </button>
                 </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { User, Mail, Phone, Shield, Save, Key } from "lucide-react";
+import PageHeader from "../ui/PageHeader";
 
 export default function AdminProfile() {
     const [loading, setLoading] = useState(true);
@@ -103,13 +104,9 @@ export default function AdminProfile() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Profil SuperAdmin</h1>
-                    <p className="text-gray-600 mt-2">Kelola informasi profil Anda</p>
-                </div>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Profil SuperAdmin" subtitle="Kelola informasi profil Anda" />
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Profile Info Card */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

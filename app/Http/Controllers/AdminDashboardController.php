@@ -37,6 +37,8 @@ class AdminDashboardController extends Controller
                 'total_anak' => $totalAnak,
                 'status_distribution' => $statusDistribution,
                 'top_risk_posyandu' => $topRiskPosyandu,
+                'monthly_trend' => $this->getMonthlyTrend(),
+                'growth_by_posyandu' => $this->getGrowthByPosyandu(),
             ],
         ], 200);
     }
@@ -109,5 +111,58 @@ class AdminDashboardController extends Controller
                 'risk_count' => $item->risk_count,
             ];
         })->toArray();
+    }
+    /**
+     * Get growth statistics by posyandu (monthly breakdown for last 12 months)
+     */
+    private function getGrowthByPosyandu(): array
+    {
+        // Generate monthly data for last 12 months
+        $monthlyData = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $monthStart = $date->copy()->startOfMonth()->format('Y-m-d');
+            $monthEnd = $date->copy()->endOfMonth()->format('Y-m-d');
+
+            $query = DB::table('weighing_logs as wl')
+                ->select(
+                    DB::raw('COUNT(DISTINCT wl.child_id) as children_count'),
+                    DB::raw('COUNT(wl.id) as weighings_count')
+                )
+                ->join('children as c', 'wl.child_id', '=', 'c.id')
+                ->whereBetween('wl.measured_at', [$monthStart, $monthEnd]);
+
+            $result = $query->first();
+
+            $monthlyData[] = [
+                'month' => $date->format('M Y'),
+                'children_count' => $result->children_count ?? 0,
+                'weighings_count' => $result->weighings_count ?? 0,
+            ];
+        }
+
+        return $monthlyData;
+    }
+
+    /**
+     * Get monthly trend for last 12 months
+     */
+    private function getMonthlyTrend(): array
+    {
+        $months = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $monthStart = $date->copy()->startOfMonth()->format('Y-m-d');
+            $monthEnd = $date->copy()->endOfMonth()->format('Y-m-d');
+
+            $weighingsCount = WeighingLog::whereBetween('measured_at', [$monthStart, $monthEnd])->count();
+
+            $months[] = [
+                'month' => $date->format('M Y'),
+                'weighings_count' => $weighingsCount,
+            ];
+        }
+
+        return $months;
     }
 }

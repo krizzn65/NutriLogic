@@ -7,6 +7,7 @@ import {
     ChevronDown, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import PageHeader from "../ui/PageHeader";
 import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell
@@ -209,77 +210,70 @@ export default function SystemReports() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto bg-gray-50/50">
-            <div className="p-4 md:p-8 w-full flex flex-col gap-8">
-                {/* Header & Filter Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Laporan Sistem</h1>
-                        <p className="text-gray-500 mt-2 text-lg">Ringkasan statistik dan performa NutriLogic</p>
-                    </div>
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
+            <PageHeader title="Laporan Sistem" subtitle="Ringkasan statistik dan performa NutriLogic" />
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
-                    <div className="flex flex-col sm:flex-row items-end gap-3 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                        {/* Custom Posyandu Dropdown */}
-                        <div className="relative" ref={posyanduRef}>
-                            <label className="text-xs font-medium text-gray-400 absolute -top-2 left-2 bg-white px-1 z-10">
-                                Posyandu
-                            </label>
-                            <button
-                                onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
-                                className="w-48 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:bg-gray-100 transition-colors text-gray-900"
-                            >
-                                <span className="truncate">
-                                    {selectedPosyandu === 'all'
-                                        ? 'Semua Posyandu'
-                                        : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
-                                </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
+                {/* Posyandu Filter */}
+                <div className="flex justify-start">
+                    <div className="relative" ref={posyanduRef}>
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">
+                            Filter Posyandu
+                        </label>
+                        <button
+                            onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                            className="w-56 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:bg-gray-50 transition-colors text-gray-900 shadow-sm"
+                        >
+                            <span className="truncate">
+                                {selectedPosyandu === 'all'
+                                    ? 'Semua Posyandu'
+                                    : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
 
-                            <AnimatePresence>
-                                {isPosyanduDropdownOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 10 }}
-                                        className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
-                                    >
-                                        <div className="max-h-64 overflow-y-auto p-1">
+                        <AnimatePresence>
+                            {isPosyanduDropdownOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
+                                >
+                                    <div className="max-h-64 overflow-y-auto p-1">
+                                        <div
+                                            onClick={() => {
+                                                setSelectedPosyandu('all');
+                                                setIsPosyanduDropdownOpen(false);
+                                                hasHydratedReports.current = false;
+                                            }}
+                                            className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                        >
+                                            <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                Semua Posyandu
+                                            </span>
+                                            {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
+                                        </div>
+                                        {posyandus.map((posyandu) => (
                                             <div
+                                                key={posyandu.id}
                                                 onClick={() => {
-                                                    setSelectedPosyandu('all');
+                                                    setSelectedPosyandu(posyandu.id);
                                                     setIsPosyanduDropdownOpen(false);
                                                     hasHydratedReports.current = false;
                                                 }}
                                                 className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                             >
-                                                <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                    Semua Posyandu
+                                                <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                    {posyandu.name}
                                                 </span>
-                                                {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
+                                                {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
                                             </div>
-                                            {posyandus.map((posyandu) => (
-                                                <div
-                                                    key={posyandu.id}
-                                                    onClick={() => {
-                                                        setSelectedPosyandu(posyandu.id);
-                                                        setIsPosyanduDropdownOpen(false);
-                                                        hasHydratedReports.current = false;
-                                                    }}
-                                                    className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
-                                                >
-                                                    <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                        {posyandu.name}
-                                                    </span>
-                                                    {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
 
@@ -572,7 +566,7 @@ export default function SystemReports() {
                     </motion.div>
                 )}
             </div>
-        </div >
+        </div>
     );
 }
 
