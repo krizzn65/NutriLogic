@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { Building2, Plus, Edit2, Power, MapPin, Users, Baby } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 
@@ -11,17 +12,91 @@ export default function PosyanduManagement() {
     const [showModal, setShowModal] = useState(false);
     const [editingPosyandu, setEditingPosyandu] = useState(null);
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
+    // Track if this is initial mount
+    const isInitialMount = React.useRef(true);
+
+    // Preload all filter data for instant tab switching
+    const preloadAllFilters = async () => {
+        const filters = ['all', 'active', 'inactive'];
+
+        for (const filter of filters) {
+            const cacheKey = `admin_posyandus_${filter}`;
+            // Skip if already cached
+            if (getCachedData(cacheKey)) continue;
+
+            try {
+                const params = filter !== 'all' ? { status: filter } : {};
+                const response = await api.get('/admin/posyandus', { params });
+                setCachedData(cacheKey, response.data.data);
+
+                // Also update "all" cache for other pages
+                if (filter === 'all') {
+                    setCachedData('admin_posyandus', response.data.data);
+                }
+            } catch (err) {
+                console.error(`Preload ${filter} error:`, err);
+            }
+        }
+    };
+
     useEffect(() => {
-        fetchPosyandus();
+        if (isInitialMount.current) {
+            // First load - show skeleton and preload all filters
+            isInitialMount.current = false;
+            fetchPosyandus();
+            // Preload other filters in background
+            preloadAllFilters();
+        } else {
+            // Filter change - no skeleton, use cache or fetch
+            fetchPosyandus(true);
+        }
     }, [filterStatus]);
 
-    const fetchPosyandus = async () => {
+    // Handler for filter tab changes - show cached data instantly, refresh in background
+    const handleFilterChange = (newFilter) => {
+        if (newFilter === filterStatus) return;
+
+        // Immediately show cached data for the new filter (instant switch)
+        const cachedPosyandus = getCachedData(`admin_posyandus_${newFilter}`);
+        if (cachedPosyandus) {
+            setPosyandus(cachedPosyandus);
+        }
+
+        setFilterStatus(newFilter);
+    };
+
+    const fetchPosyandus = async (forceRefresh = false) => {
+        // Cache each filter state separately
+        const cacheKey = `admin_posyandus_${filterStatus}`;
+
+        // For non-force refresh, use cache and return
+        if (!forceRefresh) {
+            const cachedPosyandus = getCachedData(cacheKey);
+            if (cachedPosyandus) {
+                setPosyandus(cachedPosyandus);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
-            setLoading(true);
+            // Only show loading skeleton on initial load, not on background refresh
+            if (!forceRefresh) {
+                setLoading(true);
+            }
             setError(null);
             const params = filterStatus !== "all" ? { status: filterStatus } : {};
             const response = await api.get('/admin/posyandus', { params });
             setPosyandus(response.data.data);
+            setCachedData(cacheKey, response.data.data);
+
+            // Also update "all" cache for other pages that use admin_posyandus
+            if (filterStatus === "all") {
+                setCachedData('admin_posyandus', response.data.data);
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data posyandu.';
             setError(errorMessage);
@@ -30,6 +105,7 @@ export default function PosyanduManagement() {
             setLoading(false);
         }
     };
+
 
     const handleAddNew = () => {
         setEditingPosyandu(null);
@@ -47,13 +123,30 @@ export default function PosyanduManagement() {
             return;
         }
 
+        // Optimistic update - update UI immediately
+        const previousPosyandus = [...posyandus];
+        setPosyandus(prev => prev.map(p =>
+            p.id === posyandu.id ? { ...p, is_active: !p.is_active } : p
+        ));
+
         try {
             await api.patch(`/admin/posyandus/${posyandu.id}/toggle-active`);
-            fetchPosyandus();
+            // Invalidate all posyandu caches
+            invalidateCache('admin_posyandus');
+            invalidateCache('admin_posyandus_all');
+            invalidateCache('admin_posyandus_active');
+            invalidateCache('admin_posyandus_inactive');
+            invalidateCache('admin_dashboard');
+            // Fetch fresh data to ensure consistency
+            fetchPosyandus(true);
         } catch (err) {
+            // Revert on error
+            setPosyandus(previousPosyandus);
             alert(err.response?.data?.message || 'Gagal mengubah status posyandu.');
         }
     };
+
+
 
     if (loading) {
         return (
@@ -87,7 +180,7 @@ export default function PosyanduManagement() {
                 {/* Filter Tabs */}
                 <div className="flex gap-2 border-b border-gray-200">
                     <button
-                        onClick={() => setFilterStatus('all')}
+                        onClick={() => handleFilterChange('all')}
                         className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'all'
                             ? 'text-blue-600 border-b-2 border-blue-600'
                             : 'text-gray-600 hover:text-gray-800'
@@ -96,7 +189,7 @@ export default function PosyanduManagement() {
                         Semua
                     </button>
                     <button
-                        onClick={() => setFilterStatus('active')}
+                        onClick={() => handleFilterChange('active')}
                         className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'active'
                             ? 'text-blue-600 border-b-2 border-blue-600'
                             : 'text-gray-600 hover:text-gray-800'
@@ -105,7 +198,7 @@ export default function PosyanduManagement() {
                         Aktif
                     </button>
                     <button
-                        onClick={() => setFilterStatus('inactive')}
+                        onClick={() => handleFilterChange('inactive')}
                         className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'inactive'
                             ? 'text-blue-600 border-b-2 border-blue-600'
                             : 'text-gray-600 hover:text-gray-800'
@@ -181,8 +274,8 @@ export default function PosyanduManagement() {
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${posyandu.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {posyandu.is_active ? 'Aktif' : 'Nonaktif'}
                                                 </span>
@@ -199,8 +292,8 @@ export default function PosyanduManagement() {
                                                     <button
                                                         onClick={() => handleToggleActive(posyandu)}
                                                         className={`p-1.5 rounded transition-colors ${posyandu.is_active
-                                                                ? 'text-red-600 hover:bg-red-50'
-                                                                : 'text-green-600 hover:bg-green-50'
+                                                            ? 'text-red-600 hover:bg-red-50'
+                                                            : 'text-green-600 hover:bg-green-50'
                                                             }`}
                                                         title={posyandu.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                                                     >
@@ -224,7 +317,14 @@ export default function PosyanduManagement() {
                     onClose={() => setShowModal(false)}
                     onSuccess={() => {
                         setShowModal(false);
-                        fetchPosyandus();
+                        // Invalidate all posyandu caches first
+                        invalidateCache('admin_posyandus');
+                        invalidateCache('admin_posyandus_all');
+                        invalidateCache('admin_posyandus_active');
+                        invalidateCache('admin_posyandus_inactive');
+                        invalidateCache('admin_dashboard');
+                        // Force refresh to bypass cache
+                        fetchPosyandus(true);
                     }}
                 />
             )}
@@ -235,16 +335,31 @@ export default function PosyanduManagement() {
 // Modal Component
 function PosyanduModal({ posyandu, onClose, onSuccess }) {
     const [formData, setFormData] = useState({
-        name: posyandu?.name || '',
-        village: posyandu?.village || '',
-        city: posyandu?.city || '',
-        address: posyandu?.address || '',
-        rt_rw: posyandu?.rt_rw || '',
-        latitude: posyandu?.latitude || '',
-        longitude: posyandu?.longitude || '',
+        name: '',
+        village: '',
+        city: '',
+        address: '',
+        rt_rw: '',
+        latitude: '',
+        longitude: '',
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+
+    // Reset form when modal opens or posyandu changes
+    useEffect(() => {
+        setFormData({
+            name: posyandu?.name || '',
+            village: posyandu?.village || '',
+            city: posyandu?.city || '',
+            address: posyandu?.address || '',
+            rt_rw: posyandu?.rt_rw || '',
+            latitude: posyandu?.latitude || '',
+            longitude: posyandu?.longitude || '',
+        });
+        setError(null);
+        setSubmitting(false);
+    }, [posyandu]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -266,7 +381,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
@@ -290,7 +405,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                             required
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             placeholder="Contoh: Posyandu Melati"
                         />
                     </div>
@@ -305,7 +420,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                                 required
                                 value={formData.village}
                                 onChange={(e) => setFormData({ ...formData, village: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="Nama desa"
                             />
                         </div>
@@ -319,7 +434,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                                 required
                                 value={formData.city}
                                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="Nama kota/kabupaten"
                             />
                         </div>
@@ -332,7 +447,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                         <textarea
                             value={formData.address}
                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             rows="2"
                             placeholder="Alamat lengkap posyandu"
                         />
@@ -346,7 +461,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                             type="text"
                             value={formData.rt_rw}
                             onChange={(e) => setFormData({ ...formData, rt_rw: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             placeholder="Contoh: 001/002"
                         />
                     </div>
@@ -361,7 +476,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                                 step="any"
                                 value={formData.latitude}
                                 onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="-6.200000"
                             />
                         </div>
@@ -375,7 +490,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                                 step="any"
                                 value={formData.longitude}
                                 onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="106.816666"
                             />
                         </div>

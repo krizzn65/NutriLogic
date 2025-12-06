@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge } from "../../lib/utils";
 import AddScheduleModal from "./AddScheduleModal";
 import PageHeader from "../dashboard/PageHeader";
@@ -46,6 +47,9 @@ export default function JadwalPosyandu() {
     const childDropdownRef = useRef(null);
     const navigate = useNavigate();
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchSchedules();
         fetchChildren();
@@ -66,12 +70,26 @@ export default function JadwalPosyandu() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const fetchSchedules = async () => {
+    const fetchSchedules = async (forceRefresh = false) => {
+        // Check cache first (skip if forceRefresh)
+        if (!forceRefresh) {
+            const cachedSchedules = getCachedData('kader_schedules');
+            if (cachedSchedules) {
+                setSchedules(cachedSchedules);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
-            setLoading(true);
+            // Only show loading on initial load
+            if (!forceRefresh) {
+                setLoading(true);
+            }
             setError(null);
             const response = await api.get('/kader/schedules');
             setSchedules(response.data.data);
+            setCachedData('kader_schedules', response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat jadwal. Silakan coba lagi.';
             setError(errorMessage);
@@ -80,10 +98,20 @@ export default function JadwalPosyandu() {
         }
     };
 
-    const fetchChildren = async () => {
+    const fetchChildren = async (forceRefresh = false) => {
+        // Check cache first (skip if forceRefresh)
+        if (!forceRefresh) {
+            const cachedChildren = getCachedData('kader_children_active');
+            if (cachedChildren) {
+                setChildren(cachedChildren);
+                return;
+            }
+        }
+
         try {
             const response = await api.get('/kader/children?is_active=1');
             setChildren(response.data.data);
+            setCachedData('kader_children_active', response.data.data);
         } catch (err) {
             console.error('Failed to fetch children:', err);
         }
@@ -94,12 +122,21 @@ export default function JadwalPosyandu() {
         e.stopPropagation();
         if (!window.confirm('Apakah Anda yakin ingin menandai jadwal ini sebagai selesai?')) return;
 
+        // Optimistic update
+        const previousSchedules = [...schedules];
+        setSchedules(prev => prev.map(s =>
+            s.id === id ? { ...s, status: 'completed', completed_at: new Date().toISOString() } : s
+        ));
+
         try {
             await api.put(`/kader/schedules/${id}`, {
                 completed_at: new Date().toISOString()
             });
-            fetchSchedules();
+            invalidateCache('kader_schedules');
+            invalidateCache('kader_dashboard');
+            fetchSchedules(true);
         } catch (err) {
+            setSchedules(previousSchedules);
             alert('Gagal mengupdate status jadwal.');
         }
     };
@@ -108,13 +145,21 @@ export default function JadwalPosyandu() {
         e.stopPropagation();
         if (!window.confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) return;
 
+        // Optimistic update
+        const previousSchedules = [...schedules];
+        setSchedules(prev => prev.filter(s => s.id !== id));
+
         try {
             await api.delete(`/kader/schedules/${id}`);
-            fetchSchedules();
+            invalidateCache('kader_schedules');
+            invalidateCache('kader_dashboard');
+            fetchSchedules(true);
         } catch (err) {
+            setSchedules(previousSchedules);
             alert('Gagal menghapus jadwal.');
         }
     };
+
 
     const getStatusConfig = (status) => {
         const configs = {
