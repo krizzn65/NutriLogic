@@ -318,14 +318,22 @@ export default function AnakPrioritas() {
                                     </div>
 
                                     {child.latest_weighing ? (
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">Berat Badan</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Berat</p>
                                                 <p className="text-sm font-bold text-gray-900">{child.latest_weighing.weight_kg} kg</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">Tinggi Badan</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Tinggi</p>
                                                 <p className="text-sm font-bold text-gray-900">{child.latest_weighing.height_cm} cm</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-0.5">Lengan</p>
+                                                <p className="text-sm font-bold text-gray-900">{child.latest_weighing.muac_cm ? `${child.latest_weighing.muac_cm} cm` : '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-0.5">Kepala</p>
+                                                <p className="text-sm font-bold text-gray-900">{child.latest_weighing.head_circumference_cm ? `${child.latest_weighing.head_circumference_cm} cm` : '-'}</p>
                                             </div>
                                         </div>
                                     ) : (

@@ -148,16 +148,16 @@ export default function DataAnakDetail() {
                 </div>
 
                 {/* Hero Section */}
-                <div className="relative bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+                <div className="relative bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-visible">
                     {/* Decorative Background Layer */}
-                    <div className="absolute inset-0 overflow-hidden rounded-[24px]">
+                    <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-bl-full -mr-16 -mt-16 opacity-50" />
                     </div>
 
                     {/* Content Layer */}
-                    <div className="relative z-10 p-5 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
+                    <div className="relative z-10 p-5 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center min-h-[200px]">
                         {/* Profile Info */}
-                        <div className="flex items-center gap-4 md:gap-6 flex-1 w-full">
+                        <div className="flex items-center gap-4 md:gap-6 flex-1 w-full min-w-0">
 
                             <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-blue-50 p-1.5 shadow-inner flex-shrink-0">
                                 <img

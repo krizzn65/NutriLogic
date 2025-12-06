@@ -196,6 +196,8 @@ export default function ChildrenMonitoring() {
                                 <option value="sangat_pendek">Sangat Pendek</option>
                                 <option value="kurus">Kurus</option>
                                 <option value="sangat_kurus">Sangat Kurus</option>
+                                <option value="lebih">Lebih</option>
+                                <option value="gemuk">Gemuk</option>
                             </select>
                         </div>
 

@@ -5,6 +5,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
 import PageHeader from "../dashboard/PageHeader";
 
+// InputField component defined outside to prevent re-creation on every render
+const InputField = ({ label, name, type = "text", placeholder, icon: Icon, required = false, formData, handleChange, errors, ...props }) => (
+    <div className="w-full">
+        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="relative group">
+            {Icon && (
+                <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+            )}
+            <input
+                type={type}
+                name={name}
+                value={formData[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${errors[name] ? 'border-red-500 bg-red-50/50' : ''}`}
+                {...props}
+            />
+        </div>
+        {errors[name] && (
+            <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors[name]}
+            </p>
+        )}
+    </div>
+);
+
 export default function TambahAnakKaderForm() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -63,9 +92,20 @@ export default function TambahAnakKaderForm() {
         try {
             setParentsLoading(true);
             const response = await api.get('/kader/parents');
-            setParents(response.data.data);
+            console.log('Parents API Response:', response.data);
+
+            const parentsData = response.data.data || [];
+            console.log('Parents Data:', parentsData);
+            console.log('Parents Count:', parentsData.length);
+
+            setParents(parentsData);
+
+            if (parentsData.length === 0) {
+                console.warn('No parents found in this posyandu');
+            }
         } catch (err) {
             console.error('Failed to fetch parents:', err);
+            console.error('Error response:', err.response?.data);
             setError('Gagal memuat data orang tua. Silakan refresh halaman.');
         } finally {
             setParentsLoading(false);
@@ -171,41 +211,13 @@ export default function TambahAnakKaderForm() {
         }
     };
 
-    const InputField = ({ label, name, type = "text", placeholder, icon: Icon, required = false, ...props }) => (
-        <div className="w-full">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
-                {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <div className="relative group">
-                {Icon && (
-                    <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                )}
-                <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    placeholder={placeholder}
-                    className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${errors[name] ? 'border-red-500 bg-red-50/50' : ''}`}
-                    {...props}
-                />
-            </div>
-            {errors[name] && (
-                <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors[name]}
-                </p>
-            )}
-        </div>
-    );
-
     return (
         <div className="flex flex-col flex-1 w-full h-full overflow-auto bg-gray-50/50">
             {/* Header - Full Width */}
             <div className="w-full px-4 md:px-8 pt-4 md:pt-8">
                 <PageHeader title="Tambah Data Anak" subtitle="Formulir Pendaftaran" />
             </div>
-            
+
             {/* Content - Centered with max-width */}
             <div className="w-full max-w-5xl mx-auto px-4 md:px-8 pb-4 md:pb-8 flex flex-col gap-6">
                 {error && (
@@ -328,8 +340,17 @@ export default function TambahAnakKaderForm() {
                                                                 </div>
                                                             ))
                                                     ) : (
-                                                        <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                                                            Tidak ada data orang tua ditemukan
+                                                        <div className="px-4 py-8 text-center">
+                                                            <p className="text-gray-500 text-sm mb-2">
+                                                                {parentSearch
+                                                                    ? 'Tidak ada data orang tua yang sesuai dengan pencarian'
+                                                                    : 'Belum ada data orang tua di posyandu ini'}
+                                                            </p>
+                                                            {!parentSearch && (
+                                                                <p className="text-xs text-gray-400">
+                                                                    Gunakan opsi "Buat Baru" untuk menambahkan orang tua baru
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -353,6 +374,9 @@ export default function TambahAnakKaderForm() {
                                         placeholder="Masukkan nama lengkap orang tua"
                                         icon={User}
                                         required
+                                        formData={formData}
+                                        handleChange={handleChange}
+                                        errors={errors}
                                     />
                                 </div>
                                 <InputField
@@ -361,6 +385,9 @@ export default function TambahAnakKaderForm() {
                                     type="email"
                                     placeholder="email@example.com"
                                     icon={Mail}
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
                                 />
                                 <InputField
                                     label="No. Telepon"
@@ -368,6 +395,9 @@ export default function TambahAnakKaderForm() {
                                     type="tel"
                                     placeholder="08xxxxxxxxxx"
                                     icon={Phone}
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
                                 />
                             </div>
                         )}
@@ -391,6 +421,9 @@ export default function TambahAnakKaderForm() {
                                     placeholder="Masukkan nama lengkap anak"
                                     icon={User}
                                     required
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
                                 />
                             </div>
 
@@ -400,6 +433,9 @@ export default function TambahAnakKaderForm() {
                                 placeholder="Nomor Induk Kependudukan"
                                 icon={FileText}
                                 maxLength="16"
+                                formData={formData}
+                                handleChange={handleChange}
+                                errors={errors}
                             />
 
                             {/* Custom Date Picker */}
@@ -568,6 +604,9 @@ export default function TambahAnakKaderForm() {
                                     placeholder="0.0"
                                     step="0.1"
                                     icon={Weight}
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
                                 />
                                 <InputField
                                     label="Tinggi Lahir (cm)"
@@ -576,6 +615,9 @@ export default function TambahAnakKaderForm() {
                                     placeholder="0.0"
                                     step="0.1"
                                     icon={Ruler}
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
                                 />
                             </div>
 

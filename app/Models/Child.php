@@ -64,6 +64,11 @@ class Child extends Model
         return $this->hasMany(MealLog::class);
     }
 
+    public function pmtLogs(): HasMany
+    {
+        return $this->hasMany(PmtLog::class)->orderBy('date', 'desc');
+    }
+
     public function immunizationSchedules(): HasMany
     {
         return $this->hasMany(ImmunizationSchedule::class);

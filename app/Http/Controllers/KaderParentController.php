@@ -19,22 +19,25 @@ class KaderParentController extends Controller
             $user = $request->user();
 
             // Get all parents with role 'ibu' (orang tua)
-            // Filter by same posyandu as kader for better data relevance
+            // Show all active parents to allow kader to assign them to their posyandu
             $query = User::where('role', 'ibu')
                 ->where('is_active', true)
                 ->select('id', 'name', 'phone', 'email', 'posyandu_id');
 
-            // If kader has posyandu_id, only get parents from same posyandu
+            // Prioritize parents from same posyandu, but show all
             if ($user->posyandu_id) {
-                $query->where('posyandu_id', $user->posyandu_id);
+                $query->orderByRaw("CASE WHEN posyandu_id = ? THEN 0 ELSE 1 END", [$user->posyandu_id]);
             }
+            
+            $query->orderBy('name', 'asc');
 
-            $parents = $query->orderBy('name', 'asc')->get();
+            $parents = $query->get();
 
             Log::info('Parents fetched', [
                 'kader_id' => $user->id,
                 'posyandu_id' => $user->posyandu_id,
-                'count' => $parents->count()
+                'count' => $parents->count(),
+                'parent_ids' => $parents->pluck('id')->toArray()
             ]);
 
             return response()->json([

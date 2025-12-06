@@ -54,6 +54,8 @@ class PriorityChildService
                         'measured_at' => $latestWeighing->measured_at,
                         'weight_kg' => $latestWeighing->weight_kg,
                         'height_cm' => $latestWeighing->height_cm,
+                        'muac_cm' => $latestWeighing->muac_cm,
+                        'head_circumference_cm' => $latestWeighing->head_circumference_cm,
                         'nutritional_status' => $latestWeighing->nutritional_status,
                     ] : null,
                     'priority_reasons' => $reasons,

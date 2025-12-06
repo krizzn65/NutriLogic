@@ -415,7 +415,7 @@ class ParentDashboardController extends Controller
 
         // Try to get from cache first (24 hours)
         $cacheKey = 'nutriassist_' . $child->id . '_' . md5(json_encode($validated['ingredients']));
-        
+
         try {
             $recommendations = \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($child, $validated) {
                 return $this->getAINutriAssist($child, $validated);
@@ -425,7 +425,6 @@ class ParentDashboardController extends Controller
                 'success' => true,
                 'data' => $recommendations,
             ], 200);
-
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('NutriAssist AI Error: ' . $e->getMessage(), [
                 'child_id' => $child->id,
