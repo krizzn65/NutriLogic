@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { getStatusColor, getStatusLabel } from "../../lib/utils";
 import PageHeader from "../dashboard/PageHeader";
 import { DatePicker } from "../ui/date-picker";
@@ -32,6 +33,9 @@ export default function LaporanKader() {
     });
     const [children, setChildren] = useState([]);
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchChildren();
         fetchHistory(1);
@@ -42,15 +46,37 @@ export default function LaporanKader() {
     }, [filters]);
 
     const fetchChildren = async () => {
+        // Check cache first
+        const cachedChildren = getCachedData('kader_children_all');
+        if (cachedChildren) {
+            setChildren(cachedChildren);
+            return;
+        }
+
         try {
             const response = await api.get("/kader/children");
             setChildren(response.data.data || []);
+            setCachedData('kader_children_all', response.data.data || []);
         } catch (err) {
             console.error("Error fetching children:", err);
         }
     };
 
     const fetchHistory = async (page = 1) => {
+        // Cache only first page with no filters
+        const hasFilters = filters.child_id || filters.start_date || filters.end_date;
+        const isFirstPage = page === 1;
+
+        if (isFirstPage && !hasFilters) {
+            const cachedHistory = getCachedData('kader_report_history');
+            if (cachedHistory) {
+                setHistoryData(cachedHistory.data);
+                setPagination(cachedHistory.meta);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -67,6 +93,14 @@ export default function LaporanKader() {
             const response = await api.get("/kader/report/history", { params });
             setHistoryData(response.data.data);
             setPagination(response.data.meta);
+
+            // Cache only first page with no filters
+            if (isFirstPage && !hasFilters) {
+                setCachedData('kader_report_history', {
+                    data: response.data.data,
+                    meta: response.data.meta
+                });
+            }
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message || "Gagal memuat riwayat. Silakan coba lagi.";
@@ -76,6 +110,7 @@ export default function LaporanKader() {
             setLoading(false);
         }
     };
+
 
     const handleFilterChange = (field, value) => {
         setFilters((prev) => {

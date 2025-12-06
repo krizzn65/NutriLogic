@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { FileText, Download, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 
@@ -12,11 +13,25 @@ export default function SystemReports() {
         date_to: '',
     });
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchReportData();
     }, []);
 
     const fetchReportData = async () => {
+        // Cache only when no date filter
+        const hasDateFilter = dateRange.date_from || dateRange.date_to;
+        if (!hasDateFilter) {
+            const cachedReports = getCachedData('admin_reports');
+            if (cachedReports) {
+                setReportData(cachedReports);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -26,6 +41,11 @@ export default function SystemReports() {
 
             const response = await api.get('/admin/reports', { params });
             setReportData(response.data.data);
+
+            // Cache only when no date filter
+            if (!hasDateFilter) {
+                setCachedData('admin_reports', response.data.data);
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data laporan.';
             setError(errorMessage);
@@ -34,6 +54,7 @@ export default function SystemReports() {
             setLoading(false);
         }
     };
+
 
     const handleExport = (type) => {
         const params = new URLSearchParams();

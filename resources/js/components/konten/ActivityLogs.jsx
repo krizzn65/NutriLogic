@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { Activity, Calendar, User, Filter } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 
@@ -13,11 +14,25 @@ export default function ActivityLogs() {
         date_to: '',
     });
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchLogs();
     }, []);
 
     const fetchLogs = async () => {
+        // Cache only when no filter
+        const hasFilter = filters.action || filters.date_from || filters.date_to;
+        if (!hasFilter) {
+            const cachedLogs = getCachedData('admin_logs');
+            if (cachedLogs) {
+                setLogs(cachedLogs);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -28,6 +43,11 @@ export default function ActivityLogs() {
 
             const response = await api.get('/admin/activity-logs', { params });
             setLogs(response.data.data);
+
+            // Cache only when no filter
+            if (!hasFilter) {
+                setCachedData('admin_logs', response.data.data);
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat log aktivitas.';
             setError(errorMessage);
@@ -36,6 +56,7 @@ export default function ActivityLogs() {
             setLoading(false);
         }
     };
+
 
     const getActionColor = (action) => {
         const colors = {

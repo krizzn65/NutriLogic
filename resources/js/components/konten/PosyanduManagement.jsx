@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { Building2, Plus, Edit2, Power, MapPin, Users, Baby } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 
@@ -11,17 +12,35 @@ export default function PosyanduManagement() {
     const [showModal, setShowModal] = useState(false);
     const [editingPosyandu, setEditingPosyandu] = useState(null);
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchPosyandus();
     }, [filterStatus]);
 
     const fetchPosyandus = async () => {
+        // Cache each filter state separately
+        const cacheKey = `admin_posyandus_${filterStatus}`;
+        const cachedPosyandus = getCachedData(cacheKey);
+        if (cachedPosyandus) {
+            setPosyandus(cachedPosyandus);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
             const params = filterStatus !== "all" ? { status: filterStatus } : {};
             const response = await api.get('/admin/posyandus', { params });
             setPosyandus(response.data.data);
+            setCachedData(cacheKey, response.data.data);
+
+            // Also update "all" cache for other pages that use admin_posyandus
+            if (filterStatus === "all") {
+                setCachedData('admin_posyandus', response.data.data);
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data posyandu.';
             setError(errorMessage);
@@ -30,6 +49,7 @@ export default function PosyanduManagement() {
             setLoading(false);
         }
     };
+
 
     const handleAddNew = () => {
         setEditingPosyandu(null);
@@ -49,11 +69,19 @@ export default function PosyanduManagement() {
 
         try {
             await api.patch(`/admin/posyandus/${posyandu.id}/toggle-active`);
+            // Invalidate all posyandu caches
+            invalidateCache('admin_posyandus');
+            invalidateCache('admin_posyandus_all');
+            invalidateCache('admin_posyandus_active');
+            invalidateCache('admin_posyandus_inactive');
+            invalidateCache('admin_dashboard');
             fetchPosyandus();
         } catch (err) {
             alert(err.response?.data?.message || 'Gagal mengubah status posyandu.');
         }
     };
+
+
 
     if (loading) {
         return (
@@ -181,8 +209,8 @@ export default function PosyanduManagement() {
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${posyandu.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {posyandu.is_active ? 'Aktif' : 'Nonaktif'}
                                                 </span>
@@ -199,8 +227,8 @@ export default function PosyanduManagement() {
                                                     <button
                                                         onClick={() => handleToggleActive(posyandu)}
                                                         className={`p-1.5 rounded transition-colors ${posyandu.is_active
-                                                                ? 'text-red-600 hover:bg-red-50'
-                                                                : 'text-green-600 hover:bg-green-50'
+                                                            ? 'text-red-600 hover:bg-red-50'
+                                                            : 'text-green-600 hover:bg-green-50'
                                                             }`}
                                                         title={posyandu.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                                                     >

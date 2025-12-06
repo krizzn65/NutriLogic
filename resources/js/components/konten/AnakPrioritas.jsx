@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, ArrowLeft, AlertTriangle, TrendingDown, Clock, Filter, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge } from "../../lib/utils";
 import kepalaBayi from "../../assets/kepala_bayi.png";
 import kepalaBayiCewe from "../../assets/kepala_bayi_cewe.png";
@@ -19,6 +20,9 @@ export default function AnakPrioritas() {
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchPriorityChildren();
 
@@ -33,6 +37,15 @@ export default function AnakPrioritas() {
     }, []);
 
     const fetchPriorityChildren = async () => {
+        // Check cache first
+        const cachedData = getCachedData('kader_priority_children');
+        if (cachedData) {
+            setPriorityChildren(cachedData.children);
+            setSummary(cachedData.summary);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -40,6 +53,12 @@ export default function AnakPrioritas() {
             const response = await api.get('/kader/children/priorities');
             setPriorityChildren(response.data.data);
             setSummary(response.data.summary);
+
+            // Cache both children and summary
+            setCachedData('kader_priority_children', {
+                children: response.data.data,
+                summary: response.data.summary
+            });
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak prioritas. Silakan coba lagi.';
             setError(errorMessage);
@@ -48,6 +67,7 @@ export default function AnakPrioritas() {
             setLoading(false);
         }
     };
+
 
     const getReasonBadge = (reason) => {
         const styles = {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import PageHeader from "../dashboard/PageHeader";
 import { assets } from "../../assets/assets";
@@ -14,17 +15,30 @@ export default function DetailAnakKader() {
     const [error, setError] = useState(null);
     const [childData, setChildData] = useState(null);
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchChildData();
     }, [id]);
 
     const fetchChildData = async () => {
+        // Check cache first with ID-based key
+        const cacheKey = `kader_child_${id}`;
+        const cachedChild = getCachedData(cacheKey);
+        if (cachedChild) {
+            setChildData(cachedChild);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
 
             const response = await api.get(`/kader/children/${id}`);
             setChildData(response.data.data);
+            setCachedData(cacheKey, response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
             setError(errorMessage);
@@ -33,6 +47,7 @@ export default function DetailAnakKader() {
             setLoading(false);
         }
     };
+
 
     if (loading) {
         return <DetailAnakKaderSkeleton />;
@@ -69,10 +84,10 @@ export default function DetailAnakKader() {
     return (
         <div className="flex flex-1 w-full h-full overflow-auto no-scrollbar bg-gray-50">
             <div className="p-4 md:p-10 w-full h-full flex flex-col gap-6">
-                <PageHeader 
+                <PageHeader
                     title={
                         <div className="flex items-center gap-2">
-                            <button 
+                            <button
                                 onClick={() => navigate('/dashboard/data-anak')}
                                 className="md:hidden -ml-2 p-1 text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -80,7 +95,7 @@ export default function DetailAnakKader() {
                             </button>
                             <span>Detail Anak</span>
                         </div>
-                    } 
+                    }
                     subtitle="Portal Kader"
                 >
                     <div className="hidden md:flex gap-3">
@@ -108,7 +123,7 @@ export default function DetailAnakKader() {
                         {/* Child Info Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 relative">
                             {/* Mobile Edit Button */}
-                            <button 
+                            <button
                                 onClick={() => navigate(`/dashboard/data-anak/edit/${id}`)}
                                 className="md:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-blue-600 transition-colors bg-gray-50 rounded-full border border-gray-100"
                             >
@@ -219,7 +234,7 @@ export default function DetailAnakKader() {
                                     </svg>
                                     Riwayat Penimbangan
                                 </h3>
-                                
+
                                 {/* Mobile View (Cards) */}
                                 <div className="md:hidden flex flex-col gap-3">
                                     {childData.weighing_logs.slice(0, 5).map((log) => (

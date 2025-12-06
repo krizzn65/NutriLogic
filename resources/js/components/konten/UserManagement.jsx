@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { UserCog, Users, Plus, Edit2, Power, Key, Building2 } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 
@@ -14,6 +15,9 @@ export default function UserManagement() {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [newPassword, setNewPassword] = useState(null);
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchPosyandus();
     }, []);
@@ -23,21 +27,39 @@ export default function UserManagement() {
     }, [activeTab]);
 
     const fetchPosyandus = async () => {
+        // Check cache first
+        const cachedPosyandus = getCachedData('admin_posyandus');
+        if (cachedPosyandus) {
+            setPosyandus(cachedPosyandus);
+            return;
+        }
+
         try {
             const response = await api.get('/admin/posyandus');
             setPosyandus(response.data.data);
+            setCachedData('admin_posyandus', response.data.data);
         } catch (err) {
             console.error('Posyandus fetch error:', err);
         }
     };
 
     const fetchUsers = async () => {
+        // Check cache first based on activeTab
+        const cacheKey = `admin_users_${activeTab}`;
+        const cachedUsers = getCachedData(cacheKey);
+        if (cachedUsers) {
+            setUsers(cachedUsers);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
             const params = { role: activeTab };
             const response = await api.get('/admin/users', { params });
             setUsers(response.data.data);
+            setCachedData(cacheKey, response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data user.';
             setError(errorMessage);
@@ -65,6 +87,8 @@ export default function UserManagement() {
 
         try {
             await api.patch(`/admin/users/${user.id}/toggle-active`);
+            invalidateCache(`admin_users_${activeTab}`);
+            invalidateCache('admin_dashboard');
             fetchUsers();
         } catch (err) {
             alert(err.response?.data?.message || 'Gagal mengubah status user.');
@@ -84,6 +108,7 @@ export default function UserManagement() {
             alert(err.response?.data?.message || 'Gagal reset password.');
         }
     };
+
 
     if (loading) {
         return (
@@ -196,8 +221,8 @@ export default function UserManagement() {
                                             )}
                                             <td className="py-3 px-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {user.is_active ? 'Aktif' : 'Nonaktif'}
                                                 </span>
@@ -221,8 +246,8 @@ export default function UserManagement() {
                                                     <button
                                                         onClick={() => handleToggleActive(user)}
                                                         className={`p-1.5 rounded transition-colors ${user.is_active
-                                                                ? 'text-red-600 hover:bg-red-50'
-                                                                : 'text-green-600 hover:bg-green-50'
+                                                            ? 'text-red-600 hover:bg-red-50'
+                                                            : 'text-green-600 hover:bg-green-50'
                                                             }`}
                                                         title={user.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                                                     >

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logoutWithApi } from "../../lib/auth";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import {
     Users, Building2, Baby, UserCog, AlertTriangle,
     Shield, Bell, Calendar, ChevronDown, MoreHorizontal, Settings, LogOut
@@ -28,6 +29,9 @@ export default function DashboardAdmin() {
     // Notification State
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
+
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
 
     // Keep-Alive Mechanism: Ping server every 5 minutes to prevent session timeout
     useEffect(() => {
@@ -146,20 +150,37 @@ export default function DashboardAdmin() {
     };
 
     const fetchUserProfile = async () => {
+        // Check cache first
+        const cachedUser = getCachedData('admin_user_profile');
+        if (cachedUser) {
+            setUser(cachedUser);
+            return;
+        }
+
         try {
             const response = await api.get('/me');
             setUser(response.data.data);
+            setCachedData('admin_user_profile', response.data.data);
         } catch (err) {
             console.error("Failed to fetch user profile", err);
         }
     };
 
     const fetchDashboardData = async () => {
+        // Check cache first
+        const cachedStats = getCachedData('admin_dashboard');
+        if (cachedStats) {
+            setStats(cachedStats);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
             const response = await api.get('/admin/dashboard');
             setStats(response.data.data);
+            setCachedData('admin_dashboard', response.data.data);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data dashboard.';
             setError(errorMessage);
@@ -168,6 +189,7 @@ export default function DashboardAdmin() {
             setLoading(false);
         }
     };
+
 
     if (loading) {
         return <DashboardAdminSkeleton />;

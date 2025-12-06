@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { Baby, Search, X, Building2, User, Calendar, Weight, Ruler } from "lucide-react";
 import { formatAge } from "../../lib/utils";
 
@@ -16,21 +17,44 @@ export default function ChildrenMonitoring() {
     const [selectedChild, setSelectedChild] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
+    // Data caching
+    const { getCachedData, setCachedData } = useDataCache();
+
     useEffect(() => {
         fetchPosyandus();
         fetchChildren();
     }, []);
 
     const fetchPosyandus = async () => {
+        // Check cache first
+        const cachedPosyandus = getCachedData('admin_posyandus');
+        if (cachedPosyandus) {
+            setPosyandus(cachedPosyandus);
+            return;
+        }
+
         try {
             const response = await api.get('/admin/posyandus');
             setPosyandus(response.data.data);
+            setCachedData('admin_posyandus', response.data.data);
         } catch (err) {
             console.error('Posyandus fetch error:', err);
         }
     };
 
+
     const fetchChildren = async () => {
+        // Cache only when no filter
+        const hasFilter = filters.name || filters.posyandu_id || filters.nutritional_status;
+        if (!hasFilter) {
+            const cachedChildren = getCachedData('admin_children');
+            if (cachedChildren) {
+                setChildren(cachedChildren);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -41,6 +65,11 @@ export default function ChildrenMonitoring() {
 
             const response = await api.get('/admin/children', { params });
             setChildren(response.data.data);
+
+            // Cache only when no filter
+            if (!hasFilter) {
+                setCachedData('admin_children', response.data.data);
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak.';
             setError(errorMessage);
@@ -49,6 +78,7 @@ export default function ChildrenMonitoring() {
             setLoading(false);
         }
     };
+
 
     const handleSearch = () => {
         fetchChildren();

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import { User, Mail, Phone, Shield, Save, Key } from "lucide-react";
 
 export default function AdminProfile() {
@@ -18,11 +19,27 @@ export default function AdminProfile() {
     const [saving, setSaving] = useState(false);
     const [changingPassword, setChangingPassword] = useState(false);
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchProfile();
     }, []);
 
     const fetchProfile = async () => {
+        // Check cache first
+        const cachedProfile = getCachedData('admin_profile');
+        if (cachedProfile) {
+            setUser(cachedProfile);
+            setFormData({
+                name: cachedProfile.name,
+                email: cachedProfile.email,
+                phone: cachedProfile.phone || '',
+            });
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await api.get('/me');
@@ -32,6 +49,7 @@ export default function AdminProfile() {
                 email: response.data.data.email,
                 phone: response.data.data.phone || '',
             });
+            setCachedData('admin_profile', response.data.data);
         } catch (err) {
             console.error('Profile fetch error:', err);
         } finally {
@@ -45,6 +63,8 @@ export default function AdminProfile() {
         // Simulate save
         setTimeout(() => {
             setSaving(false);
+            invalidateCache('admin_profile');
+            invalidateCache('admin_user_profile');
             alert('Profil berhasil diperbarui!');
         }, 1000);
     };
@@ -69,6 +89,7 @@ export default function AdminProfile() {
             alert('Password berhasil diubah!');
         }, 1000);
     };
+
 
     if (loading) {
         return (
