@@ -68,6 +68,7 @@ class KaderWeighingController extends Controller
             'weighings.*.weight_kg' => ['required', 'numeric', 'min:0', 'max:100'],
             'weighings.*.height_cm' => ['required', 'numeric', 'min:0', 'max:200'],
             'weighings.*.muac_cm' => ['nullable', 'numeric', 'min:0', 'max:50'],
+            'weighings.*.head_circumference_cm' => ['nullable', 'numeric', 'min:0', 'max:60'],
             'weighings.*.notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -95,6 +96,7 @@ class KaderWeighingController extends Controller
                     'weight_kg' => $weighingData['weight_kg'],
                     'height_cm' => $weighingData['height_cm'],
                     'muac_cm' => $weighingData['muac_cm'] ?? null,
+                    'head_circumference_cm' => $weighingData['head_circumference_cm'] ?? null,
                     'notes' => $weighingData['notes'] ?? null,
                 ]);
 

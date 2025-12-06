@@ -179,7 +179,7 @@ export default function DetailAnakKader() {
                                     </svg>
                                     Status Gizi Terakhir
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
                                         <p className="text-xs text-gray-500 mb-1">Tanggal Ukur</p>
                                         <p className="text-base font-bold text-gray-900">
@@ -200,7 +200,13 @@ export default function DetailAnakKader() {
                                             {latestWeighing.muac_cm ? `${latestWeighing.muac_cm} cm` : '-'}
                                         </p>
                                     </div>
-                                    <div className="sm:col-span-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <p className="text-xs text-gray-500 mb-1">Lingkar Kepala</p>
+                                        <p className="text-base font-bold text-gray-900">
+                                            {latestWeighing.head_circumference_cm ? `${latestWeighing.head_circumference_cm} cm` : '-'}
+                                        </p>
+                                    </div>
+                                    <div className="lg:col-span-1 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                         <p className="text-xs text-gray-500 mb-2">Status Gizi</p>
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold border ${getStatusColor(latestWeighing.nutritional_status)}`}>
                                             {getStatusLabel(latestWeighing.nutritional_status)}
@@ -234,7 +240,7 @@ export default function DetailAnakKader() {
                                                     {getStatusLabel(log.nutritional_status)}
                                                 </span>
                                             </div>
-                                            <div className="grid grid-cols-3 gap-2 text-center">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                                                 <div className="bg-white p-2 rounded border border-gray-100">
                                                     <p className="text-[10px] text-gray-500 uppercase">Berat</p>
                                                     <p className="font-semibold text-gray-900 text-sm">{log.weight_kg} kg</p>
@@ -244,8 +250,12 @@ export default function DetailAnakKader() {
                                                     <p className="font-semibold text-gray-900 text-sm">{log.height_cm} cm</p>
                                                 </div>
                                                 <div className="bg-white p-2 rounded border border-gray-100">
-                                                    <p className="text-[10px] text-gray-500 uppercase">Lila</p>
+                                                    <p className="text-[10px] text-gray-500 uppercase">Lengan</p>
                                                     <p className="font-semibold text-gray-900 text-sm">{log.muac_cm || '-'}</p>
+                                                </div>
+                                                <div className="bg-white p-2 rounded border border-gray-100">
+                                                    <p className="text-[10px] text-gray-500 uppercase">Kepala</p>
+                                                    <p className="font-semibold text-gray-900 text-sm">{log.head_circumference_cm || '-'}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -260,7 +270,8 @@ export default function DetailAnakKader() {
                                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
                                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Berat (kg)</th>
                                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tinggi (cm)</th>
-                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Lingkar Lengan (cm)</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Lengan (cm)</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Kepala (cm)</th>
                                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                             </tr>
                                         </thead>
@@ -273,6 +284,7 @@ export default function DetailAnakKader() {
                                                     <td className="px-4 py-3 text-sm text-gray-600">{log.weight_kg}</td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{log.height_cm}</td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{log.muac_cm || '-'}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600">{log.head_circumference_cm || '-'}</td>
                                                     <td className="px-4 py-3 text-sm">
                                                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(log.nutritional_status)}`}>
                                                             {getStatusLabel(log.nutritional_status)}
@@ -424,10 +436,10 @@ export default function DetailAnakKader() {
                                                     </p>
                                                 </div>
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${pmt.status === 'consumed'
-                                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                                        : pmt.status === 'partial'
-                                                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                                            : 'bg-red-50 text-red-700 border-red-200'
+                                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                                    : pmt.status === 'partial'
+                                                        ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                        : 'bg-red-50 text-red-700 border-red-200'
                                                     }`}>
                                                     {pmt.status === 'consumed' ? 'Habis' : pmt.status === 'partial' ? 'Sebagian' : 'Ditolak'}
                                                 </span>
@@ -465,10 +477,10 @@ export default function DetailAnakKader() {
                                                     </td>
                                                     <td className="px-4 py-3 text-sm">
                                                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${pmt.status === 'consumed'
-                                                                ? 'bg-green-50 text-green-700 border-green-200'
-                                                                : pmt.status === 'partial'
-                                                                    ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                                                    : 'bg-red-50 text-red-700 border-red-200'
+                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                            : pmt.status === 'partial'
+                                                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                                : 'bg-red-50 text-red-700 border-red-200'
                                                             }`}>
                                                             {pmt.status === 'consumed' ? '✓ Habis' : pmt.status === 'partial' ? '◐ Sebagian' : '✗ Ditolak'}
                                                         </span>
