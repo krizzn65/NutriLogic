@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
+import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
 import ProfilKaderSkeleton from "../loading/ProfilKaderSkeleton";
 
@@ -24,11 +25,27 @@ export default function ProfilKader() {
         new_password_confirmation: "",
     });
 
+    // Data caching
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
     useEffect(() => {
         fetchProfile();
     }, []);
 
     const fetchProfile = async () => {
+        // Check cache first
+        const cachedProfile = getCachedData('kader_profile');
+        if (cachedProfile) {
+            setProfile(cachedProfile);
+            setFormData({
+                name: cachedProfile.name,
+                email: cachedProfile.email,
+                phone: cachedProfile.phone || "",
+            });
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await api.get('/kader/profile');
@@ -38,6 +55,7 @@ export default function ProfilKader() {
                 email: response.data.data.email,
                 phone: response.data.data.phone || "",
             });
+            setCachedData('kader_profile', response.data.data);
         } catch (err) {
             setError('Gagal memuat profil.');
             console.error('Profile fetch error:', err);
@@ -73,6 +91,9 @@ export default function ProfilKader() {
             setProfile(prev => ({ ...prev, ...response.data.data }));
             setSuccess('Profil berhasil diperbarui!');
             setIsEditing(false);
+            invalidateCache('kader_profile');
+            invalidateCache('kader_dashboard');
+            setCachedData('kader_profile', { ...profile, ...response.data.data });
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memperbarui profil.';
             setError(errorMessage);
