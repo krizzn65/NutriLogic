@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\BroadcastLog;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -56,12 +58,39 @@ class KaderBroadcastController extends Controller
             'type' => $validated['type'],
         ]);
 
-        // TODO: Future - Trigger n8n webhook for WhatsApp/Telegram delivery
-        // $this->triggerN8nWebhook($broadcast);
+        // Create notifications for all parents in the same Posyandu
+        $parents = User::where('role', 'ibu')
+            ->where('posyandu_id', $user->posyandu_id)
+            ->get();
+
+        $typeLabels = [
+            'jadwal_posyandu' => 'Jadwal Posyandu',
+            'info_gizi' => 'Info Gizi',
+            'pengumuman_umum' => 'Pengumuman',
+            'lainnya' => 'Informasi',
+        ];
+
+        $title = $typeLabels[$validated['type']] ?? 'Pengumuman';
+
+        foreach ($parents as $parent) {
+            Notification::create([
+                'user_id' => $parent->id,
+                'type' => 'broadcast',
+                'title' => $title . ' dari Posyandu',
+                'message' => $validated['message'],
+                'link' => '/dashboard/notifikasi',
+                'is_read' => false,
+                'metadata' => [
+                    'broadcast_id' => $broadcast->id,
+                    'broadcast_type' => $validated['type'],
+                    'sender_name' => $user->name,
+                ],
+            ]);
+        }
 
         return response()->json([
             'data' => $broadcast->load('sender'),
-            'message' => 'Broadcast berhasil dikirim.',
+            'message' => 'Broadcast berhasil dikirim ke ' . $parents->count() . ' orang tua.',
         ], 201);
     }
 

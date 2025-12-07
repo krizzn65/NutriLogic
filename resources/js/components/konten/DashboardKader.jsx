@@ -7,6 +7,7 @@ import { useDataCache } from "../../contexts/DataCacheContext";
 import DashboardKaderSkeleton from "../loading/DashboardKaderSkeleton";
 import PageHeader from "../ui/PageHeader";
 import DashboardLayout from "../dashboard/DashboardLayout";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { Calendar } from "../ui/calendar";
 
 export default function DashboardKaderContent() {
@@ -98,26 +99,82 @@ export default function DashboardKaderContent() {
       });
     }
 
-    // Upcoming Schedules (check for schedules in next 3 days)
-    const upcomingSchedules = allSchedules.filter(schedule => {
+    // Upcoming Schedules (check for schedules in next 7 days for early warning)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Group schedules by urgency
+    const criticalSchedules = []; // H-0 to H-1
+    const upcomingSchedules = []; // H-2 to H-3
+    const earlyWarningSchedules = []; // H-4 to H-7
+
+    allSchedules.forEach(schedule => {
       const scheduleDate = new Date(schedule.scheduled_for);
-      const today = new Date();
+      scheduleDate.setHours(0, 0, 0, 0);
       const diffDays = Math.ceil((scheduleDate - today) / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 && diffDays <= 3;
+
+      if (diffDays >= 0 && diffDays <= 1) {
+        criticalSchedules.push({ ...schedule, diffDays });
+      } else if (diffDays >= 2 && diffDays <= 3) {
+        upcomingSchedules.push({ ...schedule, diffDays });
+      } else if (diffDays >= 4 && diffDays <= 7) {
+        earlyWarningSchedules.push({ ...schedule, diffDays });
+      }
     });
 
-    if (upcomingSchedules.length > 0) {
-      const nearestSchedule = upcomingSchedules[0];
-      const scheduleDate = new Date(nearestSchedule.scheduled_for);
-      const diffDays = Math.ceil((scheduleDate - new Date()) / (1000 * 60 * 60 * 24));
+    // Critical schedules (today or tomorrow) - HIGH PRIORITY
+    criticalSchedules.forEach(schedule => {
+      const isImmunization = schedule.type === 'imunisasi' || schedule.title.toLowerCase().includes('imunisasi');
+      const isPMT = schedule.type === 'pmt' || schedule.title.toLowerCase().includes('pmt');
       
+      let title = "Jadwal Posyandu Mendesak";
+      let icon = "📅";
+      
+      if (isImmunization) {
+        title = "Imunisasi Mendesak";
+        icon = "💉";
+      } else if (isPMT) {
+        title = "PMT (Pemberian Makanan Tambahan)";
+        icon = "🍽️";
+      }
+
       notifs.push({
-        id: `schedule_${nearestSchedule.id}`,
+        id: `critical_schedule_${schedule.id}`,
+        title: `${icon} ${title}`,
+        message: `${schedule.title} dijadwalkan ${schedule.diffDays === 0 ? 'HARI INI' : 'BESOK'}! Pastikan semua persiapan sudah lengkap dan informasikan kepada orang tua.`,
+        type: 'danger',
+        link: '/dashboard/jadwal',
+        timestamp: schedule.diffDays === 0 ? 'Hari ini' : 'Besok'
+      });
+    });
+
+    // Early warning for immunization/PMT (H-7 to H-4)
+    earlyWarningSchedules.forEach(schedule => {
+      const isImmunization = schedule.type === 'imunisasi' || schedule.title.toLowerCase().includes('imunisasi');
+      const isPMT = schedule.type === 'pmt' || schedule.title.toLowerCase().includes('pmt');
+      
+      if (isImmunization || isPMT) {
+        notifs.push({
+          id: `early_warning_${schedule.id}`,
+          title: isImmunization ? "💉 Pengingat Imunisasi" : "🍽️ Pengingat PMT",
+          message: `${schedule.title} akan dilaksanakan ${schedule.diffDays} hari lagi. Mulai persiapkan bahan dan informasikan kepada orang tua agar anak hadir.`,
+          type: 'info',
+          link: '/dashboard/jadwal',
+          timestamp: `${schedule.diffDays} hari lagi`
+        });
+      }
+    });
+
+    // Regular upcoming schedules (H-2 to H-3)
+    if (upcomingSchedules.length > 0 && notifs.length < 5) {
+      const nearestSchedule = upcomingSchedules[0];
+      notifs.push({
+        id: `upcoming_schedule_${nearestSchedule.id}`,
         title: "Jadwal Posyandu Akan Datang",
-        message: `${nearestSchedule.title} dijadwalkan ${diffDays === 0 ? 'hari ini' : diffDays === 1 ? 'besok' : `${diffDays} hari lagi`}. Pastikan persiapan sudah lengkap.`,
+        message: `${nearestSchedule.title} dijadwalkan ${nearestSchedule.diffDays} hari lagi. Pastikan persiapan sudah lengkap.`,
         type: 'info',
-        link: '/dashboard',
-        timestamp: diffDays === 0 ? 'Hari ini' : diffDays === 1 ? 'Besok' : `${diffDays} hari lagi`
+        link: '/dashboard/jadwal',
+        timestamp: `${nearestSchedule.diffDays} hari lagi`
       });
     }
 
@@ -142,21 +199,12 @@ export default function DashboardKaderContent() {
   }, [allSchedules]);
 
   const fetchDashboardData = async () => {
-    // Check cache first
-    const cachedDashboard = getCachedData('kader_dashboard');
-    if (cachedDashboard) {
-      setDashboardData(cachedDashboard);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
       const response = await api.get('/kader/dashboard');
       setDashboardData(response.data.data);
-      setCachedData('kader_dashboard', response.data.data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data dashboard. Silakan coba lagi.';
       setError(errorMessage);
@@ -167,18 +215,10 @@ export default function DashboardKaderContent() {
   };
 
   const fetchAllSchedules = async () => {
-    // Check cache first
-    const cachedSchedules = getCachedData('kader_schedules');
-    if (cachedSchedules) {
-      setAllSchedules(cachedSchedules);
-      return;
-    }
-
     try {
       const response = await api.get('/kader/schedules');
       const schedulesData = response.data.data || [];
       setAllSchedules(schedulesData);
-      setCachedData('kader_schedules', schedulesData);
     } catch (err) {
       console.error('Schedules fetch error:', err);
       setAllSchedules([]);
@@ -230,6 +270,34 @@ export default function DashboardKaderContent() {
     (statistics.nutritional_status.kurus || 0) +
     (statistics.nutritional_status.sangat_kurus || 0);
 
+  // Prepare Chart Data
+  const chartData = [
+    {
+      name: 'Normal',
+      value: statistics.nutritional_status.normal || 0,
+      color: '#10b981', // Green
+      label: 'Gizi Normal'
+    },
+    {
+      name: 'Stunting',
+      value: (statistics.nutritional_status.pendek || 0) + (statistics.nutritional_status.sangat_pendek || 0),
+      color: '#ef4444', // Red
+      label: 'Pendek (Stunting)'
+    },
+    {
+      name: 'Kurang Gizi',
+      value: (statistics.nutritional_status.kurang || 0) + (statistics.nutritional_status.sangat_kurang || 0),
+      color: '#f97316', // Orange
+      label: 'Kurang Gizi'
+    },
+    {
+      name: 'Wasting',
+      value: (statistics.nutritional_status.kurus || 0) + (statistics.nutritional_status.sangat_kurus || 0),
+      color: '#eab308', // Yellow
+      label: 'Kurus (Wasting)'
+    }
+  ];
+
   return (
     <DashboardLayout
       header={
@@ -277,7 +345,10 @@ export default function DashboardKaderContent() {
         </div>
 
         {/* 2. Priority Action Card (Span 1) */}
-        <div className="col-span-1 bg-red-50/80 backdrop-blur-sm rounded-3xl p-4 md:p-5 shadow-sm border border-red-100 hover:shadow-lg hover:shadow-red-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer">
+        <div 
+          onClick={() => navigate('/dashboard/anak-prioritas')}
+          className="col-span-1 bg-red-50/80 backdrop-blur-sm rounded-3xl p-4 md:p-5 shadow-sm border border-red-100 hover:shadow-lg hover:shadow-red-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer"
+        >
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
             <svg className="w-24 h-24 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
           </div>
@@ -303,7 +374,10 @@ export default function DashboardKaderContent() {
         </div>
 
         {/* 3. Consultation Action Card (Span 1) */}
-        <div className="col-span-1 bg-purple-50/80 backdrop-blur-sm rounded-3xl p-4 md:p-5 shadow-sm border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer">
+        <div 
+          onClick={() => navigate('/dashboard/konsultasi')}
+          className="col-span-1 bg-purple-50/80 backdrop-blur-sm rounded-3xl p-4 md:p-5 shadow-sm border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer"
+        >
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
             <svg className="w-24 h-24 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
           </div>
@@ -328,84 +402,70 @@ export default function DashboardKaderContent() {
           </div>
         </div>
 
-        {/* 4. Nutrition Distribution (Span 2) */}
-        <div className="col-span-2 md:col-span-2 bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
+        {/* 4. Nutrition Distribution Chart (Span 2) */}
+        <div className="col-span-2 md:col-span-2 bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100 flex flex-col h-full min-h-[400px]">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-xl text-gray-900">Status Gizi Anak</h3>
-              <p className="text-gray-500 text-sm mt-1">Distribusi status gizi bulan ini</p>
+              <p className="text-gray-500 text-sm mt-1">Visualisasi distribusi status gizi saat ini</p>
             </div>
             <div className="px-4 py-1.5 bg-gray-50 rounded-full text-xs font-semibold text-gray-600 border border-gray-100">
-              Bulan Ini
+              Total: {statistics.active_children} Anak
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Normal Stats */}
-            <div className="p-4 rounded-2xl bg-green-50/50 border border-green-100/50 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5">
-                <svg className="w-24 h-24 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
-              </div>
-
-              <div className="flex items-center gap-2 mb-3 relative z-10">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-200"></div>
-                <span className="text-sm font-bold text-gray-700 tracking-wide">Gizi Normal</span>
-              </div>
-              <div className="text-3xl font-bold text-gray-900 relative z-10">{statistics.nutritional_status.normal}</div>
-              <div className="text-sm text-gray-500 mt-1 font-medium relative z-10">
-                {statistics.active_children > 0
-                  ? Math.round((statistics.nutritional_status.normal / statistics.active_children) * 100)
-                  : 0}% dari total
-              </div>
-              <div className="w-full bg-green-100/50 rounded-full h-2 mt-4 overflow-hidden relative z-10">
-                <div className="bg-green-500 h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${statistics.active_children > 0 ? (statistics.nutritional_status.normal / statistics.active_children) * 100 : 0}%` }}></div>
-              </div>
-            </div>
-
-            {/* Issues Stats */}
-            <div className="p-4 rounded-2xl bg-yellow-50/50 border border-yellow-100/50 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5">
-                <svg className="w-24 h-24 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" /></svg>
-              </div>
-
-              <div className="flex items-center gap-2 mb-3 relative z-10">
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm shadow-yellow-200"></div>
-                <span className="text-sm font-bold text-gray-700 tracking-wide">Bermasalah</span>
-              </div>
-              <div className="text-3xl font-bold text-gray-900 relative z-10">{totalWithIssues}</div>
-              <div className="text-sm text-gray-500 mt-1 font-medium relative z-10">
-                {statistics.active_children > 0
-                  ? Math.round((totalWithIssues / statistics.active_children) * 100)
-                  : 0}% dari total
-              </div>
-              <div className="w-full bg-yellow-100/50 rounded-full h-2 mt-4 overflow-hidden relative z-10">
-                <div className="bg-yellow-500 h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${statistics.active_children > 0 ? (totalWithIssues / statistics.active_children) * 100 : 0}%` }}></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Detailed Breakdown */}
-          <div className="mt-4 space-y-3">
-            {[
-              { label: 'Pendek (Stunting)', value: (statistics.nutritional_status.pendek || 0) + (statistics.nutritional_status.sangat_pendek || 0), color: 'bg-red-500', bg: 'bg-red-100' },
-              { label: 'Kurang Gizi', value: (statistics.nutritional_status.kurang || 0) + (statistics.nutritional_status.sangat_kurang || 0), color: 'bg-orange-500', bg: 'bg-orange-100' },
-              { label: 'Kurus (Wasting)', value: (statistics.nutritional_status.kurus || 0) + (statistics.nutritional_status.sangat_kurus || 0), color: 'bg-yellow-500', bg: 'bg-yellow-100' },
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center text-sm group">
-                <span className="w-36 text-gray-500 font-medium group-hover:text-gray-800 transition-colors">{item.label}</span>
-                <div className="flex-1 mx-4 bg-gray-50 rounded-full h-2.5 overflow-hidden">
-                  <div className={`${item.color} h-2.5 rounded-full transition-all duration-1000 ease-out relative`} style={{ width: `${statistics.active_children > 0 ? (item.value / statistics.active_children) * 100 : 0}%` }}>
-                    <div className="absolute inset-0 bg-white/20"></div>
-                  </div>
-                </div>
-                <span className="font-bold text-gray-700 w-8 text-right">{item.value}</span>
-              </div>
-            ))}
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                barSize={40}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={{ fill: '#f9fafb' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-xl">
+                          <p className="font-bold text-gray-900 mb-1">{data.label}</p>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
+                            <span className="text-sm text-gray-600">
+                              {data.value} Anak ({statistics.active_children > 0 ? Math.round((data.value / statistics.active_children) * 100) : 0}%)
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]} animationDuration={1500}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
         {/* 5. Schedule Card (Span 2) - Sleek Redesign with Calendar */}
-        <div className="col-span-2 md:col-span-2 bg-white rounded-3xl p-0 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <div className="col-span-2 md:col-span-2 bg-white rounded-3xl p-0 shadow-sm border border-gray-100 flex flex-col h-full relative overflow-hidden group hover:shadow-md transition-all duration-300">
           {/* Decorative Top Line */}
           <div className="h-1.5 w-full bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400"></div>
 
@@ -429,7 +489,10 @@ export default function DashboardKaderContent() {
                 >
                   <CalendarIcon className="w-5 h-5" />
                 </button>
-                <button className="hidden lg:flex group/btn items-center gap-1 text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-wider">
+                <button 
+                  onClick={() => navigate('/dashboard/jadwal')}
+                  className="hidden lg:flex group/btn items-center gap-1 text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-wider"
+                >
                   Lihat Semua
                   <svg className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>

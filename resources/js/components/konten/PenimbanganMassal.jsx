@@ -26,6 +26,7 @@ export default function PenimbanganMassal() {
 
     const [weighingData, setWeighingData] = useState({});
     const [results, setResults] = useState(null);
+    const [warnings, setWarnings] = useState(null);
     const navigate = useNavigate();
 
     // Data caching
@@ -92,11 +93,33 @@ export default function PenimbanganMassal() {
     };
 
     const handleInputChange = (childId, field, value) => {
+        // Real-time validation for weight and height
+        const child = children.find(c => c.id === childId);
+        let validatedValue = value;
+
+        if (field === 'weight_kg' && value) {
+            const weight = parseFloat(value);
+            if (weight < 1) validatedValue = '1';
+            if (weight > 30) validatedValue = '30';
+        }
+
+        if (field === 'height_cm' && value) {
+            const height = parseFloat(value);
+            if (height < 40) validatedValue = '40';
+            if (height > 130) validatedValue = '130';
+        }
+
+        if (field === 'muac_cm' && value) {
+            const muac = parseFloat(value);
+            if (muac < 8) validatedValue = '8';
+            if (muac > 25) validatedValue = '25';
+        }
+
         setWeighingData(prev => ({
             ...prev,
             [childId]: {
                 ...prev[childId],
-                [field]: value
+                [field]: validatedValue
             }
         }));
     };
@@ -148,6 +171,11 @@ export default function PenimbanganMassal() {
         try {
             const response = await api.post('/kader/weighings/bulk', { weighings });
             setResults(response.data);
+            
+            // Set warnings if any
+            if (response.data.warnings) {
+                setWarnings(response.data.warnings);
+            }
 
             // Invalidate related caches
             invalidateCache('kader_weighing_children');
@@ -207,6 +235,26 @@ export default function PenimbanganMassal() {
                         </div>
                         <h3 className="text-lg font-bold text-green-800">{results.message}</h3>
                     </div>
+
+                    {/* Warnings if any */}
+                    {warnings && warnings.length > 0 && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                            <div className="flex items-start gap-2">
+                                <svg className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <div className="flex-1">
+                                    <p className="font-bold text-yellow-800 text-sm mb-2">Peringatan:</p>
+                                    <ul className="space-y-1">
+                                        {warnings.map((warning, idx) => (
+                                            <li key={idx} className="text-xs text-yellow-700">• {warning}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {results.data.map((weighing) => {
                             const child = children.find(c => c.id === weighing.child_id);
@@ -226,7 +274,10 @@ export default function PenimbanganMassal() {
                         })}
                     </div>
                     <button
-                        onClick={() => setResults(null)}
+                        onClick={() => {
+                            setResults(null);
+                            setWarnings(null);
+                        }}
                         className="mt-6 text-green-700 hover:text-green-900 text-sm font-semibold hover:underline"
                     >
                         Tutup Notifikasi
@@ -463,39 +514,42 @@ export default function PenimbanganMassal() {
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    min="0"
-                                                    max="100"
+                                                    min="1"
+                                                    max="30"
                                                     value={weighingData[child.id]?.weight_kg || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'weight_kg', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
-                                                    placeholder="0.00"
+                                                    placeholder="1-30"
                                                 />
+                                                <p className="text-[9px] text-gray-400 mt-0.5">Min 1kg, Max 30kg</p>
                                             </div>
                                             <div>
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Tinggi (cm)</label>
                                                 <input
                                                     type="number"
                                                     step="0.1"
-                                                    min="0"
-                                                    max="200"
+                                                    min="40"
+                                                    max="130"
                                                     value={weighingData[child.id]?.height_cm || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'height_cm', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
-                                                    placeholder="0.0"
+                                                    placeholder="40-130"
                                                 />
+                                                <p className="text-[9px] text-gray-400 mt-0.5">Min 40cm, Max 130cm</p>
                                             </div>
                                             <div>
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Lengan (cm)</label>
                                                 <input
                                                     type="number"
                                                     step="0.1"
-                                                    min="0"
-                                                    max="50"
+                                                    min="8"
+                                                    max="25"
                                                     value={weighingData[child.id]?.muac_cm || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'muac_cm', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
-                                                    placeholder="0.0"
+                                                    placeholder="8-25"
                                                 />
+                                                <p className="text-[9px] text-gray-400 mt-0.5">Min 8cm, Max 25cm</p>
                                             </div>
                                             <div>
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Kepala (cm)</label>

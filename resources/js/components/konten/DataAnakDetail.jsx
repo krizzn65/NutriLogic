@@ -412,33 +412,74 @@ export default function DataAnakDetail() {
                                             <table className="w-full">
                                                 <thead>
                                                     <tr className="border-b border-gray-100">
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tanggal</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Berat</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tinggi</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Lingkar Lengan</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status Gizi</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Z-Score</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ANAK</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TANGGAL</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">BERAT</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TINGGI</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LILA</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LK</th>
+                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">CATATAN</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-50">
                                                     {childData.weighing_logs.map((log) => (
                                                         <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-4 px-4 text-sm font-medium text-gray-900">
-                                                                {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                            </td>
-                                                            <td className="py-4 px-4 text-sm text-gray-600">{log.weight_kg} kg</td>
-                                                            <td className="py-4 px-4 text-sm text-gray-600">{log.height_cm} cm</td>
-                                                            <td className="py-4 px-4 text-sm text-gray-600">{log.muac_cm ? `${log.muac_cm} cm` : '-'}</td>
                                                             <td className="py-4 px-4">
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(log.nutritional_status)}`}>
-                                                                    {getStatusLabel(log.nutritional_status)}
-                                                                </span>
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-sm font-bold text-gray-900">{childData.full_name}</span>
+                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border w-fit ${getStatusColor(log.nutritional_status)}`}>
+                                                                        {getStatusLabel(log.nutritional_status)}
+                                                                    </span>
+                                                                </div>
                                                             </td>
-                                                            <td className="py-4 px-4 text-sm text-gray-500 font-mono">
-                                                                <div className="flex flex-col gap-0.5 text-xs">
-                                                                    <span>HFA: {log.zscore_hfa ? Number(log.zscore_hfa).toFixed(2) : '-'}</span>
-                                                                    <span>WFA: {log.zscore_wfa ? Number(log.zscore_wfa).toFixed(2) : '-'}</span>
-                                                                    <span>WFH: {log.zscore_wfh ? Number(log.zscore_wfh).toFixed(2) : '-'}</span>
+                                                            <td className="py-4 px-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-bold text-gray-900">
+                                                                        {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-500">
+                                                                        {new Date(log.measured_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-4 px-4">
+                                                                <span className="text-sm font-bold text-gray-900">{log.weight_kg}</span>
+                                                                <span className="text-xs text-gray-500 ml-1">kg</span>
+                                                            </td>
+                                                            <td className="py-4 px-4">
+                                                                <span className="text-sm font-bold text-gray-900">{log.height_cm}</span>
+                                                                <span className="text-xs text-gray-500 ml-1">cm</span>
+                                                            </td>
+                                                            <td className="py-4 px-4">
+                                                                {log.muac_cm ? (
+                                                                    <>
+                                                                        <span className="text-sm font-bold text-gray-900">{log.muac_cm}</span>
+                                                                        <span className="text-xs text-gray-500 ml-1">cm</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-gray-400">-</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-4 px-4">
+                                                                {log.head_circumference_cm ? (
+                                                                    <>
+                                                                        <span className="text-sm font-bold text-gray-900">{log.head_circumference_cm}</span>
+                                                                        <span className="text-xs text-gray-500 ml-1">cm</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-gray-400">-</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-4 px-4">
+                                                                <div className="flex items-center gap-2 text-gray-500">
+                                                                    {log.notes ? (
+                                                                        <>
+                                                                            <FileText className="w-4 h-4 text-yellow-500 shrink-0" />
+                                                                            <span className="text-xs truncate max-w-[150px]">{log.notes}</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="text-gray-300">-</span>
+                                                                    )}
                                                                 </div>
                                                             </td>
                                                         </tr>

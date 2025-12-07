@@ -241,7 +241,15 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 >
                                     <Bell className="w-5 h-5" />
                                     {notifications.length > 0 && (
-                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                                        <>
+                                            {notifications.filter(n => n.type === 'danger').length > 0 ? (
+                                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                                                    {notifications.filter(n => n.type === 'danger').length}
+                                                </span>
+                                            ) : (
+                                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
+                                            )}
+                                        </>
                                     )}
                                 </button>
 
