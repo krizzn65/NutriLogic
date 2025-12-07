@@ -5,6 +5,7 @@ import { useDataCache } from "../../contexts/DataCacheContext";
 import { Search, Plus, MessageSquare, Clock, CheckCircle, User, ChevronRight, Filter, Trash2, AlertTriangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DetailKonsultasiKader from "./DetailKonsultasiKader";
+import PageHeader from "../ui/PageHeader";
 import ConsultationListSkeleton from "../loading/ConsultationListSkeleton";
 
 export default function KonsultasiKader() {
@@ -133,13 +134,14 @@ export default function KonsultasiKader() {
     }
 
     return (
-        <div className="flex h-full bg-white overflow-hidden">
-            {/* Sidebar List */}
-            <div className={`flex-col h-full bg-white border-r border-slate-200 md:w-[400px] flex-shrink-0 ${id ? 'hidden md:flex' : 'flex w-full'}`}>
-                {/* Header Section */}
-                <div className="bg-slate-50 border-b border-slate-200 px-4 py-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h1 className="text-xl font-bold text-slate-800">Konsultasi</h1>
+        <div className="flex flex-col h-full bg-white">
+            <PageHeader title="Konsultasi" subtitle="Portal Kader" showProfile={true} />
+            <div className="flex flex-1 overflow-hidden">
+                {/* Sidebar List */}
+                <div className={`flex-col h-full bg-white border-r border-slate-200 md:w-[400px] flex-shrink-0 ${id ? 'hidden md:flex' : 'flex w-full'}`}>
+                    {/* Header Section */}
+                    <div className="bg-slate-50 border-b border-slate-200 px-4 py-4">
+                    <div className="flex items-center justify-end mb-4">
                         <div className="flex items-center gap-2">
                             {refreshing && (
                                 <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" title="Memperbarui..." />
@@ -274,10 +276,10 @@ export default function KonsultasiKader() {
                         </div>
                     )}
                 </div>
-            </div>
+                </div>
 
-            {/* Main Content (Detail or Placeholder) */}
-            <div className={`flex-1 flex-col h-full bg-slate-50 relative ${id ? 'flex' : 'hidden md:flex'}`}>
+                {/* Main Content (Detail or Placeholder) */}
+                <div className={`flex-1 flex-col h-full bg-slate-50 relative ${id ? 'flex' : 'hidden md:flex'}`}>
                 {/* Background Pattern Overlay */}
                 <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
                     style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}
@@ -314,6 +316,7 @@ export default function KonsultasiKader() {
                         </div>
                     </div>
                 )}
+            </div>
             </div>
 
             {/* Delete Confirmation Modal (List Level) */}

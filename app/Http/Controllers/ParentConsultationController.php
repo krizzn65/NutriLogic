@@ -159,6 +159,25 @@ class ParentConsultationController extends Controller
         $consultation = Consultation::create($validated);
         $consultation->load(['parent', 'kader', 'child']);
 
+        // Create notification for Kader if assigned
+        if (isset($validated['kader_id'])) {
+            $childName = $consultation->child ? ' tentang ' . $consultation->child->name : '';
+            \App\Models\Notification::create([
+                'user_id' => $validated['kader_id'],
+                'type' => 'info',
+                'title' => 'Konsultasi Baru',
+                'message' => $user->name . ' memulai konsultasi baru' . $childName . ': "' . $validated['title'] . '"',
+                'link' => '/kader/konsultasi/' . $consultation->id,
+                'metadata' => [
+                    'consultation_id' => $consultation->id,
+                    'parent_id' => $user->id,
+                    'parent_name' => $user->name,
+                    'child_id' => $validated['child_id'] ?? null,
+                    'child_name' => $consultation->child->name ?? null,
+                ],
+            ]);
+        }
+
         return response()->json([
             'data' => $consultation,
             'message' => 'Consultation created successfully.',
@@ -296,6 +315,23 @@ class ParentConsultationController extends Controller
 
         // Update consultation updated_at
         $consultation->touch();
+
+        // Create notification for Kader
+        if ($consultation->kader_id) {
+            \App\Models\Notification::create([
+                'user_id' => $consultation->kader_id,
+                'type' => 'info',
+                'title' => 'Pesan Konsultasi Baru',
+                'message' => $user->name . ' mengirim pesan: "' . ($validated['message'] ?? '[Gambar]') . '"',
+                'link' => '/kader/konsultasi/' . $consultation->id,
+                'metadata' => [
+                    'consultation_id' => $consultation->id,
+                    'parent_id' => $user->id,
+                    'parent_name' => $user->name,
+                    'has_attachment' => $attachmentPath ? true : false,
+                ],
+            ]);
+        }
 
         // Add points and check badges for ibu role only
         if ($user->isIbu()) {

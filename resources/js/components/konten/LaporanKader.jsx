@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { getStatusColor, getStatusLabel } from "../../lib/utils";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
+import DashboardLayout from "../dashboard/DashboardLayout";
 import { DatePicker } from "../ui/date-picker";
 import {
     DropdownMenu,
@@ -266,94 +267,93 @@ export default function LaporanKader() {
     };
 
     return (
-        <div className="flex flex-col w-full h-full bg-white overflow-x-hidden">
-            {/* Header */}
-            <div className="px-4 pt-5 md:px-10 md:pt-10 pb-2 bg-white z-20">
-                <PageHeader title="Laporan & Ekspor" subtitle="Portal Kader" />
-
-                {/* Filter Bar */}
-                <div className="mt-6 flex flex-col md:flex-row gap-3 items-center justify-between pb-4 border-b border-gray-100">
-                    <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
-                        {/* Child Filter */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100">
-                                    <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
-                                    <span>
-                                        {filters.child_id
-                                            ? children.find(c => c.id == filters.child_id)?.full_name || "Semua Anak"
-                                            : "Semua Anak"}
-                                    </span>
-                                    <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4 ml-1" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+        <DashboardLayout
+            header={
+                <PageHeader title="Laporan & Ekspor" subtitle="Portal Kader" showProfile={true} />
+            }
+        >
+            {/* Filter Bar */}
+            <div className="flex flex-col md:flex-row gap-3 items-center justify-between pb-4 border-b border-gray-100 mb-4">
+                <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
+                    {/* Child Filter */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
+                                <span>
+                                    {filters.child_id
+                                        ? children.find(c => c.id == filters.child_id)?.full_name || "Semua Anak"
+                                        : "Semua Anak"}
+                                </span>
+                                <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4 ml-1" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                            <DropdownMenuItem
+                                onClick={() => handleFilterChange("child_id", "")}
+                                className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+                            >
+                                <span className="font-medium">Semua Anak</span>
+                            </DropdownMenuItem>
+                            {children.map((child) => (
                                 <DropdownMenuItem
-                                    onClick={() => handleFilterChange("child_id", "")}
-                                    className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
-                                >
-                                    <span className="font-medium">Semua Anak</span>
-                                </DropdownMenuItem>
-                                {children.map((child) => (
-                                    <DropdownMenuItem
-                                        key={child.id}
-                                        onClick={() => handleFilterChange("child_id", child.id)}
-                                        className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
-                                    >
-                                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
-                                            {child.full_name.charAt(0)}
-                                        </div>
-                                        <span>{child.full_name}</span>
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        {/* Export Dropdown */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 rounded-full text-sm font-medium text-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-100">
-                                    <Icon icon="lucide:download" className="w-4 h-4" />
-                                    <span>Ekspor</span>
-                                    <Icon icon="lucide:chevron-down" className="text-emerald-600 w-4 h-4 ml-1" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
-                                <DropdownMenuItem
-                                    onClick={handleExportChildren}
+                                    key={child.id}
+                                    onClick={() => handleFilterChange("child_id", child.id)}
                                     className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                                 >
-                                    <Icon icon="lucide:file-spreadsheet" className="w-4 h-4 text-emerald-600" />
-                                    <span>Data Anak</span>
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
+                                        {child.full_name.charAt(0)}
+                                    </div>
+                                    <span>{child.full_name}</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={handleExportWeighings}
-                                    className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
-                                >
-                                    <Icon icon="lucide:history" className="w-4 h-4 text-blue-600" />
-                                    <span>Riwayat Penimbangan</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
-                    {/* Date Range */}
-                    <div className="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap">
-                        <div className="flex items-center gap-2 flex-1 md:flex-none">
-                            <DatePicker
-                                value={filters.start_date}
-                                onChange={(date) => handleFilterChange("start_date", date)}
-                                placeholder="Mulai"
-                                className="w-full md:w-auto"
-                            />
-                            <span className="text-gray-300">-</span>
-                            <DatePicker
-                                value={filters.end_date}
-                                onChange={(date) => handleFilterChange("end_date", date)}
-                                placeholder="Selesai"
-                                className="w-full md:w-auto"
-                            />
-                        </div>
+                    {/* Export Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 rounded-full text-sm font-medium text-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                                <Icon icon="lucide:download" className="w-4 h-4" />
+                                <span>Ekspor</span>
+                                <Icon icon="lucide:chevron-down" className="text-emerald-600 w-4 h-4 ml-1" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                            <DropdownMenuItem
+                                onClick={handleExportChildren}
+                                className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                            >
+                                <Icon icon="lucide:file-spreadsheet" className="w-4 h-4 text-emerald-600" />
+                                <span>Data Anak</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={handleExportWeighings}
+                                className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
+                            >
+                                <Icon icon="lucide:history" className="w-4 h-4 text-blue-600" />
+                                <span>Riwayat Penimbangan</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+
+                {/* Date Range */}
+                <div className="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap">
+                    <div className="flex items-center gap-2 flex-1 md:flex-none">
+                        <DatePicker
+                            value={filters.start_date}
+                            onChange={(date) => handleFilterChange("start_date", date)}
+                            placeholder="Mulai"
+                            className="w-full md:w-auto"
+                        />
+                        <span className="text-gray-300">-</span>
+                        <DatePicker
+                            value={filters.end_date}
+                            onChange={(date) => handleFilterChange("end_date", date)}
+                            placeholder="Selesai"
+                            className="w-full md:w-auto"
+                        />
                     </div>
                 </div>
             </div>
@@ -499,6 +499,6 @@ export default function LaporanKader() {
                     </div>
                 )}
             </div>
-        </div>
+        </DashboardLayout>
     );
 }

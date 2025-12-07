@@ -194,6 +194,23 @@ class KaderConsultationController extends Controller
             $consultation->update(['kader_id' => $user->id]);
         }
 
+        // Create notification for Parent
+        if ($consultation->parent_id) {
+            \App\Models\Notification::create([
+                'user_id' => $consultation->parent_id,
+                'type' => 'info',
+                'title' => 'Balasan dari Kader',
+                'message' => $user->name . ' membalas konsultasi Anda: "' . ($validated['message'] ?? '[Gambar]') . '"',
+                'link' => '/parent/konsultasi/' . $consultation->id,
+                'metadata' => [
+                    'consultation_id' => $consultation->id,
+                    'kader_id' => $user->id,
+                    'kader_name' => $user->name,
+                    'has_attachment' => $attachmentPath ? true : false,
+                ],
+            ]);
+        }
+
         $message->load('sender');
 
         return response()->json([

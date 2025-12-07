@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
 import { assets } from "../../assets/assets";
 import { ChevronLeft, Pencil } from "lucide-react";
 import DetailAnakKaderSkeleton from "../loading/DetailAnakKaderSkeleton";
