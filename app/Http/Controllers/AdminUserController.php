@@ -219,6 +219,20 @@ class AdminUserController extends Controller
         $user->password = $newPasswordHash;
         $user->save();
 
+        // Create notification for user about password reset
+        \App\Models\Notification::create([
+            'user_id' => $user->id,
+            'type' => 'warning',
+            'title' => 'Password Anda Telah Direset',
+            'message' => 'Password akun Anda telah direset oleh Admin. Password baru: ' . $newPassword . '. Silakan login dengan password baru dan segera ubah password Anda.',
+            'link' => null,
+            'metadata' => [
+                'reset_by' => auth()->id(),
+                'reset_by_name' => auth()->user()->name,
+                'reset_at' => now()->toDateTimeString(),
+            ],
+        ]);
+
         // Log activity with before/after snapshot
         AdminActivityLogController::log(
             'update',

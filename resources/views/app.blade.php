@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>NutriLogic</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('logo_das.svg') }}">
     {{-- Inject React Fast Refresh preamble (needed for @vitejs/plugin-react) --}}
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])

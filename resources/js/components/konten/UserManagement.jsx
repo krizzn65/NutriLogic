@@ -6,6 +6,7 @@ import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check,
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
+import SuccessModal from "../ui/SuccessModal";
 
 export default function UserManagement() {
     const location = useLocation();
@@ -34,6 +35,11 @@ export default function UserManagement() {
     const [resetPasswordModal, setResetPasswordModal] = useState({
         isOpen: false,
         user: null
+    });
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
     });
     const [confirmationModal, setConfirmationModal] = useState({
         isOpen: false,
@@ -508,11 +514,23 @@ export default function UserManagement() {
                         onClose={() => setResetPasswordModal({ isOpen: false, user: null })}
                         onSuccess={() => {
                             setResetPasswordModal({ isOpen: false, user: null });
-                            alert('Password berhasil direset.');
+                            setSuccessModal({
+                                isOpen: true,
+                                title: 'Password Berhasil Direset',
+                                message: 'Password user telah berhasil diperbarui.'
+                            });
                         }}
                     />
                 )}
             </AnimatePresence>
+
+            {/* Success Modal */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                onClose={() => setSuccessModal({ isOpen: false, title: '', message: '' })}
+                title={successModal.title}
+                message={successModal.message}
+            />
 
             {/* Confirmation Modal */}
             <ConfirmationModal
