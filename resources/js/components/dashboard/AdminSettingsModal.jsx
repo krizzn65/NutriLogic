@@ -5,7 +5,7 @@ import {
     DialogContent,
 } from "../ui/dialog";
 import { Switch } from "../ui/switch";
-import { getSessionTimeout, setSessionTimeout, getMaintenanceMode, setMaintenanceMode } from "../../lib/sessionTimeout";
+import api from "../../lib/api";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
 
@@ -22,19 +22,28 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
     // Confirmation Modal State
     const [confirmOpen, setConfirmOpen] = useState(false);
 
-    // Reset state when modal opens - load current settings from global storage
+    // Load settings from backend when modal opens
     useEffect(() => {
         if (isOpen) {
-            // Load current session timeout and maintenance mode from global storage
-            const currentTimeout = getSessionTimeout();
-            const currentMaintenance = getMaintenanceMode();
-            setSettings(prev => ({
-                ...prev,
-                session_timeout: currentTimeout.toString(),
-                maintenance_mode: currentMaintenance
-            }));
+            fetchSettings();
         }
     }, [isOpen]);
+
+    const fetchSettings = async () => {
+        try {
+            const response = await api.get('/admin/settings');
+            const data = response.data.data;
+            setSettings({
+                app_name: data.app_name || 'NutriLogic',
+                maintenance_mode: data.maintenance_mode || false,
+                allow_registration: data.allow_registration !== false,
+                session_timeout: (data.session_timeout || 60).toString(),
+                max_file_size: (data.max_file_size || 5).toString(),
+            });
+        } catch (err) {
+            console.error('Failed to load settings:', err);
+        }
+    };
 
     const handleSave = () => {
         setConfirmOpen(true);
@@ -44,18 +53,30 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
         setSaving(true);
         setConfirmOpen(false);
 
-        // Save session timeout to global storage
-        const timeoutValue = parseInt(settings.session_timeout, 10) || 60;
-        setSessionTimeout(timeoutValue);
+        try {
+            // Save to backend
+            await api.put('/admin/settings', {
+                app_name: settings.app_name,
+                maintenance_mode: settings.maintenance_mode,
+                allow_registration: settings.allow_registration,
+                session_timeout: parseInt(settings.session_timeout, 10),
+                max_file_size: parseInt(settings.max_file_size, 10),
+            });
 
-        // Save maintenance mode to global storage
-        setMaintenanceMode(settings.maintenance_mode);
+            // Sync to localStorage for client-side checks (read-only)
+            localStorage.setItem('nutrilogic_maintenance_mode', settings.maintenance_mode.toString());
+            localStorage.setItem('nutrilogic_session_timeout', settings.session_timeout);
 
-        setTimeout(() => {
+            // Trigger storage event for other tabs/components
+            window.dispatchEvent(new Event('storage'));
+
             setSaving(false);
-            // Removed native alert as requested
             onClose();
-        }, 500);
+        } catch (err) {
+            console.error('Failed to save settings:', err);
+            alert(err.response?.data?.message || 'Gagal menyimpan pengaturan.');
+            setSaving(false);
+        }
     };
 
 

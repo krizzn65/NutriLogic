@@ -270,6 +270,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{id}/toggle-publish', [App\Http\Controllers\AdminArticleController::class, 'togglePublish']);
         });
         
+        // System Settings
+        Route::prefix('settings')->group(function () {
+            Route::get('/', [App\Http\Controllers\AdminSettingsController::class, 'index']);
+            Route::put('/', [App\Http\Controllers\AdminSettingsController::class, 'update']);
+            Route::get('/{key}', [App\Http\Controllers\AdminSettingsController::class, 'show']);
+        });
+        
         // Activity Logs
         Route::get('/activity-logs', [App\Http\Controllers\AdminActivityLogController::class, 'index']);
     });

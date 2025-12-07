@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Calendar, Clock, MapPin, FileText, User, Activity, Save, AlertCircle, Search, ChevronDown, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { createPortal } from "react-dom";
 import api from "../../lib/api";
 
@@ -22,6 +22,7 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
     const typeDropdownRef = useRef(null);
     const datePickerRef = useRef(null);
     const timePickerRef = useRef(null);
+    const controls = useDragControls();
 
     const [formData, setFormData] = useState({
         child_id: "",
@@ -172,7 +173,7 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
     return createPortal(
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -184,22 +185,39 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
                     {/* Modal */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"
+                        drag="y"
+                        dragControls={controls}
+                        dragListener={false}
+                        dragConstraints={{ top: 0, bottom: 0 }}
+                        dragElastic={{ top: 0, bottom: 0.2 }}
+                        onDragEnd={(event, info) => {
+                            if (info.offset.y > 100) {
+                                onClose();
+                            }
+                        }}
+                        initial={{ opacity: 0, y: "100%" }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        className="relative w-full md:max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl md:rounded-2xl shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* Drag Handle */}
+                        <div
+                            className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1 sticky top-0 bg-white z-10 rounded-t-2xl"
+                            onPointerDown={(e) => controls.start(e)}
+                        >
+                            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                        </div>
                         {/* Header */}
-                        <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-white border-b border-gray-200 rounded-t-2xl">
+                        <div className="sticky top-0 md:top-0 z-10 flex items-center justify-between p-4 md:p-6 bg-white border-b border-gray-200 md:rounded-t-2xl">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-800">Tambah Jadwal Baru</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Tambah Jadwal Baru</h2>
                                 <p className="text-sm text-gray-500 mt-1">Buat jadwal kegiatan untuk anak</p>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="hidden md:flex p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
