@@ -104,18 +104,41 @@ export default function EditAnakKaderForm() {
 
         if (!formData.birth_date) {
             newErrors.birth_date = "Tanggal lahir wajib diisi";
+        } else {
+            const birthDate = new Date(formData.birth_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            birthDate.setHours(0, 0, 0, 0);
+
+            // Check if date is in the future
+            if (birthDate > today) {
+                newErrors.birth_date = "Tanggal lahir tidak boleh di masa depan";
+            } else {
+                // Calculate age in months
+                const ageInMonths = (today - birthDate) / (1000 * 60 * 60 * 24 * 30.44);
+                
+                // Check if child is too old (>60 months = 5 years)
+                if (ageInMonths > 60) {
+                    newErrors.birth_date = "Anak harus berusia maksimal 60 bulan (5 tahun)";
+                }
+                
+                // Check if age is negative
+                if (ageInMonths < 0) {
+                    newErrors.birth_date = "Tanggal lahir tidak valid";
+                }
+            }
         }
 
         if (!formData.gender) {
             newErrors.gender = "Jenis kelamin wajib dipilih";
         }
 
-        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0 || parseFloat(formData.birth_weight_kg) > 10)) {
-            newErrors.birth_weight_kg = "Berat lahir harus antara 0-10 kg";
+        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0.5 || parseFloat(formData.birth_weight_kg) > 6)) {
+            newErrors.birth_weight_kg = "Berat lahir harus antara 0.5-6 kg (normal bayi)";
         }
 
-        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 0 || parseFloat(formData.birth_height_cm) > 100)) {
-            newErrors.birth_height_cm = "Tinggi lahir harus antara 0-100 cm";
+        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 30 || parseFloat(formData.birth_height_cm) > 60)) {
+            newErrors.birth_height_cm = "Tinggi lahir harus antara 30-60 cm (normal bayi)";
         }
 
         setErrors(newErrors);

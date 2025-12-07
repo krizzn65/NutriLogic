@@ -24,9 +24,27 @@ class KaderReportController extends Controller
             ], 400);
         }
 
-        // Default to current month if no dates provided
-        $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->toDateString());
-        $dateTo = $request->input('date_to', Carbon::now()->endOfMonth()->toDateString());
+        $validated = $request->validate([
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'min:2020', 'max:2030'],
+        ]);
+
+        // Determine date range based on filters
+        if ($validated['month'] ?? null && $validated['year'] ?? null) {
+            // Month/year filter takes precedence
+            $dateFrom = Carbon::createFromDate($validated['year'], $validated['month'], 1)->startOfMonth()->toDateString();
+            $dateTo = Carbon::createFromDate($validated['year'], $validated['month'], 1)->endOfMonth()->toDateString();
+        } elseif ($validated['date_from'] ?? null && $validated['date_to'] ?? null) {
+            // Use custom date range
+            $dateFrom = $validated['date_from'];
+            $dateTo = $validated['date_to'];
+        } else {
+            // Default to current month
+            $dateFrom = Carbon::now()->startOfMonth()->toDateString();
+            $dateTo = Carbon::now()->endOfMonth()->toDateString();
+        }
 
         // Get all children IDs in posyandu
         $childIds = Child::where('posyandu_id', $user->posyandu_id)
@@ -109,14 +127,17 @@ class KaderReportController extends Controller
             ], 400);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'child_id' => ['nullable', 'integer', 'exists:children,id'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'min:2020', 'max:2030'],
+            'status' => ['nullable', 'string', 'in:normal,kurang,sangat_kurang,pendek,sangat_pendek,kurus,sangat_kurus,lebih,gemuk'],
         ]);
 
-        $perPage = $request->input('per_page', 20);
+        $perPage = $validated['per_page'] ?? 20;
 
         // Get all children IDs in posyandu
         $childIds = Child::where('posyandu_id', $user->posyandu_id)
@@ -127,16 +148,27 @@ class KaderReportController extends Controller
             ->whereIn('child_id', $childIds);
 
         // Apply filters
-        if ($request->filled('child_id')) {
-            $query->where('child_id', $request->input('child_id'));
+        if ($validated['child_id'] ?? null) {
+            $query->where('child_id', $validated['child_id']);
         }
 
-        if ($request->filled('start_date')) {
-            $query->where('measured_at', '>=', $request->input('start_date'));
+        // Date filtering with month/year priority
+        if (($validated['month'] ?? null) && ($validated['year'] ?? null)) {
+            $startOfMonth = Carbon::createFromDate($validated['year'], $validated['month'], 1)->startOfMonth();
+            $endOfMonth = Carbon::createFromDate($validated['year'], $validated['month'], 1)->endOfMonth();
+            $query->whereBetween('measured_at', [$startOfMonth, $endOfMonth]);
+        } else {
+            if ($validated['start_date'] ?? null) {
+                $query->where('measured_at', '>=', $validated['start_date']);
+            }
+            if ($validated['end_date'] ?? null) {
+                $query->where('measured_at', '<=', $validated['end_date']);
+            }
         }
 
-        if ($request->filled('end_date')) {
-            $query->where('measured_at', '<=', $request->input('end_date'));
+        // Status filter
+        if ($validated['status'] ?? null) {
+            $query->where('nutritional_status', $validated['status']);
         }
 
         // Get paginated results
