@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../dashboard/PageHeader";
 import ProfilKaderSkeleton from "../loading/ProfilKaderSkeleton";
+import SuccessModal from "../ui/SuccessModal";
 
 export default function ProfilKader() {
     const [loading, setLoading] = useState(true);
@@ -12,6 +13,12 @@ export default function ProfilKader() {
     const [success, setSuccess] = useState(null);
     const [profile, setProfile] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
 
     const [formData, setFormData] = useState({
         name: "",
@@ -116,11 +123,15 @@ export default function ProfilKader() {
 
         try {
             await api.put('/kader/profile/password', passwordData);
-            setSuccess('Password berhasil diubah!');
             setPasswordData({
                 current_password: "",
                 new_password: "",
                 new_password_confirmation: "",
+            });
+            setSuccessModal({
+                isOpen: true,
+                title: 'Password Berhasil Diubah',
+                message: 'Password Anda telah berhasil diperbarui.'
             });
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal mengubah password.';
@@ -154,6 +165,7 @@ export default function ProfilKader() {
     }
 
     return (
+        <>
         <div className="flex flex-1 w-full h-full overflow-auto">
             <div className="p-4 md:p-10 w-full max-w-4xl mx-auto bg-gray-50 flex flex-col gap-6">
                 <PageHeader title="Profil Saya" subtitle="Portal Kader" showProfile={false} />
@@ -336,5 +348,13 @@ export default function ProfilKader() {
                 </div>
             </div>
         </div>
+
+        <SuccessModal
+            isOpen={successModal.isOpen}
+            onClose={() => setSuccessModal({ isOpen: false, title: '', message: '' })}
+            title={successModal.title}
+            message={successModal.message}
+        />
+        </>
     );
 }

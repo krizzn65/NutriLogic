@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { getUser, logoutWithApi } from "../../lib/auth";
 import { getMaintenanceMode } from "../../lib/sessionTimeout";
 import AdminProfileModal from "../dashboard/AdminProfileModal";
+import ProfileModal from "../dashboard/ProfileModal";
 import AdminSettingsModal from "../dashboard/AdminSettingsModal";
 import SettingsModal from "../dashboard/SettingsModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
 
-export default function PageHeader({ title, subtitle, children, showProfile = true }) {
+export default function PageHeader({ title, subtitle, children, showProfile = true, profileClassName = "" }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -96,7 +97,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                     {children}
 
                     {showProfile && (
-                        <>
+                        <div className={`flex items-center gap-4 ${profileClassName}`}>
                             {/* Notifications Dropdown */}
                             <div className="relative">
                                 <button
@@ -165,19 +166,31 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 className="flex items-center gap-3 pl-4 border-l border-gray-200 focus:outline-none"
                             >
                                 <div className="text-right hidden md:block">
-                                    <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'Super Admin'}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Administrator</p>
+                                    <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'User'}</p>
+                                    <p className="text-xs text-gray-500 mt-1 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-white shadow-md ring-2 ring-white cursor-pointer hover:shadow-lg transition-shadow">
-                                    <Shield className="w-5 h-5" />
+                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow">
+                                    {user?.profile_photo_url ? (
+                                        <img 
+                                            src={user.profile_photo_url} 
+                                            alt={user.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <img 
+                                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
+                                            alt={user?.name || 'User'}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
                                 </div>
                             </button>
 
                             {isDropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                                     <div className="px-4 py-3 border-b border-gray-50 md:hidden">
-                                        <p className="text-sm font-semibold text-gray-800">{user?.name || 'Super Admin'}</p>
-                                        <p className="text-xs text-gray-500">Administrator</p>
+                                        <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
+                                        <p className="text-xs text-gray-500 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
                                     </div>
                                     <button
                                         onClick={() => {
@@ -213,13 +226,17 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </div>
                             )}
                         </div>
-                        </>
+                        </div>
                     )}
                 </div>
             </header>
 
             {/* Modals */}
-            <AdminProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+            {user?.role === 'admin' ? (
+                <AdminProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+            ) : (
+                <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+            )}
             {user?.role === 'admin' ? (
                 <AdminSettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
             ) : (

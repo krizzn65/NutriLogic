@@ -7,6 +7,7 @@ import {
     DialogContent,
 } from "../ui/dialog";
 import { Switch } from "../ui/switch";
+import SuccessModal from "../ui/SuccessModal";
 import {
     X,
     Loader2,
@@ -47,7 +48,13 @@ export default function SettingsModal({ isOpen, onClose }) {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const { getCachedData, setCachedData } = useDataCache();
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+
+    const { getCachedData, setCachedData, invalidateCache } = useDataCache();
 
     const fetchSettings = useCallback(async () => {
         try {
@@ -136,17 +143,17 @@ export default function SettingsModal({ isOpen, onClose }) {
                 new_password_confirmation: passwordForm.new_password_confirmation,
             });
 
-            setPasswordSuccess("Password berhasil diubah!");
             setPasswordForm({
                 current_password: "",
                 new_password: "",
                 new_password_confirmation: "",
             });
-
-            setTimeout(() => {
-                setPasswordSuccess(null);
-                onClose();
-            }, 1500);
+            
+            setSuccessModal({
+                isOpen: true,
+                title: 'Password Berhasil Diubah',
+                message: 'Password Anda telah berhasil diperbarui.'
+            });
 
         } catch (err) {
             const errorMessage =
@@ -176,6 +183,7 @@ export default function SettingsModal({ isOpen, onClose }) {
     };
 
     return (
+        <>
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent hideClose={true} className="w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-3xl md:rounded-[40px] overflow-hidden">
                 {/* Header */}
@@ -414,5 +422,16 @@ export default function SettingsModal({ isOpen, onClose }) {
                 </div>
             </DialogContent>
         </Dialog>
+
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                onClose={() => {
+                    setSuccessModal({ isOpen: false, title: '', message: '' });
+                    onClose();
+                }}
+                title={successModal.title}
+                message={successModal.message}
+            />
+        </>
     );
 }
