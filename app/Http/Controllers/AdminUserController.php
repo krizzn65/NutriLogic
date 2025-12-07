@@ -172,10 +172,22 @@ class AdminUserController extends Controller
             ], 404);
         }
 
-        // Generate new random password
-        $newPassword = Str::random(8);
+        // Check if manual password is provided
+        if ($request->has('password') && !empty($request->password)) {
+            $request->validate([
+                'password' => ['required', 'string', 'min:6'],
+            ]);
+            $newPassword = $request->password;
+        } else {
+            // Generate new random password
+            $newPassword = Str::random(8);
+        }
+
         $user->password = Hash::make($newPassword);
         $user->save();
+
+        // Log activity
+        AdminActivityLogController::log('update', "Admin mereset password user: {$user->name}", 'User', $user->id);
 
         return response()->json([
             'password' => $newPassword,

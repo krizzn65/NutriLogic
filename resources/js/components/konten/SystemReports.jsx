@@ -18,6 +18,7 @@ export default function SystemReports() {
     const [reportData, setReportData] = useState(null);
     const [posyandus, setPosyandus] = useState([]);
     const [selectedPosyandu, setSelectedPosyandu] = useState('all');
+    const [activeTab, setActiveTab] = useState('status_gizi'); // 'status_gizi', 'tren', 'statistik'
 
     // Custom UI States
     const [isPosyanduDropdownOpen, setIsPosyanduDropdownOpen] = useState(false);
@@ -138,18 +139,18 @@ export default function SystemReports() {
         try {
             setIsExporting(true);
             setExportError(null);
-            
-            const posyanduName = selectedPosyandu === 'all' 
-                ? 'Semua Posyandu' 
+
+            const posyanduName = selectedPosyandu === 'all'
+                ? 'Semua Posyandu'
                 : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Semua Posyandu';
 
             exportSystemReportsToExcel(reportData, posyanduName);
-            
+
             // Show success message
             setTimeout(() => {
                 setIsExporting(false);
             }, 1000);
-            
+
         } catch (error) {
             console.error('Error exporting to Excel:', error);
             setExportError('Gagal mengexport data: ' + error.message);
@@ -209,14 +210,14 @@ export default function SystemReports() {
                 params.posyandu_id = selectedPosyandu;
             }
 
-            const response = await api.get('/admin/reports/export', { 
-                params: { 
+            const response = await api.get('/admin/reports/export', {
+                params: {
                     ...params,
                     type: 'weighings',
                     format: 'json' // Request JSON format instead of CSV
-                } 
+                }
             });
-            
+
             // If API returns CSV, we need to fetch weighing data differently
             // Let's use a direct weighing endpoint
             const weighingResponse = await api.get('/admin/weighings', { params });
@@ -305,7 +306,7 @@ export default function SystemReports() {
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
             <PageHeader title="Laporan Sistem" subtitle="Ringkasan statistik dan performa NutriLogic" />
-            <div className="flex-1 overflow-auto p-6 space-y-6">
+            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                 {/* Filter Bar */}
                 <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 lg:p-5">
@@ -314,63 +315,93 @@ export default function SystemReports() {
                         <p className="text-sm text-gray-600">Saring laporan berdasarkan posyandu yang ingin dianalisis.</p>
                     </div>
 
-                    <div className="mt-3">
-                        <div className="relative w-64" ref={posyanduRef}>
-                            <label className="text-[11px] font-semibold text-gray-500 mb-1 block">Posyandu</label>
-                            <button
-                                onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:bg-white transition-colors text-gray-900 shadow-sm"
-                            >
-                                <span className="truncate">
-                                    {selectedPosyandu === 'all'
-                                        ? 'Semua Posyandu'
-                                        : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
-                                </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
+                    <div className="mt-3 flex flex-col md:block gap-3">
+                        <div className="flex items-end gap-3">
+                            <div className="relative flex-1 md:w-64" ref={posyanduRef}>
+                                <label className="text-[11px] font-semibold text-gray-500 mb-1 block">Posyandu</label>
+                                <button
+                                    onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-left flex items-center justify-between hover:bg-white transition-colors text-gray-900 shadow-sm"
+                                >
+                                    <span className="truncate">
+                                        {selectedPosyandu === 'all'
+                                            ? 'Semua Posyandu'
+                                            : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
+                                    </span>
+                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
 
-                            <AnimatePresence>
-                                {isPosyanduDropdownOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 10 }}
-                                        className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
-                                    >
-                                        <div className="max-h-64 overflow-y-auto p-1">
-                                            <div
-                                                onClick={() => {
-                                                    setSelectedPosyandu('all');
-                                                    setIsPosyanduDropdownOpen(false);
-                                                    hasHydratedReports.current = false;
-                                                }}
-                                                className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
-                                            >
-                                                <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                    Semua Posyandu
-                                                </span>
-                                                {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
-                                            </div>
-                                            {posyandus.map((posyandu) => (
+                                <AnimatePresence>
+                                    {isPosyanduDropdownOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
+                                        >
+                                            <div className="max-h-64 overflow-y-auto p-1">
                                                 <div
-                                                    key={posyandu.id}
                                                     onClick={() => {
-                                                        setSelectedPosyandu(posyandu.id);
+                                                        setSelectedPosyandu('all');
                                                         setIsPosyanduDropdownOpen(false);
                                                         hasHydratedReports.current = false;
                                                     }}
                                                     className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                                 >
-                                                    <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                        {posyandu.name}
+                                                    <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                        Semua Posyandu
                                                     </span>
-                                                    {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
+                                                    {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                                                {posyandus.map((posyandu) => (
+                                                    <div
+                                                        key={posyandu.id}
+                                                        onClick={() => {
+                                                            setSelectedPosyandu(posyandu.id);
+                                                            setIsPosyanduDropdownOpen(false);
+                                                            hasHydratedReports.current = false;
+                                                        }}
+                                                        className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                    >
+                                                        <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                            {posyandu.name}
+                                                        </span>
+                                                        {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Mobile Export Icons */}
+                            <div className="flex md:hidden gap-2">
+                                <button
+                                    onClick={handleExportToExcel}
+                                    disabled={isExporting}
+                                    className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-200 hover:bg-blue-100 transition-colors"
+                                    title="Export Ringkasan"
+                                >
+                                    {isExporting ? <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /> : <FileText className="w-5 h-5" />}
+                                </button>
+                                <button
+                                    onClick={handleExportChildrenToExcel}
+                                    disabled={isExportingChildren}
+                                    className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                                    title="Export Data Anak"
+                                >
+                                    {isExportingChildren ? <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" /> : <FileText className="w-5 h-5" />}
+                                </button>
+                                <button
+                                    onClick={handleExportWeighingsToExcel}
+                                    disabled={isExportingWeighings}
+                                    className="p-2.5 bg-violet-50 text-violet-600 rounded-xl border border-violet-200 hover:bg-violet-100 transition-colors"
+                                    title="Export Penimbangan"
+                                >
+                                    {isExportingWeighings ? <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" /> : <FileText className="w-5 h-5" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -403,7 +434,7 @@ export default function SystemReports() {
                             <p className="text-sm text-orange-800">{exportError}</p>
                             <p className="text-xs text-orange-600 mt-2">Jika masalah berlanjut, silakan refresh halaman atau hubungi administrator.</p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setExportError(null)}
                             className="text-orange-400 hover:text-orange-600 transition-colors"
                         >
@@ -421,43 +452,95 @@ export default function SystemReports() {
                         animate="visible"
                         className="space-y-8"
                     >
-                        {/* Summary Table */}
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Keterangan</th>
-                                        <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 text-sm">
-                                    <tr className="hover:bg-gray-50">
-                                        <td className="py-3 px-4 font-medium text-gray-800">Total Posyandu</td>
-                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_posyandu ?? 0}</td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50">
-                                        <td className="py-3 px-4 font-medium text-gray-800">Total Kader</td>
-                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_kader ?? 0}</td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50">
-                                        <td className="py-3 px-4 font-medium text-gray-800">Total Orang Tua</td>
-                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_ibu ?? 0}</td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50">
-                                        <td className="py-3 px-4 font-medium text-gray-800">Total Anak</td>
-                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_anak ?? 0}</td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50">
-                                        <td className="py-3 px-4 font-medium text-gray-800">Total Penimbangan</td>
-                                        <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_weighings ?? 0}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        {/* Summary Section */}
+                        <div>
+                            {/* Mobile View: Cards */}
+                            <div className="grid grid-cols-2 gap-3 md:hidden">
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Posyandu</span>
+                                    <span className="text-2xl font-bold text-blue-600">{reportData?.summary?.total_posyandu ?? 0}</span>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Kader</span>
+                                    <span className="text-2xl font-bold text-emerald-600">{reportData?.summary?.total_kader ?? 0}</span>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Orang Tua</span>
+                                    <span className="text-2xl font-bold text-purple-600">{reportData?.summary?.total_ibu ?? 0}</span>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Anak</span>
+                                    <span className="text-2xl font-bold text-orange-600">{reportData?.summary?.total_anak ?? 0}</span>
+                                </div>
+                                <div className="col-span-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Total Penimbangan</span>
+                                    <span className="text-3xl font-bold text-pink-600">{reportData?.summary?.total_weighings ?? 0}</span>
+                                </div>
+                            </div>
+
+                            {/* Desktop View: Table */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="min-w-full bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Keterangan</th>
+                                            <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Jumlah</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 text-sm">
+                                        <tr className="hover:bg-gray-50">
+                                            <td className="py-3 px-4 font-medium text-gray-800">Total Posyandu</td>
+                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_posyandu ?? 0}</td>
+                                        </tr>
+                                        <tr className="hover:bg-gray-50">
+                                            <td className="py-3 px-4 font-medium text-gray-800">Total Kader</td>
+                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_kader ?? 0}</td>
+                                        </tr>
+                                        <tr className="hover:bg-gray-50">
+                                            <td className="py-3 px-4 font-medium text-gray-800">Total Orang Tua</td>
+                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_ibu ?? 0}</td>
+                                        </tr>
+                                        <tr className="hover:bg-gray-50">
+                                            <td className="py-3 px-4 font-medium text-gray-800">Total Anak</td>
+                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_anak ?? 0}</td>
+                                        </tr>
+                                        <tr className="hover:bg-gray-50">
+                                            <td className="py-3 px-4 font-medium text-gray-800">Total Penimbangan</td>
+                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_weighings ?? 0}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Mobile Tab Navigation */}
+                        <div className="md:hidden bg-white p-1 rounded-xl border border-gray-200 flex">
+                            <button
+                                onClick={() => setActiveTab('status_gizi')}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${activeTab === 'status_gizi' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                Status Gizi
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('tren')}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${activeTab === 'tren' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                Tren
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('statistik')}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${activeTab === 'statistik' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                Statistik
+                            </button>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Nutritional Status Distribution - Table */}
-                            <motion.div variants={itemVariants} className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                            <motion.div
+                                variants={itemVariants}
+                                className={`lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 ${activeTab === 'status_gizi' ? 'block' : 'hidden md:block'}`}
+                            >
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
                                         <Activity className="w-5 h-5" />
@@ -490,8 +573,8 @@ export default function SystemReports() {
                                 </div>
                             </motion.div>
 
-                            {/* Export Actions */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col gap-3">
+                            {/* Export Actions - Desktop Only */}
+                            <motion.div variants={itemVariants} className="hidden md:flex bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex-col gap-3">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-gray-100 text-gray-600 rounded-lg">
                                         <Download className="w-5 h-5" />
@@ -501,27 +584,27 @@ export default function SystemReports() {
                                         <p className="text-xs text-gray-500">Unduh data sesuai filter yang dipilih.</p>
                                     </div>
                                 </div>
-                                
-                                <ExportButton 
-                                    onClick={handleExportToExcel} 
-                                    label="Export Ringkasan" 
-                                    color="blue" 
+
+                                <ExportButton
+                                    onClick={handleExportToExcel}
+                                    label="Export Ringkasan"
+                                    color="blue"
                                     icon={FileText}
                                     disabled={isExporting}
                                     isLoading={isExporting}
                                 />
-                                <ExportButton 
-                                    onClick={handleExportChildrenToExcel} 
-                                    label="Export Data Anak" 
-                                    color="emerald" 
+                                <ExportButton
+                                    onClick={handleExportChildrenToExcel}
+                                    label="Export Data Anak"
+                                    color="emerald"
                                     icon={FileText}
                                     disabled={isExportingChildren}
                                     isLoading={isExportingChildren}
                                 />
-                                <ExportButton 
-                                    onClick={handleExportWeighingsToExcel} 
-                                    label="Export Penimbangan" 
-                                    color="violet" 
+                                <ExportButton
+                                    onClick={handleExportWeighingsToExcel}
+                                    label="Export Penimbangan"
+                                    color="violet"
                                     icon={FileText}
                                     disabled={isExportingWeighings}
                                     isLoading={isExportingWeighings}
@@ -531,7 +614,10 @@ export default function SystemReports() {
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Monthly Trend - Table */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                            <motion.div
+                                variants={itemVariants}
+                                className={`bg-white rounded-3xl shadow-sm border border-gray-100 p-6 ${activeTab === 'tren' ? 'block' : 'hidden md:block'}`}
+                            >
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                                         <TrendingUp className="w-5 h-5" />
@@ -559,7 +645,10 @@ export default function SystemReports() {
                             </motion.div>
 
                             {/* Monthly Statistics - Table */}
-                            <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                            <motion.div
+                                variants={itemVariants}
+                                className={`bg-white rounded-3xl shadow-sm border border-gray-100 p-6 ${activeTab === 'statistik' ? 'block' : 'hidden md:block'}`}
+                            >
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                                         <Calendar className="w-5 h-5" />

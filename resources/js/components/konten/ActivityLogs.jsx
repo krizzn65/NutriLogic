@@ -25,6 +25,8 @@ export default function ActivityLogs() {
     });
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [openDropdown, setOpenDropdown] = useState(null);
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
@@ -124,7 +126,7 @@ export default function ActivityLogs() {
     // Auto-fetch when filters change
     useEffect(() => {
         if (!hasHydratedLogs.current) return; // Skip initial render
-        
+
         const hasFilter = filters.action || filters.model || filters.user_id || filters.date_from || filters.date_to;
         if (hasFilter) {
             fetchLogs({ forceRefresh: true, showLoader: false });
@@ -150,23 +152,23 @@ export default function ActivityLogs() {
             alert('Tidak ada data untuk diexport');
             return;
         }
-        
+
         try {
             setIsExporting(true);
-            
+
             // Prepare data - ensure all required fields exist
             const validLogs = logs.filter(log => log && log.created_at);
-            
+
             if (validLogs.length === 0) {
                 throw new Error('Tidak ada data valid untuk diexport');
             }
-            
+
             // Export to Excel with current filters
             const result = await exportActivityLogsToExcel(validLogs, filters);
-            
+
             if (result && result.success) {
                 console.log(`✓ Export berhasil: ${result.filename}`);
-                
+
                 // Show success notification briefly
                 setTimeout(() => {
                     setIsExporting(false);
@@ -174,14 +176,14 @@ export default function ActivityLogs() {
             } else {
                 throw new Error('Export gagal tanpa pesan error');
             }
-            
+
         } catch (error) {
             console.error('Error exporting to Excel:', error);
-            
+
             // User-friendly error message
             const errorMessage = error.message || 'Terjadi kesalahan saat mengexport data';
             alert(`Gagal mengexport data:\n${errorMessage}\n\nSilakan coba lagi atau hubungi administrator.`);
-            
+
             setIsExporting(false);
         }
     };
@@ -244,72 +246,84 @@ export default function ActivityLogs() {
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
             <PageHeader title="Log Aktivitas" subtitle="Riwayat aktivitas pengguna sistem" />
-            <div className="flex-1 overflow-auto p-6 space-y-6">
+            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                 {/* Filters & Controls */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-0 md:mb-4">
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="text-sm font-semibold text-gray-700 flex items-center gap-2 md:cursor-default"
+                        >
                             <Filter className="w-4 h-4" />
-                            Filter & Kontrol
-                        </h3>
+                            <span>Filter & Kontrol</span>
+                            <ChevronDown className={`w-4 h-4 md:hidden transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                        </button>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setAutoRefresh(!autoRefresh)}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${autoRefresh
-                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
+                                title="Auto Refresh"
                             >
                                 <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
-                                Auto Refresh {autoRefresh ? 'ON' : 'OFF'}
+                                <span className="hidden md:inline">Auto Refresh {autoRefresh ? 'ON' : 'OFF'}</span>
                             </button>
                             <button
                                 onClick={handleExportToExcel}
                                 disabled={logs.length === 0 || isExporting}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                                title="Export Excel"
                             >
                                 {isExporting ? (
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                 ) : (
                                     <Download className="w-4 h-4" />
                                 )}
-                                {isExporting ? 'Exporting...' : 'Export Excel'}
+                                <span className="hidden md:inline">{isExporting ? 'Exporting...' : 'Export Excel'}</span>
                             </button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div className="relative z-10">
+                    <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mt-4 md:mt-0 ${isFilterOpen ? 'block' : 'hidden md:grid'}`}>
+                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'action' ? 'z-50' : 'z-10'}`}>
                             <CustomDropdown
                                 label="Aksi"
                                 value={filters.action}
                                 options={actionOptions}
                                 onChange={(value) => setFilters({ ...filters, action: value })}
+                                isOpen={openDropdown === 'action'}
+                                onToggle={(val) => setOpenDropdown(val ? 'action' : null)}
                             />
                         </div>
 
-                        <div className="relative z-10">
+                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'model' ? 'z-50' : 'z-10'}`}>
                             <CustomDropdown
                                 label="Model"
                                 value={filters.model}
                                 options={modelOptions}
                                 onChange={(value) => setFilters({ ...filters, model: value })}
+                                isOpen={openDropdown === 'model'}
+                                onToggle={(val) => setOpenDropdown(val ? 'model' : null)}
                             />
                         </div>
 
-                        <div className="relative z-10">
+                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'user' ? 'z-50' : 'z-10'}`}>
                             <CustomDropdown
                                 label="User"
                                 value={filters.user_id}
                                 options={userOptions}
                                 onChange={(value) => setFilters({ ...filters, user_id: value })}
+                                isOpen={openDropdown === 'user'}
+                                onToggle={(val) => setOpenDropdown(val ? 'user' : null)}
                             />
                         </div>
 
                         <div className="relative z-10">
                             <CustomDatePicker
-                                label="Dari Tanggal"
+                                label="Dari"
                                 value={filters.date_from}
                                 onChange={(value) => setFilters({ ...filters, date_from: value })}
                             />
@@ -317,7 +331,7 @@ export default function ActivityLogs() {
 
                         <div className="relative z-10">
                             <CustomDatePicker
-                                label="Sampai Tanggal"
+                                label="Sampai"
                                 value={filters.date_to}
                                 onChange={(value) => setFilters({ ...filters, date_to: value })}
                             />
@@ -358,7 +372,7 @@ export default function ActivityLogs() {
                 )}
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
                     {[
                         { label: 'Login', count: logs.filter(l => l.action === 'login').length, color: 'green' },
                         { label: 'Logout', count: logs.filter(l => l.action === 'logout').length, color: 'gray' },
@@ -379,8 +393,56 @@ export default function ActivityLogs() {
                     ))}
                 </div>
 
-                {/* Table */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Mobile View: Cards */}
+                <div className="md:hidden space-y-4">
+                    {logs.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200 p-4">
+                            {hasActiveFilters ? 'Tidak ada log yang sesuai dengan filter' : 'Belum ada log aktivitas'}
+                        </div>
+                    ) : (
+                        logs.map((log) => (
+                            <div key={log.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 bg-gray-100 rounded-full">
+                                            <User className="w-4 h-4 text-gray-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">{log.user?.name || 'System'}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {new Date(log.created_at).toLocaleString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
+                                        {log.action}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelColor(log.model)}`}>
+                                            {log.model || '-'}
+                                        </span>
+                                        <span className="text-gray-400 text-xs">•</span>
+                                        <span className="text-xs text-gray-500">{log.ip_address || '-'}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        {log.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop View: Table */}
+                <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -406,47 +468,47 @@ export default function ActivityLogs() {
                                             key={log.id}
                                             className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                                         >
-                                                <td className="py-3 px-4 text-sm text-gray-600">
-                                                    <div className="flex items-center gap-1">
-                                                        <Calendar className="w-4 h-4 text-gray-400" />
-                                                        {new Date(log.created_at).toLocaleString('id-ID', {
-                                                            year: 'numeric',
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex items-center gap-1 text-sm text-gray-700">
-                                                        <User className="w-4 h-4 text-gray-400" />
-                                                        {log.user?.name || 'System'}
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4 text-center">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
-                                                        {log.action}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-4 text-center">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModelColor(log.model)}`}>
-                                                        {log.model || '-'}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-700">
-                                                    {log.description}
-                                                </td>
-                                                <td className="py-3 px-4 text-sm text-gray-500">
-                                                    {log.ip_address || '-'}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>                {/* Info */}
+                                            <td className="py-3 px-4 text-sm text-gray-600">
+                                                <div className="flex items-center gap-1">
+                                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                                    {new Date(log.created_at).toLocaleString('id-ID', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <div className="flex items-center gap-1 text-sm text-gray-700">
+                                                    <User className="w-4 h-4 text-gray-400" />
+                                                    {log.user?.name || 'System'}
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-4 text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
+                                                    {log.action}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-4 text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModelColor(log.model)}`}>
+                                                    {log.model || '-'}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-4 text-sm text-gray-700">
+                                                {log.description}
+                                            </td>
+                                            <td className="py-3 px-4 text-sm text-gray-500">
+                                                {log.ip_address || '-'}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>                {/* Info */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                         <Activity className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -468,19 +530,18 @@ export default function ActivityLogs() {
 
 // Helper Components
 
-function CustomDropdown({ label, value, options, onChange }) {
-    const [isOpen, setIsOpen] = useState(false);
+function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
+            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                onToggle(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+    }, [isOpen, onToggle]);
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));
 
@@ -490,7 +551,7 @@ function CustomDropdown({ label, value, options, onChange }) {
                 {label}
             </label>
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => onToggle(!isOpen)}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-left flex items-center justify-between hover:bg-gray-50 transition-colors text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
                 <span className="truncate">
@@ -514,7 +575,7 @@ function CustomDropdown({ label, value, options, onChange }) {
                                     key={option.value}
                                     onClick={() => {
                                         onChange(option.value);
-                                        setIsOpen(false);
+                                        onToggle(false);
                                     }}
                                     className="px-3 py-2 rounded-md hover:bg-blue-50 cursor-pointer flex items-center justify-between group transition-colors"
                                 >
