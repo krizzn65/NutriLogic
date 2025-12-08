@@ -162,8 +162,8 @@ export default function AuthSwitch() {
         role: 'ibu'
       });
 
-      // Auto login after registration
-      await login(signUpData.email, signUpData.password);
+      // Auto login after registration using phone (login uses phone/name as identifier, not email)
+      await login(signUpData.phone, signUpData.password);
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.';

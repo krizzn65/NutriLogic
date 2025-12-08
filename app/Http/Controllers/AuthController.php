@@ -71,8 +71,17 @@ class AuthController extends Controller
                 ['ip' => $request->ip(), 'user_agent' => $request->userAgent()]
             );
 
+            // More specific error message for better UX
+            if ($emailExists && $phoneExists) {
+                $message = 'Email dan nomor telepon sudah terdaftar.';
+            } elseif ($emailExists) {
+                $message = 'Email sudah terdaftar. Gunakan email lain atau login dengan akun yang sudah ada.';
+            } else {
+                $message = 'Nomor telepon sudah terdaftar. Gunakan nomor lain atau login dengan akun yang sudah ada.';
+            }
+
             return response()->json([
-                'message' => 'Registrasi gagal. Periksa kembali data yang Anda masukkan.',
+                'message' => $message,
             ], 422);
         }
 
@@ -81,7 +90,7 @@ class AuthController extends Controller
         // Force role to 'ibu' for public registration endpoint
         // Admin and kader roles should only be created via seeder or internal panel
         $validated['role'] = 'ibu';
-        $validated['posyandu_id'] = null; // Ibu doesn't need posyandu_id
+        // Keep posyandu_id from request (user selects their posyandu during registration)
 
         // Password will be automatically hashed by model cast ('password' => 'hashed')
         // Do NOT manually Hash::make here to avoid double hashing!
