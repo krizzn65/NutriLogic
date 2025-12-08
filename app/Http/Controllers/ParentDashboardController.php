@@ -312,6 +312,7 @@ class ParentDashboardController extends Controller
                 'zscore_hfa' => $log->zscore_hfa,
                 'zscore_wfa' => $log->zscore_wfa,
                 'zscore_wfh' => $log->zscore_wfh,
+                'notes' => $log->notes,
             ];
         });
 

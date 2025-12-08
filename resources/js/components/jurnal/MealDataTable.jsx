@@ -131,9 +131,11 @@ export default function MealDataTable({ meals, loading, onDelete }) {
 
                         <div className="mb-3">
                             <h4 className="font-semibold text-gray-900 text-lg">{meal.description}</h4>
-                            <div className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md font-medium capitalize">
-                                Porsi: {meal.portion.replace('_', ' ')}
-                            </div>
+                            {meal.portion && (
+                                <div className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md font-medium capitalize">
+                                    Porsi: {meal.portion.replace('_', ' ')}
+                                </div>
+                            )}
                         </div>
 
                         {(meal.ingredients || meal.notes) && (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge } from "../../lib/utils";
 import PageHeader from "../ui/PageHeader";
@@ -21,12 +22,15 @@ import {
   ChevronDown,
   Check,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  BookOpen
 } from "lucide-react";
 
 // TODO: Integrate with AI/n8n for advanced recommendations in future version
 
 export default function NutriAssistPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -46,10 +50,15 @@ export default function NutriAssistPage() {
   useEffect(() => {
     fetchChildren();
 
-    // Load cached recommendations if available
-    const cachedRecommendations = getCachedData('nutriAssistRecommendations');
-    if (cachedRecommendations) {
-      setRecommendations(cachedRecommendations);
+    // Load cached recommendations from sessionStorage (survives refresh and navigation)
+    try {
+      const storedRecommendations = sessionStorage.getItem('nutriAssistRecommendations');
+      if (storedRecommendations) {
+        const parsed = JSON.parse(storedRecommendations);
+        setRecommendations(parsed);
+      }
+    } catch (e) {
+      console.error('Error loading cached recommendations:', e);
     }
   }, []);
 
@@ -182,6 +191,12 @@ export default function NutriAssistPage() {
       }
 
       setRecommendations(newRecommendations);
+      // Save to sessionStorage for persistence across navigation and refresh
+      try {
+        sessionStorage.setItem('nutriAssistRecommendations', JSON.stringify(newRecommendations));
+      } catch (e) {
+        console.error('Error saving recommendations to sessionStorage:', e);
+      }
       setCachedData('nutriAssistRecommendations', newRecommendations);
       setExpandedCardIndex(null);
 
@@ -210,6 +225,38 @@ export default function NutriAssistPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Function to add recommendation to meal journal - Navigate with prefilled data
+  const handleAddToJournal = (rec, index) => {
+    if (!selectedChildId) {
+      setError('Silakan pilih anak terlebih dahulu.');
+      return;
+    }
+
+    // Build meal log data from recommendation
+    const menuName = rec.menu?.name || rec.name || 'Menu dari Nutri-Assist';
+    const menuDescription = rec.menu?.description || rec.description || '';
+    const ingredientsList = rec.ingredients
+      ? (Array.isArray(rec.ingredients) ? rec.ingredients.join(', ') : rec.ingredients)
+      : '';
+    const recNotes = rec.notes || '';
+
+    // Determine time_of_day from meal_type if available
+    const timeOfDay = rec.meal_type || 'siang';
+
+    // Prepare prefilled data for the journal form
+    const prefilledData = {
+      childId: parseInt(selectedChildId),
+      time_of_day: timeOfDay,
+      description: `${menuName}${menuDescription ? ` - ${menuDescription}` : ''}`,
+      ingredients: ingredientsList,
+      notes: `Rekomendasi dari Nutri-Assist. ${recNotes}`.trim(),
+      source: 'nutri-assist',
+    };
+
+    // Navigate to JurnalMakanPage with state
+    navigate('/dashboard/jurnal-makan', { state: { prefilledMeal: prefilledData } });
   };
 
   // Loading state (initial fetch)
@@ -263,6 +310,7 @@ export default function NutriAssistPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
 
           {children.length === 0 ? (
             <motion.div
@@ -835,6 +883,15 @@ export default function NutriAssistPage() {
                                             <p className="text-sm text-blue-700 leading-relaxed">{rec.notes}</p>
                                           </div>
                                         )}
+
+                                        {/* Add to Journal Button */}
+                                        <button
+                                          onClick={() => handleAddToJournal(rec, index)}
+                                          className="w-full mt-4 py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-semibold shadow-lg shadow-green-500/20 hover:shadow-green-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                                        >
+                                          <BookOpen className="w-5 h-5" />
+                                          <span>Tambah ke Jurnal Makan</span>
+                                        </button>
                                       </div>
                                     </motion.div>
                                   )}

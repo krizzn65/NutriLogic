@@ -1,9 +1,9 @@
-import React, { useState, useRef, memo, useCallback } from 'react';
+import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Loader2, Check, AlertCircle, Clock, Utensils, ChevronDown } from 'lucide-react';
+import { Plus, Loader2, Check, AlertCircle, Clock, Utensils, ChevronDown, Sparkles } from 'lucide-react';
 import api from '../../lib/api';
 
-const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess }) {
+const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialData }) {
     const [formData, setFormData] = useState({
         time_of_day: 'pagi',
         description: '',
@@ -15,8 +15,23 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess }) {
     const [error, setError] = useState(null);
     const [showSuccess, setShowSuccess] = useState(false);
     const [isPortionDropdownOpen, setIsPortionDropdownOpen] = useState(false);
+    const [isFromNutriAssist, setIsFromNutriAssist] = useState(false);
 
     const descriptionRef = useRef(null);
+
+    // Populate form with initial data from NutriAssistPage
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                time_of_day: initialData.time_of_day || 'siang',
+                description: initialData.description || '',
+                ingredients: initialData.ingredients || '',
+                portion: 'habis', // Default portion
+                notes: initialData.notes || '',
+            });
+            setIsFromNutriAssist(initialData.source === 'nutri-assist');
+        }
+    }, [initialData]);
 
     const timeOptions = [
         { value: 'pagi', label: 'Pagi' },
@@ -96,6 +111,19 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess }) {
                 <Plus className="w-5 h-5 text-gray-400" />
                 Catat Makanan
             </h3>
+
+            {/* NutriAssist Indicator */}
+            {isFromNutriAssist && (
+                <div className="mb-6 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                        <Sparkles className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-blue-800">Dari Nutri-Assist</p>
+                        <p className="text-xs text-blue-600">Data terisi otomatis dari rekomendasi. Sesuaikan jika perlu.</p>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Top Row: Time & Portion */}

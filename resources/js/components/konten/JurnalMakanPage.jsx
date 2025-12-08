@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import api from '../../lib/api';
@@ -15,6 +16,7 @@ import ErrorBoundary from '../ErrorBoundary';
 import MealDataTable from '../jurnal/MealDataTable';
 
 function JurnalMakanPageContent() {
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('jurnal'); // 'jurnal' or 'pmt'
     const [children, setChildren] = useState([]);
     const [selectedChildId, setSelectedChildId] = useState('');
@@ -23,6 +25,9 @@ function JurnalMakanPageContent() {
     const [mealsLoading, setMealsLoading] = useState(false);
     const [pmtRefreshKey, setPmtRefreshKey] = useState(0);
     const [isAddMealModalOpen, setIsAddMealModalOpen] = useState(false);
+
+    // Get prefilled meal data from navigation state (from NutriAssistPage)
+    const prefilledMeal = location.state?.prefilledMeal || null;
 
     useEffect(() => {
         fetchChildren();
@@ -40,7 +45,13 @@ function JurnalMakanPageContent() {
             const childrenData = response.data.data || [];
             setChildren(childrenData);
             if (childrenData.length > 0) {
-                setSelectedChildId(childrenData[0].id);
+                // If we have prefilled meal data, select that child; otherwise select first
+                if (prefilledMeal?.childId) {
+                    const targetChild = childrenData.find(c => c.id === prefilledMeal.childId);
+                    setSelectedChildId(targetChild ? targetChild.id : childrenData[0].id);
+                } else {
+                    setSelectedChildId(childrenData[0].id);
+                }
             }
         } catch (error) {
             console.error('Error fetching children:', error);
@@ -188,6 +199,7 @@ function JurnalMakanPageContent() {
                                                 <QuickAddForm
                                                     childId={selectedChildId}
                                                     onSuccess={handleMealAdded}
+                                                    initialData={prefilledMeal}
                                                 />
                                             </div>
 
@@ -266,6 +278,7 @@ function JurnalMakanPageContent() {
                                                 handleMealAdded();
                                                 setIsAddMealModalOpen(false);
                                             }}
+                                            initialData={prefilledMeal}
                                         />
                                     </motion.div>
                                 </>
@@ -273,6 +286,7 @@ function JurnalMakanPageContent() {
                         </AnimatePresence>
                     </>
                 )}
+
             </div>
         </div>
     );

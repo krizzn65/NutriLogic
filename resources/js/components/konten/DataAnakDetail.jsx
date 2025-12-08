@@ -34,6 +34,15 @@ export default function DataAnakDetail() {
     const [activeTab, setActiveTab] = useState('history'); // history, meals, immunization
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+    // Pagination states
+    const ITEMS_PER_PAGE = 5;
+    const [historyPage, setHistoryPage] = useState(1);
+    const [mealsPage, setMealsPage] = useState(1);
+    const [immunizationPage, setImmunizationPage] = useState(1);
+
+    // Expanded notes state
+    const [expandedNoteId, setExpandedNoteId] = useState(null);
+
     useEffect(() => {
         if (id) {
             fetchChildDetail(id);
@@ -80,6 +89,75 @@ export default function DataAnakDetail() {
     const handleEditSuccess = (message) => {
         fetchChildDetail(id);
         // Optional: Show success message
+    };
+
+    // Pagination helper
+    const paginate = (items, page) => {
+        if (!items || items.length === 0) return { data: [], totalPages: 0, total: 0 };
+        const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+        const start = (page - 1) * ITEMS_PER_PAGE;
+        return {
+            data: items.slice(start, start + ITEMS_PER_PAGE),
+            totalPages,
+            total: items.length,
+        };
+    };
+
+    // Pagination UI Component
+    const PaginationUI = ({ currentPage, totalPages, total, onPageChange, label }) => {
+        if (total === 0) return null;
+
+        return (
+            <div className="flex flex-col items-center gap-3 mt-6 pt-6 border-t border-gray-100">
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <div className="flex items-center gap-1">
+                            {[...Array(totalPages)].map((_, i) => {
+                                const pageNum = i + 1;
+                                const show = pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1;
+                                if (!show && (pageNum === currentPage - 2 || pageNum === currentPage + 2)) {
+                                    return <span key={i} className="px-1 text-gray-400 text-sm">...</span>;
+                                }
+                                if (!show) return null;
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => onPageChange(pageNum)}
+                                        className={`min-w-[32px] h-8 rounded-lg text-sm font-medium transition-all ${pageNum === currentPage
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+                <div className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
+                    Halaman {currentPage} dari {totalPages || 1} • Total: <span className="font-bold text-gray-700">{total}</span> {label}
+                </div>
+            </div>
+        );
     };
 
     // Loading state
@@ -129,18 +207,18 @@ export default function DataAnakDetail() {
     const latestWeighing = childData.weighing_logs?.[0]; // Assuming weighing_logs are sorted by date descending
     const currentWeight = latestWeighing?.weight_kg;
     const currentHeight = latestWeighing?.height_cm;
-    
+
     // Guard arrays with fallback
     const weighingLogs = childData.weighing_logs || [];
     const mealLogs = childData.meal_logs || [];
     const immunizationSchedules = childData.immunization_schedules || [];
-    
+
     // Determine health status based on nutritional status
     const latestStatus = childData.latest_nutritional_status;
     const isHealthy = latestStatus && !latestStatus.is_at_risk;
     const statusLabel = isHealthy ? 'Sehat' : 'Perlu Perhatian';
-    const statusColor = isHealthy 
-        ? 'bg-green-50 text-green-600 border-green-100' 
+    const statusColor = isHealthy
+        ? 'bg-green-50 text-green-600 border-green-100'
         : 'bg-yellow-50 text-yellow-600 border-yellow-100';
 
     return (
@@ -359,149 +437,211 @@ export default function DataAnakDetail() {
 
                                 {weighingLogs.length === 0 ? (
                                     <EmptyState message="Belum ada data penimbangan" />
-                                ) : (
-                                    <>
-                                        {/* Mobile View (Cards) */}
-                                        <div className="md:hidden flex flex-col gap-4">
-                                            {weighingLogs.map((log) => (
-                                                <div key={log.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <p className="text-sm font-bold text-gray-900">
-                                                                {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                            </p>
-                                                            <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(log.nutritional_status)}`}>
-                                                                {getStatusLabel(log.nutritional_status)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-gray-200/50">
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Berat</p>
-                                                            <p className="font-semibold text-gray-900">{log.weight_kg} kg</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tinggi</p>
-                                                            <p className="font-semibold text-gray-900">{log.height_cm} cm</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Lila</p>
-                                                            <p className="font-semibold text-gray-900">{log.muac_cm ? `${log.muac_cm} cm` : '-'}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div>
-                                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Z-Score</p>
-                                                        <div className="flex gap-3 text-xs font-mono bg-white p-2 rounded-lg border border-gray-100">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-gray-400 text-[10px]">HFA</span>
-                                                                <span className={log.zscore_hfa < -2 || log.zscore_hfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
-                                                                    {log.zscore_hfa ? Number(log.zscore_hfa).toFixed(2) : '-'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="w-px bg-gray-100"></div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-gray-400 text-[10px]">WFA</span>
-                                                                <span className={log.zscore_wfa < -2 || log.zscore_wfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
-                                                                    {log.zscore_wfa ? Number(log.zscore_wfa).toFixed(2) : '-'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="w-px bg-gray-100"></div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-gray-400 text-[10px]">WFH</span>
-                                                                <span className={log.zscore_wfh < -2 || log.zscore_wfh > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
-                                                                    {log.zscore_wfh ? Number(log.zscore_wfh).toFixed(2) : '-'}
+                                ) : (() => {
+                                    const historyData = paginate(childData.weighing_logs, historyPage);
+                                    return (
+                                        <>
+                                            {/* Mobile View (Cards) */}
+                                            <div className="md:hidden flex flex-col gap-4">
+                                                {historyData.data.map((log) => (
+                                                    <div key={log.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <p className="text-sm font-bold text-gray-900">
+                                                                    {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                </p>
+                                                                <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(log.nutritional_status)}`}>
+                                                                    {getStatusLabel(log.nutritional_status)}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
 
-                                        {/* Desktop View (Table) */}
-                                        <div className="hidden md:block overflow-x-auto no-scrollbar">
-                                            <table className="w-full">
-                                                <thead>
-                                                    <tr className="border-b border-gray-100">
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ANAK</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TANGGAL</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">BERAT</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TINGGI</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LILA</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LK</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">CATATAN</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-50">
-                                                    {weighingLogs.map((log) => (
-                                                        <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-4 px-4">
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-sm font-bold text-gray-900">{childData.full_name}</span>
-                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border w-fit ${getStatusColor(log.nutritional_status)}`}>
-                                                                        {getStatusLabel(log.nutritional_status)}
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="py-4 px-4">
+                                                        <div className="grid grid-cols-3 gap-2 py-2 border-y border-gray-200/50">
+                                                            <div>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Berat</p>
+                                                                <p className="font-semibold text-gray-900">{log.weight_kg} kg</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tinggi</p>
+                                                                <p className="font-semibold text-gray-900">{log.height_cm} cm</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Lila</p>
+                                                                <p className="font-semibold text-gray-900">{log.muac_cm ? `${log.muac_cm} cm` : '-'}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Z-Score</p>
+                                                            <div className="flex gap-3 text-xs font-mono bg-white p-2 rounded-lg border border-gray-100">
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-sm font-bold text-gray-900">
-                                                                        {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                                    </span>
-                                                                    <span className="text-xs text-gray-500">
-                                                                        {new Date(log.measured_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                                    <span className="text-gray-400 text-[10px]">HFA</span>
+                                                                    <span className={log.zscore_hfa < -2 || log.zscore_hfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
+                                                                        {log.zscore_hfa ? Number(log.zscore_hfa).toFixed(2) : '-'}
                                                                     </span>
                                                                 </div>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <span className="text-sm font-bold text-gray-900">{log.weight_kg}</span>
-                                                                <span className="text-xs text-gray-500 ml-1">kg</span>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <span className="text-sm font-bold text-gray-900">{log.height_cm}</span>
-                                                                <span className="text-xs text-gray-500 ml-1">cm</span>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                {log.muac_cm ? (
-                                                                    <>
-                                                                        <span className="text-sm font-bold text-gray-900">{log.muac_cm}</span>
-                                                                        <span className="text-xs text-gray-500 ml-1">cm</span>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-gray-400">-</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                {log.head_circumference_cm ? (
-                                                                    <>
-                                                                        <span className="text-sm font-bold text-gray-900">{log.head_circumference_cm}</span>
-                                                                        <span className="text-xs text-gray-500 ml-1">cm</span>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-gray-400">-</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <div className="flex items-center gap-2 text-gray-500">
-                                                                    {log.notes ? (
+                                                                <div className="w-px bg-gray-100"></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-gray-400 text-[10px]">WFA</span>
+                                                                    <span className={log.zscore_wfa < -2 || log.zscore_wfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
+                                                                        {log.zscore_wfa ? Number(log.zscore_wfa).toFixed(2) : '-'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="w-px bg-gray-100"></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-gray-400 text-[10px]">WFH</span>
+                                                                    <span className={log.zscore_wfh < -2 || log.zscore_wfh > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
+                                                                        {log.zscore_wfh ? Number(log.zscore_wfh).toFixed(2) : '-'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Notes Section */}
+                                                        {log.notes && (
+                                                            <div className="pt-2 border-t border-gray-200/50">
+                                                                <button
+                                                                    onClick={() => setExpandedNoteId(expandedNoteId === log.id ? null : log.id)}
+                                                                    className="w-full text-left"
+                                                                >
+                                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                                        <FileText className="w-3 h-3 text-yellow-500" />
+                                                                        Catatan
+                                                                        {log.notes.length > 50 && (
+                                                                            <span className="text-blue-500 text-[9px] ml-1">
+                                                                                {expandedNoteId === log.id ? '(tutup)' : '(lihat semua)'}
+                                                                            </span>
+                                                                        )}
+                                                                    </p>
+                                                                    <p className={`text-sm text-gray-700 ${expandedNoteId === log.id ? '' : 'line-clamp-2'}`}>
+                                                                        {log.notes}
+                                                                    </p>
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Desktop View (Table) */}
+                                            <div className="hidden md:block overflow-x-auto no-scrollbar">
+                                                <table className="w-full">
+                                                    <thead>
+                                                        <tr className="border-b border-gray-100">
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ANAK</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TANGGAL</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">BERAT</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TINGGI</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LILA</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LK</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">CATATAN</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-50">
+                                                        {historyData.data.map((log) => (
+                                                            <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                                                                <td className="py-4 px-4">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <span className="text-sm font-bold text-gray-900">{childData.full_name}</span>
+                                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border w-fit ${getStatusColor(log.nutritional_status)}`}>
+                                                                            {getStatusLabel(log.nutritional_status)}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="py-4 px-4">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-sm font-bold text-gray-900">
+                                                                            {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-500">
+                                                                            {new Date(log.measured_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="py-4 px-4">
+                                                                    <span className="text-sm font-bold text-gray-900">{log.weight_kg}</span>
+                                                                    <span className="text-xs text-gray-500 ml-1">kg</span>
+                                                                </td>
+                                                                <td className="py-4 px-4">
+                                                                    <span className="text-sm font-bold text-gray-900">{log.height_cm}</span>
+                                                                    <span className="text-xs text-gray-500 ml-1">cm</span>
+                                                                </td>
+                                                                <td className="py-4 px-4">
+                                                                    {log.muac_cm ? (
                                                                         <>
-                                                                            <FileText className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                                            <span className="text-xs truncate max-w-[200px]" title={log.notes}>{log.notes}</span>
+                                                                            <span className="text-sm font-bold text-gray-900">{log.muac_cm}</span>
+                                                                            <span className="text-xs text-gray-500 ml-1">cm</span>
                                                                         </>
+                                                                    ) : (
+                                                                        <span className="text-gray-400">-</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-4 px-4">
+                                                                    {log.head_circumference_cm ? (
+                                                                        <>
+                                                                            <span className="text-sm font-bold text-gray-900">{log.head_circumference_cm}</span>
+                                                                            <span className="text-xs text-gray-500 ml-1">cm</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="text-gray-400">-</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-4 px-4">
+                                                                    {log.notes ? (
+                                                                        <div className="relative">
+                                                                            <button
+                                                                                onClick={() => setExpandedNoteId(expandedNoteId === log.id ? null : log.id)}
+                                                                                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors group cursor-pointer text-left"
+                                                                                title="Klik untuk melihat catatan lengkap"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-yellow-500 shrink-0" />
+                                                                                <span className={`text-xs ${expandedNoteId === log.id ? '' : 'truncate max-w-[150px]'}`}>
+                                                                                    {log.notes}
+                                                                                </span>
+                                                                                {log.notes.length > 30 && expandedNoteId !== log.id && (
+                                                                                    <span className="text-blue-500 text-[10px] whitespace-nowrap group-hover:underline">lihat</span>
+                                                                                )}
+                                                                            </button>
+                                                                            {/* Expanded Note Modal/Popup */}
+                                                                            {expandedNoteId === log.id && log.notes.length > 30 && (
+                                                                                <div className="absolute z-50 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-4 max-w-xs min-w-[200px]">
+                                                                                    <div className="flex justify-between items-start mb-2">
+                                                                                        <span className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                                                                            <FileText className="w-3 h-3 text-yellow-500" />
+                                                                                            Catatan
+                                                                                        </span>
+                                                                                        <button
+                                                                                            onClick={(e) => { e.stopPropagation(); setExpandedNoteId(null); }}
+                                                                                            className="text-gray-400 hover:text-gray-600 text-sm"
+                                                                                        >
+                                                                                            ✕
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{log.notes}</p>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     ) : (
                                                                         <span className="text-gray-300">-</span>
                                                                     )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </>
-                                )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={historyPage}
+                                                totalPages={historyData.totalPages}
+                                                total={historyData.total}
+                                                onPageChange={setHistoryPage}
+                                                label="penimbangan"
+                                            />
+                                        </>
+                                    );
+                                })()}
                             </div>
                         )}
 
@@ -510,52 +650,66 @@ export default function DataAnakDetail() {
                                 <h3 className="text-lg font-bold text-gray-900 mb-6">Log Makanan Terakhir</h3>
                                 {mealLogs.length === 0 ? (
                                     <EmptyState message="Belum ada log makanan" />
-                                ) : (
-                                    <div className="relative">
-                                        {mealLogs.map((log, index) => (
-                                            <div key={log.id} className="relative pl-8 pb-8 last:pb-0">
-                                                {/* Timeline Line */}
-                                                {index !== mealLogs.length - 1 && (
-                                                    <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-gray-100" />
-                                                )}
-
-                                                {/* Dot */}
-                                                <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 z-10">
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                                                </div>
-
-                                                {/* Content Card */}
-                                                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-blue-200 transition-colors">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className="text-sm font-bold text-gray-900">
-                                                            {new Date(log.eaten_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                        </span>
-                                                        {log.time_of_day && (
-                                                            <span className="px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-500 border border-gray-200">
-                                                                {log.time_of_day}
-                                                            </span>
+                                ) : (() => {
+                                    const mealsData = paginate(childData.meal_logs, mealsPage);
+                                    return (
+                                        <>
+                                            <div className="relative">
+                                                {mealsData.data.map((log, index) => (
+                                                    <div key={log.id} className="relative pl-8 pb-8 last:pb-0">
+                                                        {/* Timeline Line */}
+                                                        {index !== mealsData.data.length - 1 && (
+                                                            <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-gray-100" />
                                                         )}
-                                                    </div>
-                                                    <p className="text-gray-700 font-medium mb-2 line-clamp-2">{log.description}</p>
-                                                    {(log.ingredients || log.source) && (
-                                                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200/50">
-                                                            {log.ingredients && (
-                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200 truncate max-w-full">
-                                                                    Bahan: {log.ingredients}
+
+                                                        {/* Dot */}
+                                                        <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 z-10">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                                        </div>
+
+                                                        {/* Content Card */}
+                                                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-blue-200 transition-colors">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <span className="text-sm font-bold text-gray-900">
+                                                                    {new Date(log.eaten_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                                 </span>
-                                                            )}
-                                                            {log.source && (
-                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200 truncate max-w-full">
-                                                                    Sumber: {log.source}
-                                                                </span>
+                                                                {log.time_of_day && (
+                                                                    <span className="px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-500 border border-gray-200">
+                                                                        {log.time_of_day}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-gray-700 font-medium mb-2">{log.description}</p>
+                                                            {(log.ingredients || log.source) && (
+                                                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200/50">
+                                                                    {log.ingredients && (
+                                                                        <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                                                                            Bahan: {log.ingredients}
+                                                                        </span>
+                                                                    )}
+                                                                    {log.source && (
+                                                                        <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                                                                            Sumber: {log.source}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                         </div>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={mealsPage}
+                                                totalPages={mealsData.totalPages}
+                                                total={mealsData.total}
+                                                onPageChange={setMealsPage}
+                                                label="log makanan"
+                                            />
+                                        </>
+                                    );
+                                })()}
                             </div>
                         )}
 
@@ -564,49 +718,63 @@ export default function DataAnakDetail() {
                                 <h3 className="text-lg font-bold text-gray-900 mb-6">Jadwal Imunisasi</h3>
                                 {immunizationSchedules.length === 0 ? (
                                     <EmptyState message="Belum ada jadwal imunisasi" />
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {immunizationSchedules.map((schedule) => (
-                                            <div
-                                                key={schedule.id}
-                                                className={`p-4 rounded-2xl border transition-all ${schedule.completed_at
-                                                    ? 'bg-green-50/50 border-green-100'
-                                                    : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-sm'
-                                                    }`}
-                                            >
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`p-2 rounded-full ${schedule.completed_at ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                            <Syringe className="w-4 h-4" />
+                                ) : (() => {
+                                    const immunizationData = paginate(childData.immunization_schedules, immunizationPage);
+                                    return (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {immunizationData.data.map((schedule) => (
+                                                    <div
+                                                        key={schedule.id}
+                                                        className={`p-4 rounded-2xl border transition-all ${schedule.completed_at
+                                                            ? 'bg-green-50/50 border-green-100'
+                                                            : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-sm'
+                                                            }`}
+                                                    >
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`p-2 rounded-full ${schedule.completed_at ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                                    <Syringe className="w-4 h-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-bold text-gray-900">{schedule.title}</h4>
+                                                                    <p className="text-xs text-gray-500">{schedule.type}</p>
+                                                                </div>
+                                                            </div>
+                                                            {schedule.completed_at ? (
+                                                                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                                            ) : (
+                                                                <Clock className="w-5 h-5 text-gray-300" />
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-gray-900">{schedule.title}</h4>
-                                                            <p className="text-xs text-gray-500">{schedule.type}</p>
+
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <Calendar className="w-4 h-4 text-gray-400" />
+                                                            <span className={schedule.completed_at ? 'text-green-700 font-medium' : 'text-gray-600'}>
+                                                                {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                            </span>
                                                         </div>
-                                                    </div>
-                                                    {schedule.completed_at ? (
-                                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                                    ) : (
-                                                        <Clock className="w-5 h-5 text-gray-300" />
-                                                    )}
-                                                </div>
 
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                                    <span className={schedule.completed_at ? 'text-green-700 font-medium' : 'text-gray-600'}>
-                                                        {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                    </span>
-                                                </div>
-
-                                                {schedule.completed_at && (
-                                                    <div className="mt-2 text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-lg w-fit">
-                                                        Selesai: {new Date(schedule.completed_at).toLocaleDateString('id-ID')}
+                                                        {schedule.completed_at && (
+                                                            <div className="mt-2 text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-lg w-fit">
+                                                                Selesai: {new Date(schedule.completed_at).toLocaleDateString('id-ID')}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={immunizationPage}
+                                                totalPages={immunizationData.totalPages}
+                                                total={immunizationData.total}
+                                                onPageChange={setImmunizationPage}
+                                                label="jadwal imunisasi"
+                                            />
+                                        </>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>

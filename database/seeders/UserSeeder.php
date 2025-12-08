@@ -130,5 +130,14 @@ class UserSeeder extends Seeder
             'posyandu_id' => $posyandus->first()->id,
             'phone'       => '081234567891',
         ]);
+        // Default admin account
+        User::create([
+            'name'     => 'Admin Test',
+            'email'    => 'admin@admin.com',
+            'password' => Hash::make('admin'),
+            'role'     => 'admin',
+            'posyandu_id' => $posyandus->first()->id,
+            'phone'    => '081234567892',
+        ]);
     }
 }
