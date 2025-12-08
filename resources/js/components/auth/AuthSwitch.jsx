@@ -5,14 +5,49 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from '@iconify/react'
 import { login, fetchMe } from '../../lib/auth';
+import api from '../../lib/api';
 
 export default function AuthSwitch() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const navigate = useNavigate();
+
+  // Sign Up form states
+  const [signUpData, setSignUpData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    posyandu_id: '',
+    rt: '',
+    rw: '',
+    address: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [signUpError, setSignUpError] = useState('');
+  const [signUpLoading, setSignUpLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [posyandus, setPosyandus] = useState([]);
+  const [isPosyanduDropdownOpen, setIsPosyanduDropdownOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({}); // Track which fields have errors
+
+  // Fetch posyandus list on mount
+  useEffect(() => {
+    const fetchPosyandus = async () => {
+      try {
+        const response = await api.get('/posyandus');
+        setPosyandus(response.data.data || response.data || []);
+      } catch (err) {
+        console.error('Failed to fetch posyandus:', err);
+      }
+    };
+    fetchPosyandus();
+  }, []);
 
   useEffect(() => {
     const container = document.querySelector(".auth-container");
@@ -20,6 +55,139 @@ export default function AuthSwitch() {
     if (isSignUp) container.classList.add("sign-up-mode");
     else container.classList.remove("sign-up-mode");
   }, [isSignUp]);
+
+  // Password validation function
+  const validatePassword = (pwd) => {
+    if (pwd.length < 8) {
+      return 'Password minimal 8 karakter.';
+    }
+    const hasUpperCase = /[A-Z]/.test(pwd);
+    const hasLowerCase = /[a-z]/.test(pwd);
+    const hasNumber = /\d/.test(pwd);
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      return 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka.';
+    }
+    return null;
+  };
+
+  // Email validation function
+  const validateEmail = (email) => {
+    // RFC 5322 compliant email regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email)) {
+      return 'Format email tidak valid.';
+    }
+    
+    // Additional checks for common errors
+    if (email.includes('..')) {
+      return 'Email tidak boleh mengandung titik ganda berturut-turut.';
+    }
+    
+    if (email.startsWith('.') || email.endsWith('.')) {
+      return 'Email tidak boleh diawali atau diakhiri dengan titik.';
+    }
+    
+    return null;
+  };
+
+  // Phone validation function
+  const validatePhone = (phone) => {
+    // Indonesian phone number format
+    const phoneRegex = /^(08|62)\d{8,13}$/;
+    
+    if (!phoneRegex.test(phone)) {
+      return 'Format nomor telepon tidak valid. Gunakan format 08xxxxxxxxxx atau 62xxxxxxxxxx.';
+    }
+    
+    return null;
+  };
+
+  // Handle sign up form submission
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setSignUpError('');
+    setFieldErrors({}); // Clear previous field errors
+
+    // Validate required fields
+    if (!signUpData.name || !signUpData.email || !signUpData.phone || !signUpData.posyandu_id || !signUpData.rt || !signUpData.rw || !signUpData.address || !signUpData.password || !signUpData.confirmPassword) {
+      setSignUpError('Semua field wajib diisi.');
+      return;
+    }
+
+    // Validate email format
+    const emailError = validateEmail(signUpData.email);
+    if (emailError) {
+      setSignUpError(emailError);
+      setFieldErrors({ email: true });
+      return;
+    }
+
+    // Validate phone format
+    const phoneError = validatePhone(signUpData.phone);
+    if (phoneError) {
+      setSignUpError(phoneError);
+      setFieldErrors({ phone: true });
+      return;
+    }
+
+    // Validate password
+    const passwordError = validatePassword(signUpData.password);
+    if (passwordError) {
+      setSignUpError(passwordError);
+      setFieldErrors({ password: true });
+      return;
+    }
+
+    // Check password match
+    if (signUpData.password !== signUpData.confirmPassword) {
+      setSignUpError('Password dan konfirmasi password tidak cocok.');
+      setFieldErrors({ confirmPassword: true });
+      return;
+    }
+
+    setSignUpLoading(true);
+
+    try {
+      await api.post('/register', {
+        name: signUpData.name,
+        email: signUpData.email,
+        phone: signUpData.phone,
+        posyandu_id: signUpData.posyandu_id,
+        rt: signUpData.rt,
+        rw: signUpData.rw,
+        address: signUpData.address,
+        password: signUpData.password,
+        password_confirmation: signUpData.confirmPassword,
+        role: 'ibu'
+      });
+
+      // Auto login after registration
+      await login(signUpData.email, signUpData.password);
+      navigate('/dashboard');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.';
+      
+      // Parse validation errors from backend
+      const errors = err.response?.data?.errors;
+      if (errors) {
+        // Mark fields with errors
+        const errFields = {};
+        Object.keys(errors).forEach(field => {
+          errFields[field] = true;
+        });
+        setFieldErrors(errFields);
+        
+        // Show specific field errors
+        const fieldErrors = Object.values(errors).flat();
+        setSignUpError(fieldErrors.join(' '));
+      } else {
+        setSignUpError(errorMessage);
+      }
+    } finally {
+      setSignUpLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -78,7 +246,7 @@ export default function AuthSwitch() {
           position: relative;
           width: 100%;
           max-width: 900px;
-          height: 550px;
+          height: 750px;
           background: white;
           border-radius: 20px;
           box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
@@ -88,7 +256,7 @@ export default function AuthSwitch() {
         @media (max-width: 870px) {
           .auth-container {
             height: auto;
-            min-height: 550px;
+            min-height: 750px;
             max-height: none;
           }
         }
@@ -96,7 +264,7 @@ export default function AuthSwitch() {
         @media (max-width: 570px) {
           .auth-container {
             height: auto;
-            min-height: 600px;
+            min-height: 800px;
             border-radius: 15px;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
           }
@@ -129,14 +297,18 @@ export default function AuthSwitch() {
           flex-direction: column;
           padding: 0 5rem;
           transition: all 0.2s 0.7s;
-          overflow: hidden;
+          overflow-y: auto;
+          overflow-x: hidden;
           grid-column: 1 / 2;
           grid-row: 1 / 2;
+          max-height: 100%;
         }
 
         form.sign-up-form {
           opacity: 0;
           z-index: 1;
+          padding-top: 1rem;
+          padding-bottom: 1rem;
         }
 
         form.sign-in-form {
@@ -146,8 +318,13 @@ export default function AuthSwitch() {
         .title {
           font-size: 2.2rem;
           color: #444;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
           font-weight: 700;
+        }
+        
+        .sign-up-form .title {
+          margin-bottom: 5px;
+          font-size: 2rem;
         }
 
         .input-field {
@@ -158,11 +335,108 @@ export default function AuthSwitch() {
           height: 55px;
           border-radius: 55px;
           display: grid;
-          grid-template-columns: 15% 85%;
+          grid-template-columns: 15% 1fr auto;
           padding: 0 0.4rem;
           position: relative;
           transition: 0.3s;
           overflow: hidden; /* Clip the rectangular input corners */
+          border: 2px solid transparent;
+        }
+        
+        .sign-up-form .input-field {
+          margin: 7px 0;
+          height: 50px;
+        }
+        
+        .sign-up-form .input-field.textarea-field {
+          min-height: 80px;
+        }
+        
+        .input-field.small-field {
+          max-width: 182px;
+          margin: 10px 4px;
+          grid-template-columns: 20% 1fr;
+          padding: 0 0.6rem;
+        }
+        
+        .sign-up-form .input-field.small-field {
+          margin: 7px 4px;
+          height: 50px;
+        }
+        
+        .input-field.small-field i {
+          line-height: 50px;
+        }
+        
+        .input-field.small-field input {
+          padding-left: 8px;
+        }
+        
+        .rt-rw-container {
+          display: flex;
+          gap: 8px;
+          width: 100%;
+          max-width: 380px;
+        }
+        
+        .input-field.textarea-field {
+          height: auto;
+          min-height: 90px;
+          border-radius: 20px;
+          grid-template-columns: 15% 1fr;
+          align-items: start;
+          padding: 0.8rem 0.4rem;
+        }
+        
+        .input-field.textarea-field textarea {
+          background: none;
+          outline: none;
+          border: none;
+          font-weight: 500;
+          font-size: 1rem;
+          color: #333;
+          width: 100%;
+          resize: none;
+          font-family: 'Poppins', 'Montserrat', 'Outfit', sans-serif;
+        }
+        
+        .input-field.textarea-field textarea::placeholder {
+          color: #aaa;
+          font-weight: 400;
+        }
+        
+        .input-field.textarea-field i {
+          padding-top: 5px;
+        }
+
+        .input-field.error {
+          border-color: #FF3B30;
+          background-color: #fff5f5;
+        }
+
+        .input-field.password-field {
+          grid-template-columns: 15% 1fr 15%;
+        }
+
+        .password-toggle {
+          background: none;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #888;
+          padding: 0;
+          transition: color 0.3s;
+        }
+
+        .password-toggle:hover {
+          color: #00BFEF;
+        }
+
+        .password-toggle svg {
+          width: 20px;
+          height: 20px;
         }
 
         .input-field:focus-within {
@@ -316,7 +590,7 @@ export default function AuthSwitch() {
           transform: translateY(-50%);
           background: linear-gradient(-45deg, #00BFEF 0%, #006AA6 100%);
           transition: 1.8s ease-in-out;
-          border-radius: 50%;
+          border-radius: 0;
           z-index: 6;
         }
 
@@ -597,7 +871,7 @@ export default function AuthSwitch() {
 
                 try {
                   // Login user
-                  await login(email, password);
+                  await login(identifier, password);
 
                   // Fetch user data from API
                   const user = await fetchMe();
@@ -611,9 +885,17 @@ export default function AuthSwitch() {
                     navigate('/dashboard');
                   }
                 } catch (err) {
-                  // Handle error
-                  const errorMessage = err.response?.data?.message || 'Login gagal. Periksa kembali email dan password Anda.';
-                  setError(errorMessage);
+                  // Handle error with lockout information
+                  const errorMessage = err.response?.data?.message || 'Login gagal. Periksa kembali nomor telepon/nama dan password Anda.';
+                  const statusCode = err.response?.status;
+                  
+                  // Show lockout warning if account is locked (429 status)
+                  if (statusCode === 429) {
+                    const lockedUntil = err.response?.data?.locked_until;
+                    setError(`🔒 ${errorMessage}`);
+                  } else {
+                    setError(errorMessage);
+                  }
                 } finally {
                   setLoading(false);
                 }
@@ -655,28 +937,36 @@ export default function AuthSwitch() {
                 )}
               </AnimatePresence>
               <div className="input-field">
-                <i><Icon icon="mdi:email" /></i>
+                <i><Icon icon="mdi:account-circle" /></i>
                 <input
-                  type="email"
-                  placeholder="Email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="No. Telepon / Nama Lengkap"
+                  autoComplete="username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value.trim())}
                   required
                   disabled={loading}
                 />
               </div>
-              <div className="input-field">
+              <div className="input-field password-field">
                 <i><Icon icon="material-symbols:lock" /></i>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   autoComplete="current-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value.trim())}
                   required
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  <Icon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} />
+                </button>
               </div>
               <a href="#" className="forgot-password color" onClick={(e) => {
                 e.preventDefault();
@@ -694,40 +984,295 @@ export default function AuthSwitch() {
             <form
               className="sign-up-form"
               autoComplete="off"
-              onSubmit={(e) => {
-                e.preventDefault();
-                navigate('/dashboard');
-              }}
+              onSubmit={handleSignUp}
             >
-              <h2 className="title">Sign up</h2>
-              <div className="input-field">
+              <h2 className="title">Daftar</h2>
+              <AnimatePresence mode="wait">
+                {signUpError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -10, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    style={{
+                      width: '100%',
+                      maxWidth: '380px',
+                      marginBottom: '10px',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div style={{
+                      padding: '10px 14px',
+                      background: 'rgba(255, 59, 48, 0.1)',
+                      border: '1px solid rgba(255, 59, 48, 0.2)',
+                      borderRadius: '12px',
+                      color: '#FF3B30',
+                      fontSize: '0.8rem',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <Icon icon="solar:danger-circle-bold-duotone" style={{ fontSize: '1.1rem', flexShrink: 0 }} />
+                      <span>{signUpError}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Nama Lengkap */}
+              <div className={`input-field ${fieldErrors.name ? 'error' : ''}`}>
                 <i><Icon icon="mdi:account" /></i>
                 <input
                   type="text"
-                  placeholder="Username"
-                  autoComplete="off"
-                  defaultValue=""
+                  placeholder="Nama Lengkap"
+                  autoComplete="name"
+                  value={signUpData.name}
+                  onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value.trim() })}
+                  required
+                  disabled={signUpLoading}
                 />
               </div>
-              <div className="input-field">
+
+              {/* Email */}
+              <div className={`input-field ${fieldErrors.email ? 'error' : ''}`}>
+                <i><Icon icon="mdi:email" /></i>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  autoComplete="email"
+                  value={signUpData.email}
+                  onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value.trim() })}
+                  required
+                  disabled={signUpLoading}
+                />
+              </div>
+
+              {/* No Telepon */}
+              <div className={`input-field ${fieldErrors.phone ? 'error' : ''}`}>
                 <i><Icon icon="fluent:phone-16-filled" /></i>
                 <input
-                  type="phone"
-                  placeholder="085xxxxxxx"
-                  autoComplete="off"
-                  defaultValue=""
+                  type="tel"
+                  placeholder="No. Telepon (08xxxxxxxxxx)"
+                  autoComplete="tel"
+                  value={signUpData.phone}
+                  onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value.trim() })}
+                  required
+                  disabled={signUpLoading}
                 />
               </div>
-              <div className="input-field">
+
+              {/* Lokasi Posyandu Dropdown */}
+              <div className={`input-field ${fieldErrors.posyandu_id ? 'error' : ''}`} style={{ cursor: 'pointer', overflow: 'visible' }}>
+                <i><Icon icon="mdi:hospital-building" /></i>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    position: 'relative'
+                  }}
+                  onClick={() => !signUpLoading && setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                >
+                  <span style={{
+                    flex: 1,
+                    color: signUpData.posyandu_id ? '#333' : '#aaa',
+                    fontSize: '1rem',
+                    fontWeight: signUpData.posyandu_id ? 500 : 400
+                  }}>
+                    {signUpData.posyandu_id
+                      ? posyandus.find(p => p.id === parseInt(signUpData.posyandu_id))?.name || 'Pilih Posyandu'
+                      : 'Pilih Lokasi Posyandu'}
+                  </span>
+                  <Icon
+                    icon="mdi:chevron-down"
+                    style={{
+                      fontSize: '1.5rem',
+                      color: '#666',
+                      transition: 'transform 0.3s',
+                      transform: isPosyanduDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      marginRight: '10px'
+                    }}
+                  />
+                </div>
+                <AnimatePresence>
+                  {isPosyanduDropdownOpen && (
+                    <>
+                      <div
+                        style={{
+                          position: 'fixed',
+                          inset: 0,
+                          zIndex: 10
+                        }}
+                        onClick={() => setIsPosyanduDropdownOpen(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          background: 'white',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          zIndex: 20,
+                          marginTop: '5px'
+                        }}
+                      >
+                        {posyandus.length === 0 ? (
+                          <div style={{ padding: '12px 16px', color: '#999', fontSize: '0.9rem' }}>
+                            Memuat data posyandu...
+                          </div>
+                        ) : (
+                          posyandus.map((posyandu) => (
+                            <div
+                              key={posyandu.id}
+                              onClick={() => {
+                                setSignUpData({ ...signUpData, posyandu_id: posyandu.id });
+                                setIsPosyanduDropdownOpen(false);
+                              }}
+                              style={{
+                                padding: '12px 16px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                transition: 'background 0.2s',
+                                background: parseInt(signUpData.posyandu_id) === posyandu.id ? '#e6f7ff' : 'white',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#f0f9ff'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = parseInt(signUpData.posyandu_id) === posyandu.id ? '#e6f7ff' : 'white'}
+                            >
+                              <span style={{
+                                color: parseInt(signUpData.posyandu_id) === posyandu.id ? '#00BFEF' : '#333',
+                                fontWeight: parseInt(signUpData.posyandu_id) === posyandu.id ? 600 : 400,
+                                fontSize: '0.9rem'
+                              }}>
+                                {posyandu.name}
+                              </span>
+                              {parseInt(signUpData.posyandu_id) === posyandu.id && (
+                                <Icon icon="mdi:check" style={{ color: '#00BFEF', fontSize: '1.2rem' }} />
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* RT & RW - Horizontal */}
+              <div className="rt-rw-container">
+                <div className={`input-field small-field ${fieldErrors.rt ? 'error' : ''}`}>
+                  <i><Icon icon="mdi:home-group" /></i>
+                  <input
+                    type="text"
+                    placeholder="RT"
+                    autoComplete="off"
+                    value={signUpData.rt}
+                    onChange={(e) => setSignUpData({ ...signUpData, rt: e.target.value.trim() })}
+                    required
+                    disabled={signUpLoading}
+                    maxLength={5}
+                  />
+                </div>
+                <div className={`input-field small-field ${fieldErrors.rw ? 'error' : ''}`}>
+                  <i><Icon icon="mdi:home-city" /></i>
+                  <input
+                    type="text"
+                    placeholder="RW"
+                    autoComplete="off"
+                    value={signUpData.rw}
+                    onChange={(e) => setSignUpData({ ...signUpData, rw: e.target.value.trim() })}
+                    required
+                    disabled={signUpLoading}
+                    maxLength={5}
+                  />
+                </div>
+              </div>
+
+              {/* Alamat */}
+              <div className={`input-field textarea-field ${fieldErrors.address ? 'error' : ''}`}>
+                <i><Icon icon="mdi:map-marker" /></i>
+                <textarea
+                  placeholder="Alamat Lengkap"
+                  autoComplete="street-address"
+                  value={signUpData.address}
+                  onChange={(e) => setSignUpData({ ...signUpData, address: e.target.value })}
+                  required
+                  disabled={signUpLoading}
+                  rows={3}
+                />
+              </div>
+
+              {/* Password */}
+              <div className={`input-field password-field ${fieldErrors.password ? 'error' : ''}`}>
                 <i><Icon icon="material-symbols:lock" /></i>
                 <input
-                  type="password"
+                  type={showSignUpPassword ? "text" : "password"}
                   placeholder="Password"
                   autoComplete="new-password"
-                  defaultValue=""
+                  value={signUpData.password}
+                  onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value.trim() })}
+                  required
+                  disabled={signUpLoading}
                 />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                  disabled={signUpLoading}
+                >
+                  <Icon icon={showSignUpPassword ? "mdi:eye-off" : "mdi:eye"} />
+                </button>
               </div>
-              <input type="submit" value="Sign up" className="btn" />
+
+              {/* Konfirmasi Password */}
+              <div className={`input-field password-field ${fieldErrors.confirmPassword ? 'error' : ''}`}>
+                <i><Icon icon="material-symbols:lock-outline" /></i>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Konfirmasi Password"
+                  autoComplete="new-password"
+                  value={signUpData.confirmPassword}
+                  onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value.trim() })}
+                  required
+                  disabled={signUpLoading}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={signUpLoading}
+                >
+                  <Icon icon={showConfirmPassword ? "mdi:eye-off" : "mdi:eye"} />
+                </button>
+              </div>
+
+              {/* Password hint */}
+              <p style={{
+                fontSize: '0.7rem',
+                color: '#888',
+                maxWidth: '380px',
+                textAlign: 'center',
+                marginTop: '-5px',
+                marginBottom: '5px'
+              }}>
+                Min. 8 karakter, mengandung huruf besar, huruf kecil, dan angka
+              </p>
+
+              <input
+                type="submit"
+                value={signUpLoading ? "Memproses..." : "Daftar"}
+                className="btn"
+                disabled={signUpLoading}
+              />
             </form>
           </div>
         </div>
@@ -745,15 +1290,15 @@ export default function AuthSwitch() {
                   setIsSignUp(true);
                 }}
               >
-                Sign up
+                Daftar
               </button>
             </div>
           </div>
 
           <div className="panel right-panel">
             <div className="content">
-              <h3>One of us?</h3>
-              <p>Welcome back! Sign in to continue your journey with us.</p>
+              <h3>Sudah Punya Akun?</h3>
+              <p>Selamat datang kembali! Masuk untuk melanjutkan perjalanan sehat bersama NutriLogic.</p>
               <button
                 type="button"
                 className="btn transparent"
@@ -762,7 +1307,7 @@ export default function AuthSwitch() {
                   setIsSignUp(false);
                 }}
               >
-                Sign in
+                Masuk
               </button>
             </div>
           </div>

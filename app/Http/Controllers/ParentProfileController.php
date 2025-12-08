@@ -11,7 +11,7 @@ class ParentProfileController extends Controller
     /**
      * Update user profile
      * 
-     * Updates name, phone, and email for the authenticated parent
+     * Updates name, phone, email, address, rt, rw, and posyandu for the authenticated parent
      */
     public function update(Request $request): JsonResponse
     {
@@ -35,6 +35,10 @@ class ParentProfileController extends Controller
                 'max:191',
                 'unique:users,email,' . $user->id, // Ignore current user's email
             ],
+            'address' => ['nullable', 'string', 'max:500'],
+            'rt' => ['nullable', 'string', 'max:10'],
+            'rw' => ['nullable', 'string', 'max:10'],
+            'posyandu_id' => ['nullable', 'integer', 'exists:posyandus,id'],
             'profile_photo' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
@@ -42,6 +46,10 @@ class ParentProfileController extends Controller
         $user->name = $validated['name'];
         $user->phone = $validated['phone'] ?? null;
         $user->email = $validated['email'];
+        $user->address = $validated['address'] ?? null;
+        $user->rt = $validated['rt'] ?? null;
+        $user->rw = $validated['rw'] ?? null;
+        $user->posyandu_id = $validated['posyandu_id'] ?? null;
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
@@ -56,6 +64,9 @@ class ParentProfileController extends Controller
 
         $user->save();
 
+        // Load posyandu relationship for response
+        $user->load('posyandu');
+
         return response()->json([
             'message' => 'Profile updated successfully.',
             'data' => [
@@ -63,6 +74,13 @@ class ParentProfileController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'address' => $user->address,
+                'rt' => $user->rt,
+                'rw' => $user->rw,
+                'posyandu' => $user->posyandu ? [
+                    'id' => $user->posyandu->id,
+                    'name' => $user->posyandu->name,
+                ] : null,
                 'role' => $user->role,
                 'profile_photo_url' => $user->profile_photo_path 
                     ? asset('storage/' . $user->profile_photo_path) 
