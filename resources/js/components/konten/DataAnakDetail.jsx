@@ -40,6 +40,9 @@ export default function DataAnakDetail() {
     const [mealsPage, setMealsPage] = useState(1);
     const [immunizationPage, setImmunizationPage] = useState(1);
 
+    // Expanded notes state
+    const [expandedNoteId, setExpandedNoteId] = useState(null);
+
     useEffect(() => {
         if (id) {
             fetchChildDetail(id);
@@ -480,6 +483,29 @@ export default function DataAnakDetail() {
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        {/* Notes Section */}
+                                                        {log.notes && (
+                                                            <div className="pt-2 border-t border-gray-200/50">
+                                                                <button
+                                                                    onClick={() => setExpandedNoteId(expandedNoteId === log.id ? null : log.id)}
+                                                                    className="w-full text-left"
+                                                                >
+                                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                                        <FileText className="w-3 h-3 text-yellow-500" />
+                                                                        Catatan
+                                                                        {log.notes.length > 50 && (
+                                                                            <span className="text-blue-500 text-[9px] ml-1">
+                                                                                {expandedNoteId === log.id ? '(tutup)' : '(lihat semua)'}
+                                                                            </span>
+                                                                        )}
+                                                                    </p>
+                                                                    <p className={`text-sm text-gray-700 ${expandedNoteId === log.id ? '' : 'line-clamp-2'}`}>
+                                                                        {log.notes}
+                                                                    </p>
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -548,16 +574,43 @@ export default function DataAnakDetail() {
                                                                     )}
                                                                 </td>
                                                                 <td className="py-4 px-4">
-                                                                    <div className="flex items-center gap-2 text-gray-500">
-                                                                        {log.notes ? (
-                                                                            <>
+                                                                    {log.notes ? (
+                                                                        <div className="relative">
+                                                                            <button
+                                                                                onClick={() => setExpandedNoteId(expandedNoteId === log.id ? null : log.id)}
+                                                                                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors group cursor-pointer text-left"
+                                                                                title="Klik untuk melihat catatan lengkap"
+                                                                            >
                                                                                 <FileText className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                                                <span className="text-xs truncate max-w-[150px]">{log.notes}</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            <span className="text-gray-300">-</span>
-                                                                        )}
-                                                                    </div>
+                                                                                <span className={`text-xs ${expandedNoteId === log.id ? '' : 'truncate max-w-[150px]'}`}>
+                                                                                    {log.notes}
+                                                                                </span>
+                                                                                {log.notes.length > 30 && expandedNoteId !== log.id && (
+                                                                                    <span className="text-blue-500 text-[10px] whitespace-nowrap group-hover:underline">lihat</span>
+                                                                                )}
+                                                                            </button>
+                                                                            {/* Expanded Note Modal/Popup */}
+                                                                            {expandedNoteId === log.id && log.notes.length > 30 && (
+                                                                                <div className="absolute z-50 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-4 max-w-xs min-w-[200px]">
+                                                                                    <div className="flex justify-between items-start mb-2">
+                                                                                        <span className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                                                                            <FileText className="w-3 h-3 text-yellow-500" />
+                                                                                            Catatan
+                                                                                        </span>
+                                                                                        <button
+                                                                                            onClick={(e) => { e.stopPropagation(); setExpandedNoteId(null); }}
+                                                                                            className="text-gray-400 hover:text-gray-600 text-sm"
+                                                                                        >
+                                                                                            ✕
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{log.notes}</p>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-gray-300">-</span>
+                                                                    )}
                                                                 </td>
                                                             </tr>
                                                         ))}
