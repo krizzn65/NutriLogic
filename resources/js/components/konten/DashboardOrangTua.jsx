@@ -8,7 +8,6 @@ import ChildProfileCard from "../dashboard/ChildProfileCard";
 import { Calendar } from "../ui/calendar";
 import GrowthChart from "../dashboard/GrowthChart";
 import RightSection from "../dashboard/RightSection";
-import PageHeader from "../ui/PageHeader";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,13 +116,6 @@ export default function DashboardOrangTuaContent() {
           childrenData={children}
           selectedChildId={selectedChildId}
           onSelectChild={setSelectedChildId}
-        />
-      }
-      header={
-        <PageHeader
-          title="Dashboard"
-          subtitle={new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          showProfile={true}
         />
       }
     >

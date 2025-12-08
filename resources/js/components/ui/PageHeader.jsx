@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, Bell, Shield, UserCog, Settings, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getUser, logoutWithApi } from "../../lib/auth";
 import { getMaintenanceMode } from "../../lib/sessionTimeout";
-import api from "../../lib/api";
 import AdminProfileModal from "../dashboard/AdminProfileModal";
-import ProfileModal from "../dashboard/ProfileModal";
 import AdminSettingsModal from "../dashboard/AdminSettingsModal";
 import SettingsModal from "../dashboard/SettingsModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
 
-export default function PageHeader({ title, subtitle, children, showProfile = true, profileClassName = "", dashboardData = null, generateNotifications = null }) {
+export default function PageHeader({ title, subtitle, children, showProfile = true }) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -20,64 +18,10 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
 
-    const fetchNotifications = useCallback(async () => {
-        try {
-            // Determine the correct API endpoint based on user role
-            const user = getUser();
-            if (!user) return;
-            
-            let endpoint = '/notifications/unread';
-            if (user.role === 'kader') {
-                endpoint = '/kader/notifications/unread';
-            } else if (user.role === 'admin') {
-                endpoint = '/admin/notifications/unread';
-            } else if (user.role === 'ibu') {
-                endpoint = '/parent/notifications/unread';
-            }
-            
-            const response = await api.get(endpoint);
-            const dbNotifications = response.data.data.map(notif => ({
-                id: `db_${notif.id}`,
-                type: notif.type,
-                title: notif.title,
-                message: notif.message,
-                link: notif.link,
-                timestamp: notif.timestamp,
-                dbId: notif.id, // Store original DB ID
-                source: 'database', // Mark as database notification
-            }));
-            
-            console.log('Fetched DB notifications:', dbNotifications.length);
-            
-            // Always update database notifications
-            setNotifications(prev => {
-                // Keep non-database notifications (maintenance, AI notifications)
-                const nonDbNotifs = prev.filter(n => !n.source || n.source !== 'database');
-                const merged = [...nonDbNotifs, ...dbNotifications];
-                console.log('Total notifications after merge:', merged.length);
-                return merged;
-            });
-        } catch (err) {
-            console.error('Failed to fetch notifications:', err);
-        }
-    }, []);
-
     useEffect(() => {
         const userData = getUser();
         setUser(userData);
-        
-        // Fetch notifications from database
-        if (userData) {
-            fetchNotifications();
-            
-            // Poll for new notifications every 30 seconds
-            const pollInterval = setInterval(() => {
-                fetchNotifications();
-            }, 30000);
-            
-            return () => clearInterval(pollInterval);
-        }
-    }, [fetchNotifications]);
+    }, []);
 
     // Check maintenance mode notifications
     useEffect(() => {
@@ -119,92 +63,12 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
         };
     }, []);
 
-    // Generate notifications from dashboard data (for Kader)
-    useEffect(() => {
-        if (dashboardData && generateNotifications) {
-            const smartNotifications = generateNotifications(dashboardData);
-            const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-            const filteredNotifications = smartNotifications.filter(n => !dismissedIds.includes(n.id)).map(n => ({
-                ...n,
-                source: 'ai', // Mark as AI notification
-            }));
-            
-            // Save AI notifications to localStorage for persistence across pages
-            if (filteredNotifications.length > 0) {
-                localStorage.setItem('aiNotifications', JSON.stringify(filteredNotifications));
-            }
-            
-            setNotifications(prev => {
-                // Keep maintenance and database notifications
-                const persistentNotifs = prev.filter(n => 
-                    n.id === 'maintenance-mode-active' || 
-                    n.source === 'database'
-                );
-                return [...persistentNotifs, ...filteredNotifications];
-            });
-        } else {
-            // Load AI notifications from localStorage when not on dashboard
-            const savedAiNotifs = localStorage.getItem('aiNotifications');
-            if (savedAiNotifs) {
-                try {
-                    const aiNotifications = JSON.parse(savedAiNotifs);
-                    const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-                    const activeAiNotifs = aiNotifications.filter(n => !dismissedIds.includes(n.id));
-                    
-                    if (activeAiNotifs.length > 0) {
-                        setNotifications(prev => {
-                            // Only add AI notifications if they're not already there
-                            const hasAiNotifs = prev.some(n => n.source === 'ai');
-                            if (hasAiNotifs) return prev;
-                            
-                            // Keep maintenance and database notifications
-                            const persistentNotifs = prev.filter(n => 
-                                n.id === 'maintenance-mode-active' || 
-                                n.source === 'database'
-                            );
-                            return [...persistentNotifs, ...activeAiNotifs];
-                        });
-                    }
-                } catch (err) {
-                    console.error('Failed to parse AI notifications from localStorage:', err);
-                }
-            }
-        }
-    }, [dashboardData, generateNotifications]);
-
     const handleNotificationClick = (notification) => {
         if (notification.id === 'maintenance-mode-active') {
             setIsNotificationOpen(false);
             setIsSettingsModalOpen(true);
             return;
         }
-
-        // Mark as read in database if it's a DB notification
-        if (notification.dbId) {
-            api.post(`/notifications/${notification.dbId}/read`).catch(err => {
-                console.error('Failed to mark notification as read:', err);
-            });
-        } else if (notification.source === 'ai') {
-            // Save dismissed notification ID to localStorage for AI notifications
-            const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-            if (!dismissedIds.includes(notification.id)) {
-                dismissedIds.push(notification.id);
-                localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedIds));
-            }
-            
-            // Also update aiNotifications in localStorage
-            const savedAiNotifs = localStorage.getItem('aiNotifications');
-            if (savedAiNotifs) {
-                try {
-                    const aiNotifications = JSON.parse(savedAiNotifs);
-                    const updatedAiNotifs = aiNotifications.filter(n => n.id !== notification.id);
-                    localStorage.setItem('aiNotifications', JSON.stringify(updatedAiNotifs));
-                } catch (err) {
-                    console.error('Failed to update AI notifications in localStorage:', err);
-                }
-            }
-        }
-
         setNotifications(prev => prev.filter(n => n.id !== notification.id));
         setIsNotificationOpen(false);
         if (notification.link) {
@@ -232,7 +96,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                     {children}
 
                     {showProfile && (
-                        <div className={`flex items-center gap-4 ${profileClassName}`}>
+                        <>
                             {/* Notifications Dropdown */}
                             <div className="relative">
                                 <button
@@ -241,15 +105,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 >
                                     <Bell className="w-5 h-5" />
                                     {notifications.length > 0 && (
-                                        <>
-                                            {notifications.filter(n => n.type === 'danger').length > 0 ? (
-                                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                                                    {notifications.filter(n => n.type === 'danger').length}
-                                                </span>
-                                            ) : (
-                                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
-                                            )}
-                                        </>
+                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                                     )}
                                 </button>
 
@@ -309,31 +165,19 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 className="flex items-center gap-3 pl-4 border-l border-gray-200 focus:outline-none"
                             >
                                 <div className="text-right hidden md:block">
-                                    <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'User'}</p>
-                                    <p className="text-xs text-gray-500 mt-1 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
+                                    <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'Super Admin'}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Administrator</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow">
-                                    {user?.profile_photo_url ? (
-                                        <img 
-                                            src={user.profile_photo_url} 
-                                            alt={user.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <img 
-                                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
-                                            alt={user?.name || 'User'}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    )}
+                                <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-white shadow-md ring-2 ring-white cursor-pointer hover:shadow-lg transition-shadow">
+                                    <Shield className="w-5 h-5" />
                                 </div>
                             </button>
 
                             {isDropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                                     <div className="px-4 py-3 border-b border-gray-50 md:hidden">
-                                        <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
-                                        <p className="text-xs text-gray-500 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
+                                        <p className="text-sm font-semibold text-gray-800">{user?.name || 'Super Admin'}</p>
+                                        <p className="text-xs text-gray-500">Administrator</p>
                                     </div>
                                     <button
                                         onClick={() => {
@@ -369,17 +213,13 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </div>
                             )}
                         </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </header>
 
             {/* Modals */}
-            {user?.role === 'admin' ? (
-                <AdminProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
-            ) : (
-                <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
-            )}
+            <AdminProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
             {user?.role === 'admin' ? (
                 <AdminSettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
             ) : (

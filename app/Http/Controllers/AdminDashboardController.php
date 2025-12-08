@@ -76,17 +76,13 @@ class AdminDashboardController extends Controller
             'gemuk' => 0,
         ];
 
-        // Get latest weighing for each child based on measured_at
+        // Get latest weighing for each child
         $latestWeighingsQuery = WeighingLog::select('weighing_logs.child_id', 'weighing_logs.nutritional_status')
             ->join('children', 'weighing_logs.child_id', '=', 'children.id')
             ->whereIn('weighing_logs.id', function ($query) {
-                $query->select('wl.id')
-                    ->from('weighing_logs as wl')
-                    ->join(DB::raw('(SELECT child_id, MAX(measured_at) as max_date FROM weighing_logs GROUP BY child_id) as latest'),
-                        function ($join) {
-                            $join->on('wl.child_id', '=', 'latest.child_id')
-                                ->on('wl.measured_at', '=', 'latest.max_date');
-                        });
+                $query->select(DB::raw('MAX(id)'))
+                    ->from('weighing_logs')
+                    ->groupBy('child_id');
             });
 
         if ($posyanduId) {
@@ -110,14 +106,11 @@ class AdminDashboardController extends Controller
      */
     private function getTopRiskPosyandu($posyanduId = null): array
     {
-        // Get latest weighing for each child with their posyandu based on measured_at
+        // Get latest weighing for each child with their posyandu
         $riskCountsQuery = DB::table('weighing_logs as wl')
             ->select('p.id', 'p.name', DB::raw('COUNT(DISTINCT c.id) as risk_count'))
-            ->join(DB::raw('(SELECT child_id, MAX(measured_at) as max_date FROM weighing_logs GROUP BY child_id) as latest'), 
-                function ($join) {
-                    $join->on('wl.child_id', '=', 'latest.child_id')
-                        ->on('wl.measured_at', '=', 'latest.max_date');
-                })
+            ->join(DB::raw('(SELECT child_id, MAX(id) as max_id FROM weighing_logs GROUP BY child_id) as latest'), 
+                'wl.id', '=', 'latest.max_id')
             ->join('children as c', 'wl.child_id', '=', 'c.id')
             ->join('posyandus as p', 'c.posyandu_id', '=', 'p.id')
             ->whereIn('wl.nutritional_status', [

@@ -128,40 +128,26 @@ class KaderChildController extends Controller
             'parent_email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'parent_phone' => ['nullable', 'string', 'max:20'],
             'full_name' => ['required', 'string', 'max:150'],
-            'nik' => ['nullable', 'string', 'size:16', 'regex:/^\d{16}$/', 'unique:children,nik'],
-            'birth_date' => ['required', 'date', 'before_or_equal:today', 'after:' . now()->subYears(5)->format('Y-m-d')],
+            'nik' => ['nullable', 'string', 'max:32', 'unique:children,nik'],
+            'birth_date' => ['required', 'date'],
             'gender' => ['required', 'string', 'in:L,P'],
-            'birth_weight_kg' => ['nullable', 'numeric', 'min:0.5', 'max:6'],
-            'birth_height_cm' => ['nullable', 'numeric', 'min:30', 'max:60'],
+            'birth_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:10'],
+            'birth_height_cm' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string'],
-        ], [
-            'birth_date.before_or_equal' => 'Tanggal lahir tidak boleh di masa depan.',
-            'birth_date.after' => 'Anak harus berusia maksimal 60 bulan (5 tahun).',
-            'birth_weight_kg.min' => 'Berat lahir minimal 0.5 kg.',
-            'birth_weight_kg.max' => 'Berat lahir maksimal 6 kg (sesuai standar WHO).',
-            'birth_height_cm.min' => 'Tinggi lahir minimal 30 cm.',
-            'birth_height_cm.max' => 'Tinggi lahir maksimal 60 cm (sesuai standar WHO).',
         ]);
 
         // Handle parent creation or use existing
         if (!isset($validated['parent_id'])) {
-            // Generate random secure password
-            $randomPassword = bin2hex(random_bytes(4)); // 8 character random password
-            
             // Create new parent user
             $parent = User::create([
                 'name' => $validated['parent_name'],
                 'email' => $validated['parent_email'] ?? null,
                 'phone' => $validated['parent_phone'] ?? null,
-                'password' => Hash::make($randomPassword),
+                'password' => Hash::make('password123'), // Default password
                 'role' => 'ibu',
                 'posyandu_id' => $user->posyandu_id,
             ]);
             $validated['parent_id'] = $parent->id;
-            
-            // Store generated password in response for Kader to inform parent
-            $validated['generated_password'] = $randomPassword;
-            $validated['parent_email_or_phone'] = $validated['parent_email'] ?? $validated['parent_phone'] ?? null;
         }
 
         // Create child
@@ -177,22 +163,10 @@ class KaderChildController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $response = [
+        return response()->json([
             'data' => $child->load(['parent', 'posyandu']),
             'message' => 'Data anak berhasil ditambahkan.',
-        ];
-
-        // Add password info if new parent was created
-        if (isset($validated['generated_password'])) {
-            $response['parent_info'] = [
-                'name' => $validated['parent_name'],
-                'password' => $validated['generated_password'],
-                'contact' => $validated['parent_email_or_phone'],
-            ];
-            $response['message'] = 'Data anak dan orang tua berhasil ditambahkan. Segera informasikan password kepada orang tua.';
-        }
-
-        return response()->json($response, 201);
+        ], 201);
     }
 
     /**
@@ -212,22 +186,13 @@ class KaderChildController extends Controller
 
         $validated = $request->validate([
             'full_name' => ['sometimes', 'string', 'max:150'],
-            'nik' => ['nullable', 'string', 'size:16', 'regex:/^\d{16}$/', 'unique:children,nik,' . $id],
-            'birth_date' => ['sometimes', 'date', 'before_or_equal:today', 'after:' . now()->subYears(5)->format('Y-m-d')],
+            'nik' => ['nullable', 'string', 'max:32', 'unique:children,nik,' . $id],
+            'birth_date' => ['sometimes', 'date'],
             'gender' => ['sometimes', 'string', 'in:L,P'],
-            'birth_weight_kg' => ['nullable', 'numeric', 'min:0.5', 'max:6'],
-            'birth_height_cm' => ['nullable', 'numeric', 'min:30', 'max:60'],
+            'birth_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:10'],
+            'birth_height_cm' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
-        ], [
-            'birth_date.before_or_equal' => 'Tanggal lahir tidak boleh di masa depan.',
-            'birth_date.after' => 'Anak harus berusia maksimal 60 bulan (5 tahun).',
-            'birth_weight_kg.min' => 'Berat lahir minimal 0.5 kg.',
-            'birth_weight_kg.max' => 'Berat lahir maksimal 6 kg (sesuai standar WHO).',
-            'birth_height_cm.min' => 'Tinggi lahir minimal 30 cm.',
-            'birth_height_cm.max' => 'Tinggi lahir maksimal 60 cm (sesuai standar WHO).',
-            'nik.size' => 'NIK harus 16 digit.',
-            'nik.regex' => 'NIK hanya boleh berisi angka.',
         ]);
 
         $child->update($validated);

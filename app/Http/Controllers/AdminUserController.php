@@ -105,13 +105,6 @@ class AdminUserController extends Controller
             ], 404);
         }
 
-        // Prevent admin from editing own account
-        if ($user->id === auth()->id()) {
-            return response()->json([
-                'message' => 'Anda tidak dapat mengedit akun Anda sendiri.',
-            ], 403);
-        }
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
@@ -151,13 +144,6 @@ class AdminUserController extends Controller
             ], 404);
         }
 
-        // Prevent admin from disabling own account
-        if ($user->id === auth()->id()) {
-            return response()->json([
-                'message' => 'Anda tidak dapat menonaktifkan akun Anda sendiri.',
-            ], 403);
-        }
-
         $user->is_active = !($user->is_active ?? true);
         $user->save();
 
@@ -186,95 +172,14 @@ class AdminUserController extends Controller
             ], 404);
         }
 
-        // Prevent admin from resetting own password through this endpoint
-        if ($user->id === auth()->id()) {
-            return response()->json([
-                'message' => 'Gunakan fitur ubah password di profil untuk mengubah password Anda sendiri.',
-            ], 403);
-        }
-
-        // Store old password hash for audit trail
-        $oldPasswordHash = $user->password;
-
-        // Check if manual password is provided
-        if ($request->has('password') && !empty($request->password)) {
-            $request->validate([
-                'password' => [
-                    'required',
-                    'string',
-                    'min:8',
-                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-                ],
-            ], [
-                'password.min' => 'Password minimal 8 karakter.',
-                'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka.',
-            ]);
-            $newPassword = $request->password;
-        } else {
-            // Generate new random password with complexity requirements
-            $newPassword = $this->generateSecurePassword();
-        }
-
-        $newPasswordHash = Hash::make($newPassword);
-        $user->password = $newPasswordHash;
+        // Generate new random password
+        $newPassword = Str::random(8);
+        $user->password = Hash::make($newPassword);
         $user->save();
-
-        // Create notification for user about password reset
-        \App\Models\Notification::create([
-            'user_id' => $user->id,
-            'type' => 'warning',
-            'title' => 'Password Anda Telah Direset',
-            'message' => 'Password akun Anda telah direset oleh Admin. Password baru: ' . $newPassword . '. Silakan login dengan password baru dan segera ubah password Anda.',
-            'link' => null,
-            'metadata' => [
-                'reset_by' => auth()->id(),
-                'reset_by_name' => auth()->user()->name,
-                'reset_at' => now()->toDateTimeString(),
-            ],
-        ]);
-
-        // Log activity with before/after snapshot
-        AdminActivityLogController::log(
-            'update',
-            "Admin mereset password user: {$user->name} ({$user->email})",
-            'User',
-            $user->id,
-            [
-                'action' => 'reset_password',
-                'before' => ['password_hash' => substr($oldPasswordHash, 0, 20) . '...'],
-                'after' => ['password_hash' => substr($newPasswordHash, 0, 20) . '...'],
-                'manual_password' => $request->has('password'),
-            ]
-        );
 
         return response()->json([
             'password' => $newPassword,
             'message' => 'Password berhasil direset.',
         ], 200);
-    }
-
-    /**
-     * Generate secure random password with complexity requirements
-     */
-    private function generateSecurePassword(): string
-    {
-        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
-        $numbers = '0123456789';
-        $special = '!@#$%';
-
-        // Ensure at least one of each type
-        $password = $uppercase[rand(0, strlen($uppercase) - 1)];
-        $password .= $lowercase[rand(0, strlen($lowercase) - 1)];
-        $password .= $numbers[rand(0, strlen($numbers) - 1)];
-
-        // Fill remaining 5 characters with random mix
-        $allChars = $uppercase . $lowercase . $numbers . $special;
-        for ($i = 0; $i < 5; $i++) {
-            $password .= $allChars[rand(0, strlen($allChars) - 1)];
-        }
-
-        // Shuffle the password
-        return str_shuffle($password);
     }
 }

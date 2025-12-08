@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Settings, Save } from "lucide-react";
 import PageHeader from "../ui/PageHeader";
-import api from "../../lib/api";
 
 export default function SystemSettings() {
     const [settings, setSettings] = useState({
@@ -12,59 +11,15 @@ export default function SystemSettings() {
         session_timeout: '60',
     });
     const [saving, setSaving] = useState(false);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
-    const fetchSettings = async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/admin/settings');
-            const data = response.data.data;
-            setSettings({
-                app_name: data.app_name || 'NutriLogic',
-                maintenance_mode: data.maintenance_mode || false,
-                allow_registration: data.allow_registration !== false,
-                session_timeout: (data.session_timeout || 60).toString(),
-                max_file_size: (data.max_file_size || 5).toString(),
-            });
-        } catch (err) {
-            console.error('Failed to load settings:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSave = async () => {
         setSaving(true);
-        try {
-            await api.put('/admin/settings', {
-                app_name: settings.app_name,
-                maintenance_mode: settings.maintenance_mode,
-                allow_registration: settings.allow_registration,
-                session_timeout: parseInt(settings.session_timeout, 10),
-                max_file_size: parseInt(settings.max_file_size, 10),
-            });
-            alert('Pengaturan berhasil disimpan!');
-        } catch (err) {
-            alert(err.response?.data?.message || 'Gagal menyimpan pengaturan.');
-        } finally {
+        // Simulate save
+        setTimeout(() => {
             setSaving(false);
-        }
+            alert('Pengaturan berhasil disimpan!');
+        }, 1000);
     };
-
-    if (loading) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">

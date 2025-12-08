@@ -66,10 +66,6 @@ export default function TambahAnakKaderForm() {
     const genderWrapperRef = useRef(null);
     const parentWrapperRef = useRef(null);
 
-    // Password Modal State
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [generatedPasswordInfo, setGeneratedPasswordInfo] = useState(null);
-
     useEffect(() => {
         fetchParents();
 
@@ -148,49 +144,20 @@ export default function TambahAnakKaderForm() {
             newErrors.full_name = "Nama lengkap anak wajib diisi";
         }
 
-        if (formData.nik && formData.nik.trim()) {
-            if (!/^\d{16}$/.test(formData.nik)) {
-                newErrors.nik = "NIK harus 16 digit angka";
-            }
-        }
-
         if (!formData.birth_date) {
             newErrors.birth_date = "Tanggal lahir wajib diisi";
-        } else {
-            const birthDate = new Date(formData.birth_date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            birthDate.setHours(0, 0, 0, 0);
-
-            // Check if date is in the future
-            if (birthDate > today) {
-                newErrors.birth_date = "Tanggal lahir tidak boleh di masa depan";
-            } else {
-                // Calculate age in months
-                const ageInMonths = (today - birthDate) / (1000 * 60 * 60 * 24 * 30.44);
-                
-                // Check if child is too old (>60 months = 5 years)
-                if (ageInMonths > 60) {
-                    newErrors.birth_date = "Anak harus berusia maksimal 60 bulan (5 tahun)";
-                }
-                
-                // Check if age is negative (shouldn't happen, but double-check)
-                if (ageInMonths < 0) {
-                    newErrors.birth_date = "Tanggal lahir tidak valid";
-                }
-            }
         }
 
         if (!formData.gender) {
             newErrors.gender = "Jenis kelamin wajib dipilih";
         }
 
-        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0.5 || parseFloat(formData.birth_weight_kg) > 6)) {
-            newErrors.birth_weight_kg = "Berat lahir harus antara 0.5-6 kg (normal bayi)";
+        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0 || parseFloat(formData.birth_weight_kg) > 10)) {
+            newErrors.birth_weight_kg = "Berat lahir harus antara 0-10 kg";
         }
 
-        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 30 || parseFloat(formData.birth_height_cm) > 60)) {
-            newErrors.birth_height_cm = "Tinggi lahir harus antara 30-60 cm (normal bayi)";
+        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 0 || parseFloat(formData.birth_height_cm) > 100)) {
+            newErrors.birth_height_cm = "Tinggi lahir harus antara 0-100 cm";
         }
 
         setErrors(newErrors);
@@ -226,33 +193,11 @@ export default function TambahAnakKaderForm() {
                 dataToSubmit.parent_phone = formData.parent_phone || null;
             }
 
-            const response = await api.post('/kader/children', dataToSubmit);
+            await api.post('/kader/children', dataToSubmit);
 
-            // Check if new parent was created and password was generated
-            if (response.data.parent_info) {
-                setGeneratedPasswordInfo(response.data.parent_info);
-                setShowPasswordModal(true);
-                
-                // Clear form
-                setFormData({
-                    parent_id: "",
-                    parent_name: "",
-                    parent_email: "",
-                    parent_phone: "",
-                    full_name: "",
-                    nik: "",
-                    birth_date: "",
-                    gender: "",
-                    birth_weight_kg: "",
-                    birth_height_cm: "",
-                    notes: "",
-                });
-            } else {
-                // Navigate immediately if no password to show
-                navigate('/dashboard/data-anak', {
-                    state: { message: 'Data anak berhasil ditambahkan!' }
-                });
-            }
+            navigate('/dashboard/data-anak', {
+                state: { message: 'Data anak berhasil ditambahkan!' }
+            });
         } catch (err) {
             console.error('Submit error:', err);
 
@@ -482,19 +427,16 @@ export default function TambahAnakKaderForm() {
                                 />
                             </div>
 
-                            <div>
-                                <InputField
-                                    label="NIK"
-                                    name="nik"
-                                    placeholder="16 digit angka NIK"
-                                    icon={FileText}
-                                    maxLength="16"
-                                    formData={formData}
-                                    handleChange={handleChange}
-                                    errors={errors}
-                                />
-                                <p className="mt-1 text-xs text-gray-400 ml-1">Harus 16 digit angka</p>
-                            </div>
+                            <InputField
+                                label="NIK"
+                                name="nik"
+                                placeholder="Nomor Induk Kependudukan"
+                                icon={FileText}
+                                maxLength="16"
+                                formData={formData}
+                                handleChange={handleChange}
+                                errors={errors}
+                            />
 
                             {/* Custom Date Picker */}
                             <div className="relative" ref={dateWrapperRef}>
@@ -511,15 +453,6 @@ export default function TambahAnakKaderForm() {
                                     </span>
                                     <Calendar className="w-5 h-5 text-gray-400" />
                                 </button>
-                                {!errors.birth_date && (
-                                    <p className="mt-1 text-xs text-gray-400 ml-1">Usia anak maksimal 60 bulan (5 tahun)</p>
-                                )}
-                                {errors.birth_date && (
-                                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
-                                        <AlertCircle className="w-3 h-3" />
-                                        {errors.birth_date}
-                                    </p>
-                                )}
 
                                 <AnimatePresence>
                                     {isDatePickerOpen && (
@@ -599,6 +532,12 @@ export default function TambahAnakKaderForm() {
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
+                                {errors.birth_date && (
+                                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                                        <AlertCircle className="w-3 h-3" />
+                                        {errors.birth_date}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Custom Gender Dropdown */}
@@ -658,34 +597,28 @@ export default function TambahAnakKaderForm() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <InputField
-                                        label="Berat Lahir (kg)"
-                                        name="birth_weight_kg"
-                                        type="number"
-                                        placeholder="2.5"
-                                        step="0.1"
-                                        icon={Weight}
-                                        formData={formData}
-                                        handleChange={handleChange}
-                                        errors={errors}
-                                    />
-                                    <p className="mt-1 text-xs text-gray-400 ml-1">Normal: 0.5-6 kg</p>
-                                </div>
-                                <div>
-                                    <InputField
-                                        label="Tinggi Lahir (cm)"
-                                        name="birth_height_cm"
-                                        type="number"
-                                        placeholder="48"
-                                        step="0.1"
-                                        icon={Ruler}
-                                        formData={formData}
-                                        handleChange={handleChange}
-                                        errors={errors}
-                                    />
-                                    <p className="mt-1 text-xs text-gray-400 ml-1">Normal: 30-60 cm</p>
-                                </div>
+                                <InputField
+                                    label="Berat Lahir (kg)"
+                                    name="birth_weight_kg"
+                                    type="number"
+                                    placeholder="0.0"
+                                    step="0.1"
+                                    icon={Weight}
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
+                                />
+                                <InputField
+                                    label="Tinggi Lahir (cm)"
+                                    name="birth_height_cm"
+                                    type="number"
+                                    placeholder="0.0"
+                                    step="0.1"
+                                    icon={Ruler}
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    errors={errors}
+                                />
                             </div>
 
                             <div className="md:col-span-2">
@@ -734,85 +667,6 @@ export default function TambahAnakKaderForm() {
                     </div>
                 </form>
             </div>
-
-            {/* Password Modal */}
-            {showPasswordModal && generatedPasswordInfo && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Check className="w-8 h-8 text-green-600" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Akun Orang Tua Dibuat!</h3>
-                            <p className="text-sm text-gray-600">Data berhasil disimpan. Segera informasikan password ke orang tua.</p>
-                        </div>
-
-                        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Orang Tua</label>
-                                    <p className="text-lg font-bold text-gray-900">{generatedPasswordInfo.name}</p>
-                                </div>
-                                {generatedPasswordInfo.contact && (
-                                    <div>
-                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email/Telepon</label>
-                                        <p className="text-sm font-medium text-gray-700">{generatedPasswordInfo.contact}</p>
-                                    </div>
-                                )}
-                                <div className="pt-3 border-t-2 border-blue-200">
-                                    <label className="text-xs font-semibold text-blue-700 uppercase tracking-wider flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                                        Password Login (PENTING!)
-                                    </label>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <code className="flex-1 text-2xl font-bold text-blue-600 bg-white px-4 py-3 rounded-lg border-2 border-blue-300 tracking-wider">
-                                            {generatedPasswordInfo.password}
-                                        </code>
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(generatedPasswordInfo.password);
-                                                alert('Password berhasil disalin!');
-                                            }}
-                                            className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                            title="Salin password"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                            <div className="flex gap-3">
-                                <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                                <div className="text-xs text-yellow-800">
-                                    <p className="font-bold mb-1">Catatan Penting:</p>
-                                    <ul className="list-disc list-inside space-y-1">
-                                        <li>Catat password ini dengan aman</li>
-                                        <li>Informasikan ke orang tua untuk login pertama kali</li>
-                                        <li>Sarankan untuk segera mengganti password</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => {
-                                setShowPasswordModal(false);
-                                navigate('/dashboard/data-anak', {
-                                    state: { message: 'Data anak dan orang tua berhasil ditambahkan!' }
-                                });
-                            }}
-                            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
-                        >
-                            Saya Sudah Catat, Lanjutkan
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -134,16 +134,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/settings', [ParentSettingsController::class, 'index']);
         Route::put('/settings', [ParentSettingsController::class, 'update']);
 
-        // Parent notifications routes
-        Route::prefix('notifications')->group(function () {
-            Route::get('/', [App\Http\Controllers\NotificationController::class, 'index']);
-            Route::get('/unread', [App\Http\Controllers\NotificationController::class, 'unread']);
-            Route::post('/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
-            Route::post('/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
-            Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy']);
-            Route::delete('/read/all', [App\Http\Controllers\NotificationController::class, 'deleteRead']);
-        });
-
         // Parent profile routes
         Route::put('/profile', [ParentProfileController::class, 'update']);
         Route::put('/profile/password', [ParentProfileController::class, 'updatePassword']);
@@ -218,21 +208,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}', [App\Http\Controllers\KaderBroadcastController::class, 'destroy']);
         });
 
-        // Profile endpoints
+        // Profile Management
         Route::prefix('profile')->group(function () {
             Route::get('/', [App\Http\Controllers\KaderProfileController::class, 'show']);
             Route::put('/', [App\Http\Controllers\KaderProfileController::class, 'update']);
             Route::put('/password', [App\Http\Controllers\KaderProfileController::class, 'updatePassword']);
-        });
-
-        // Notifications
-        Route::prefix('notifications')->group(function () {
-            Route::get('/', [App\Http\Controllers\NotificationController::class, 'index']);
-            Route::get('/unread', [App\Http\Controllers\NotificationController::class, 'unread']);
-            Route::post('/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
-            Route::post('/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
-            Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy']);
-            Route::delete('/read/all', [App\Http\Controllers\NotificationController::class, 'deleteRead']);
         });
 
         // Actual kader endpoints will be added here in next menus
@@ -290,24 +270,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{id}/toggle-publish', [App\Http\Controllers\AdminArticleController::class, 'togglePublish']);
         });
         
-        // System Settings
-        Route::prefix('settings')->group(function () {
-            Route::get('/', [App\Http\Controllers\AdminSettingsController::class, 'index']);
-            Route::put('/', [App\Http\Controllers\AdminSettingsController::class, 'update']);
-            Route::get('/{key}', [App\Http\Controllers\AdminSettingsController::class, 'show']);
-        });
-        
         // Activity Logs
         Route::get('/activity-logs', [App\Http\Controllers\AdminActivityLogController::class, 'index']);
-
-        // Admin Notifications
-        Route::prefix('notifications')->group(function () {
-            Route::get('/', [App\Http\Controllers\NotificationController::class, 'index']);
-            Route::get('/unread', [App\Http\Controllers\NotificationController::class, 'unread']);
-            Route::post('/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
-            Route::post('/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
-            Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy']);
-            Route::delete('/read/all', [App\Http\Controllers\NotificationController::class, 'deleteRead']);
-        });
     });
 });

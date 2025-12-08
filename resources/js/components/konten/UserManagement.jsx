@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check, Eye, EyeOff } from "lucide-react";
-import { motion, AnimatePresence, useDragControls } from "framer-motion";
+import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
-import SuccessModal from "../ui/SuccessModal";
 
 export default function UserManagement() {
     const location = useLocation();
@@ -15,12 +14,6 @@ export default function UserManagement() {
     const [users, setUsers] = useState([]);
     const [posyandus, setPosyandus] = useState([]);
     
-    // Get current logged-in user for self-edit protection
-    const [currentUser] = useState(() => {
-        const userData = localStorage.getItem('nutrilogic_user');
-        return userData ? JSON.parse(userData) : null;
-    });
-
     // Determine initial tab based on current route
     const getInitialTab = () => {
         if (location.pathname.includes('/orang-tua')) {
@@ -28,28 +21,12 @@ export default function UserManagement() {
         }
         return 'kader';
     };
-
+    
     const [activeTab, setActiveTab] = useState(getInitialTab());
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
-    const [resetPasswordModal, setResetPasswordModal] = useState({
-        isOpen: false,
-        user: null
-    });
-    const [successModal, setSuccessModal] = useState({
-        isOpen: false,
-        title: '',
-        message: ''
-    });
-    const [confirmationModal, setConfirmationModal] = useState({
-        isOpen: false,
-        title: '',
-        message: '',
-        confirmLabel: '',
-        confirmColor: 'blue',
-        onConfirm: () => { }
-    });
-
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [newPassword, setNewPassword] = useState(null);
 
     // Data caching
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
@@ -171,65 +148,45 @@ export default function UserManagement() {
     };
 
     const handleEdit = (user) => {
-        // Prevent admin from editing own account
-        if (currentUser && user.id === currentUser.id) {
-            alert('Anda tidak dapat mengedit akun Anda sendiri.');
-            return;
-        }
-        
         setEditingUser(user);
         setShowModal(true);
     };
 
-    const handleToggleActive = (user) => {
-        // Prevent admin from disabling own account
-        if (currentUser && user.id === currentUser.id) {
-            alert('Anda tidak dapat menonaktifkan akun Anda sendiri.');
+    const handleToggleActive = async (user) => {
+        const action = user.is_active ? 'nonaktifkan' : 'aktifkan';
+        if (!window.confirm(`Apakah Anda yakin ingin ${action} user ${user.name}?`)) {
             return;
         }
-        
-        const action = user.is_active ? 'nonaktifkan' : 'aktifkan';
 
-        setConfirmationModal({
-            isOpen: true,
-            title: `Konfirmasi ${action === 'nonaktifkan' ? 'Nonaktifkan' : 'Aktifkan'}`,
-            message: `Apakah Anda yakin ingin ${action} pengguna ${user.name}?`,
-            confirmLabel: `Ya, ${action === 'nonaktifkan' ? 'Nonaktifkan' : 'Aktifkan'}`,
-            confirmColor: user.is_active ? 'red' : 'green',
-            onConfirm: async () => {
-                // Optimistic update
-                const previousUsers = [...users];
-                setUsers(prev => prev.map(u =>
-                    u.id === user.id ? { ...u, is_active: !u.is_active } : u
-                ));
+        // Optimistic update
+        const previousUsers = [...users];
+        setUsers(prev => prev.map(u =>
+            u.id === user.id ? { ...u, is_active: !u.is_active } : u
+        ));
 
-                // Close modal
-                setConfirmationModal(prev => ({ ...prev, isOpen: false }));
-
-                try {
-                    await api.patch(`/admin/users/${user.id}/toggle-active`);
-                    invalidateCache(`admin_users_${activeTab}`);
-                    invalidateCache('admin_dashboard');
-                    fetchUsers(activeTab, { forceRefresh: true });
-                } catch (err) {
-                    setUsers(previousUsers);
-                    alert(err.response?.data?.message || 'Gagal mengubah status user.');
-                }
-            }
-        });
+        try {
+            await api.patch(`/admin/users/${user.id}/toggle-active`);
+            invalidateCache(`admin_users_${activeTab}`);
+            invalidateCache('admin_dashboard');
+            fetchUsers(activeTab, { forceRefresh: true });
+        } catch (err) {
+            setUsers(previousUsers);
+            alert(err.response?.data?.message || 'Gagal mengubah status user.');
+        }
     };
 
-    const handleResetPassword = (user) => {
-        // Prevent admin from resetting own password through this endpoint
-        if (currentUser && user.id === currentUser.id) {
-            alert('Gunakan fitur ubah password di profil untuk mengubah password Anda sendiri.');
+    const handleResetPassword = async (user) => {
+        if (!window.confirm(`Apakah Anda yakin ingin reset password untuk ${user.name}?`)) {
             return;
         }
-        
-        setResetPasswordModal({
-            isOpen: true,
-            user: user
-        });
+
+        try {
+            const response = await api.post(`/admin/users/${user.id}/reset-password`);
+            setNewPassword(response.data.password);
+            setShowPasswordModal(true);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Gagal reset password.');
+        }
     };
 
 
@@ -251,7 +208,7 @@ export default function UserManagement() {
             <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Tabs with Add Button */}
-                <motion.div
+                <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
@@ -281,7 +238,7 @@ export default function UserManagement() {
                     </div>
                     <button
                         onClick={handleAddNew}
-                        className="hidden md:flex px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all items-center gap-2 shadow-sm mb-0.5"
+                        className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-sm mb-0.5"
                     >
                         <Plus className="w-4 h-4" />
                         Tambah {activeTab === 'kader' ? 'Kader' : 'Orang Tua'}
@@ -301,91 +258,8 @@ export default function UserManagement() {
                     </div>
                 )}
 
-                {/* Mobile View (Cards) */}
-                <div className="md:hidden flex flex-col gap-4">
-                    {users.length === 0 ? (
-                        <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Users className="w-8 h-8 text-gray-300" />
-                            </div>
-                            <h3 className="text-lg font-medium text-gray-900">Tidak ada data user</h3>
-                            <p className="text-gray-500 text-sm mt-1">Belum ada data yang tersedia.</p>
-                        </div>
-                    ) : (
-                        users.map((user, index) => (
-                            <motion.div
-                                key={user.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05, duration: 0.3 }}
-                                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-4"
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="font-bold text-gray-900">{user.name}</h3>
-                                        <p className="text-sm text-gray-500">{user.email}</p>
-                                    </div>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {user.is_active ? 'Aktif' : 'Nonaktif'}
-                                    </span>
-                                </div>
-
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-20 text-gray-400">Telepon</span>
-                                        <span className="font-medium text-gray-900">{user.phone}</span>
-                                    </div>
-                                    {activeTab === 'kader' && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-20 text-gray-400">Posyandu</span>
-                                            <span className="font-medium text-gray-900 flex items-center gap-1">
-                                                {user.posyandu ? (
-                                                    <>
-                                                        <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                                                        {user.posyandu.name}
-                                                    </>
-                                                ) : '-'}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
-                                    <button
-                                        onClick={() => handleResetPassword(user)}
-                                        className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium"
-                                    >
-                                        <Key className="w-4 h-4" />
-                                        Reset Pass
-                                    </button>
-                                    <button
-                                        onClick={() => handleEdit(user)}
-                                        className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleToggleActive(user)}
-                                        className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium ${user.is_active
-                                            ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                                            : 'text-green-600 bg-green-50 hover:bg-green-100'
-                                            }`}
-                                    >
-                                        <Power className="w-4 h-4" />
-                                        {user.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))
-                    )}
-                </div>
-
-                {/* Desktop View (Table) */}
-                <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Table */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -409,8 +283,8 @@ export default function UserManagement() {
                                     </tr>
                                 ) : (
                                     users.map((user, index) => (
-                                        <motion.tr
-                                            key={user.id}
+                                        <motion.tr 
+                                            key={user.id} 
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.05, duration: 0.3 }}
@@ -478,77 +352,40 @@ export default function UserManagement() {
                 </div>
             </div>
 
-            {/* Mobile FAB */}
-            <button
-                onClick={handleAddNew}
-                className="md:hidden fixed bottom-24 right-4 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:scale-90 transition-all z-40"
-            >
-                <Plus className="w-6 h-6" />
-            </button>
-
             {/* Add/Edit Modal */}
-            <AnimatePresence>
-                {showModal && (
-                    <UserModal
-                        user={editingUser}
-                        role={activeTab}
-                        posyandus={posyandus}
-                        onClose={() => setShowModal(false)}
-                        onSuccess={(password) => {
-                            setShowModal(false);
-                            fetchUsers(activeTab, { forceRefresh: true });
-                            if (password) {
-                                setNewPassword(password);
-                                setShowPasswordModal(true);
-                            }
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+            {showModal && (
+                <UserModal
+                    user={editingUser}
+                    role={activeTab}
+                    posyandus={posyandus}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={(password) => {
+                        setShowModal(false);
+                        fetchUsers(activeTab, { forceRefresh: true });
+                        if (password) {
+                            setNewPassword(password);
+                            setShowPasswordModal(true);
+                        }
+                    }}
+                />
+            )}
 
-            {/* Reset Password Form Modal */}
-            <AnimatePresence>
-                {resetPasswordModal.isOpen && (
-                    <ResetPasswordFormModal
-                        user={resetPasswordModal.user}
-                        onClose={() => setResetPasswordModal({ isOpen: false, user: null })}
-                        onSuccess={() => {
-                            setResetPasswordModal({ isOpen: false, user: null });
-                            setSuccessModal({
-                                isOpen: true,
-                                title: 'Password Berhasil Direset',
-                                message: 'Password user telah berhasil diperbarui.'
-                            });
-                        }}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* Success Modal */}
-            <SuccessModal
-                isOpen={successModal.isOpen}
-                onClose={() => setSuccessModal({ isOpen: false, title: '', message: '' })}
-                title={successModal.title}
-                message={successModal.message}
-            />
-
-            {/* Confirmation Modal */}
-            <ConfirmationModal
-                isOpen={confirmationModal.isOpen}
-                title={confirmationModal.title}
-                message={confirmationModal.message}
-                confirmLabel={confirmationModal.confirmLabel}
-                confirmColor={confirmationModal.confirmColor}
-                onConfirm={confirmationModal.onConfirm}
-                onCancel={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-            />
+            {/* Password Display Modal */}
+            {showPasswordModal && (
+                <PasswordModal
+                    password={newPassword}
+                    onClose={() => {
+                        setShowPasswordModal(false);
+                        setNewPassword(null);
+                    }}
+                />
+            )}
         </div>
     );
 }
 
 // User Add/Edit Modal
 function UserModal({ user, role, posyandus, onClose, onSuccess }) {
-    const controls = useDragControls();
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
@@ -582,31 +419,8 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-50 p-0 md:p-4">
-            <motion.div
-                drag="y"
-                dragControls={controls}
-                dragListener={false}
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0, bottom: 0.2 }}
-                onDragEnd={(event, info) => {
-                    if (info.offset.y > 100) {
-                        onClose();
-                    }
-                }}
-                initial={{ opacity: 0, y: "100%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white rounded-t-2xl md:rounded-xl w-full md:max-w-md max-h-[90vh] overflow-y-auto shadow-xl"
-            >
-                {/* Drag Handle */}
-                <div
-                    className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1"
-                    onPointerDown={(e) => controls.start(e)}
-                >
-                    <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full">
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
                         {user ? 'Edit User' : `Tambah ${role === 'kader' ? 'Kader' : 'Orang Tua'} Baru`}
@@ -731,232 +545,63 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                         </button>
                     </div>
                 </form>
-            </motion.div>
+            </div>
         </div>
     );
 }
 
-function ResetPasswordFormModal({ user, onClose, onSuccess }) {
-    const controls = useDragControls();
-    const [formData, setFormData] = useState({
-        password: '',
-        password_confirmation: ''
-    });
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState(null);
+// Password Display Modal
+function PasswordModal({ password, onClose }) {
+    const [copied, setCopied] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (formData.password !== formData.password_confirmation) {
-            setError('Password dan konfirmasi password tidak cocok.');
-            return;
-        }
-
-        if (formData.password.length < 8) {
-            setError('Password minimal 8 karakter.');
-            return;
-        }
-
-        // Password complexity validation
-        const hasUpperCase = /[A-Z]/.test(formData.password);
-        const hasLowerCase = /[a-z]/.test(formData.password);
-        const hasNumber = /\d/.test(formData.password);
-
-        if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-            setError('Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka.');
-            return;
-        }
-
-        setSubmitting(true);
-        setError(null);
-
-        try {
-            await api.post(`/admin/users/${user.id}/reset-password`, {
-                password: formData.password
-            });
-            onSuccess();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Gagal reset password.');
-        } finally {
-            setSubmitting(false);
-        }
+    const handleCopy = () => {
+        navigator.clipboard.writeText(password);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-[60] p-0 md:p-4">
-            <motion.div
-                drag="y"
-                dragControls={controls}
-                dragListener={false}
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0, bottom: 0.2 }}
-                onDragEnd={(event, info) => {
-                    if (info.offset.y > 100) {
-                        onClose();
-                    }
-                }}
-                initial={{ opacity: 0, y: "100%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white rounded-t-2xl md:rounded-xl shadow-xl w-full md:max-w-md overflow-hidden"
-            >
-                {/* Drag Handle */}
-                <div
-                    className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1"
-                    onPointerDown={(e) => controls.start(e)}
-                >
-                    <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                </div>
-
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full">
                 <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-800">Reset Password</h2>
-                    <p className="text-sm text-gray-500 mt-1">Set password baru untuk {user.name}</p>
+                    <h2 className="text-xl font-semibold text-gray-800">Password Baru</h2>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password Baru
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                required
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 text-gray-900"
-                                placeholder="Min 8 karakter, 1 huruf besar, 1 huruf kecil, 1 angka"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka
+                <div className="p-6 space-y-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-sm text-yellow-800 mb-2">
+                            <strong>Penting:</strong> Simpan password ini dengan aman. Password tidak akan ditampilkan lagi.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Konfirmasi Password
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password:
                         </label>
-                        <div className="relative">
+                        <div className="flex gap-2">
                             <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                required
-                                value={formData.password_confirmation}
-                                onChange={(e) => setFormData({ ...formData, password_confirmation: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 text-gray-900"
-                                placeholder="Ulangi password baru"
+                                type="text"
+                                value={password}
+                                readOnly
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-lg"
                             />
                             <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                onClick={handleCopy}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                             >
-                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {copied ? 'Tersalin!' : 'Salin'}
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                            disabled={submitting}
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                            disabled={submitting}
-                        >
-                            {submitting ? 'Menyimpan...' : 'Simpan Password'}
-                        </button>
-                    </div>
-                </form>
-            </motion.div>
-        </div>
-    );
-}
-
-function ConfirmationModal({ isOpen, title, message, confirmLabel, confirmColor, onConfirm, onCancel }) {
-    const controls = useDragControls();
-
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-[60] p-0 md:p-4">
-                    <motion.div
-                        key="confirmation-modal"
-                        drag="y"
-                        dragControls={controls}
-                        dragListener={false}
-                        dragConstraints={{ top: 0, bottom: 0 }}
-                        dragElastic={{ top: 0, bottom: 0.2 }}
-                        onDragEnd={(event, info) => {
-                            if (info.offset.y > 100) {
-                                onCancel();
-                            }
-                        }}
-                        initial={{ opacity: 0, y: "100%" }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: "100%" }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="bg-white rounded-t-2xl md:rounded-xl shadow-xl w-full md:max-w-md overflow-hidden"
+                    <button
+                        onClick={onClose}
+                        className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
-                        {/* Drag Handle */}
-                        <div
-                            className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1"
-                            onPointerDown={(e) => controls.start(e)}
-                        >
-                            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                        </div>
-
-                        <div className="p-6 text-center pt-2 md:pt-6">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-${confirmColor}-100 text-${confirmColor}-600`}>
-                                <Key className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                {title}
-                            </h3>
-                            <p className="text-gray-600 mb-6">
-                                {message}
-                            </p>
-                            <div className="flex gap-3 justify-center">
-                                <button
-                                    onClick={onCancel}
-                                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium flex-1 md:flex-none"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={onConfirm}
-                                    className={`px-4 py-2 text-white rounded-lg transition-colors font-medium flex-1 md:flex-none bg-${confirmColor}-600 hover:bg-${confirmColor}-700`}
-                                >
-                                    {confirmLabel}
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
+                        Tutup
+                    </button>
                 </div>
-            )}
-        </AnimatePresence>
+            </div>
+        </div>
     );
 }

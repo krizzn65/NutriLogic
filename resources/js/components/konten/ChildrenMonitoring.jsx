@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { Baby, Search, X, Building2, User, Calendar, Weight, Ruler, ChevronDown, Check } from "lucide-react";
-import { motion, AnimatePresence, useDragControls } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { formatAge } from "../../lib/utils";
 import PageHeader from "../ui/PageHeader";
 
@@ -207,24 +207,21 @@ export default function ChildrenMonitoring() {
                     transition={{ duration: 0.3 }}
                     className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
                 >
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="col-span-2 md:col-span-1">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Nama Anak
                             </label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={filters.name}
-                                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                                    placeholder="Cari nama..."
-                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
-                                />
-                            </div>
+                            <input
+                                type="text"
+                                value={filters.name}
+                                onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                                placeholder="Cari nama..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                            />
                         </div>
 
-                        <div className="col-span-1">
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Posyandu
                             </label>
@@ -234,12 +231,12 @@ export default function ChildrenMonitoring() {
                                     onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                 >
-                                    <span className="text-gray-900 truncate text-sm">
+                                    <span className="text-gray-900 truncate">
                                         {filters.posyandu_id
-                                            ? posyandus.find(p => p.id === parseInt(filters.posyandu_id))?.name || "Posyandu"
-                                            : "Semua"}
+                                            ? posyandus.find(p => p.id === parseInt(filters.posyandu_id))?.name || "Posyandu Terpilih"
+                                            : "Semua Posyandu"}
                                     </span>
-                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
+                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
                                 </button>
 
                                 <AnimatePresence>
@@ -260,7 +257,7 @@ export default function ChildrenMonitoring() {
                                                     className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                                 >
                                                     <span className={`text-sm ${filters.posyandu_id === '' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                        Semua
+                                                        Semua Posyandu
                                                     </span>
                                                     {filters.posyandu_id === '' && (
                                                         <Check className="w-4 h-4 text-blue-600" />
@@ -290,7 +287,7 @@ export default function ChildrenMonitoring() {
                             </div>
                         </div>
 
-                        <div className="col-span-1">
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Status Gizi
                             </label>
@@ -300,10 +297,10 @@ export default function ChildrenMonitoring() {
                                     onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                 >
-                                    <span className="text-gray-900 truncate text-sm">
-                                        {statusOptions.find(opt => opt.value === filters.nutritional_status)?.label || "Semua"}
+                                    <span className="text-gray-900 truncate">
+                                        {statusOptions.find(opt => opt.value === filters.nutritional_status)?.label || "Semua Status"}
                                     </span>
-                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isStatusDropdownOpen ? "rotate-180" : ""}`} />
+                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isStatusDropdownOpen ? "rotate-180" : ""}`} />
                                 </button>
 
                                 <AnimatePresence>
@@ -340,14 +337,13 @@ export default function ChildrenMonitoring() {
                             </div>
                         </div>
 
-                        <div className="col-span-2 md:col-span-1 flex items-end">
+                        <div className="flex items-end gap-2">
                             <button
                                 onClick={handleClearFilters}
-                                className="w-full md:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                                className="p-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                 title="Clear Filters"
                             >
                                 <X className="w-5 h-5" />
-                                <span className="md:hidden text-sm font-medium">Reset Filter</span>
                             </button>
                         </div>
                     </div>
@@ -366,70 +362,8 @@ export default function ChildrenMonitoring() {
                     </div>
                 )}
 
-                {/* Mobile View (Cards) */}
-                <div className="md:hidden flex flex-col gap-4">
-                    {children.length === 0 ? (
-                        <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Baby className="w-8 h-8 text-gray-300" />
-                            </div>
-                            <h3 className="text-lg font-medium text-gray-900">Tidak ada data anak</h3>
-                            <p className="text-gray-500 text-sm mt-1">Belum ada data yang tersedia.</p>
-                        </div>
-                    ) : (
-                        children.map((child, index) => (
-                            <motion.div
-                                key={child.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05, duration: 0.3 }}
-                                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-4"
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${child.gender === 'L' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'}`}>
-                                            <Baby className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-900">{child.full_name}</h3>
-                                            <p className="text-xs text-gray-500">{child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} • {child.age_months ? formatAge(child.age_months) : '-'}</p>
-                                        </div>
-                                    </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(child.latest_weighing?.nutritional_status)}`}>
-                                        {getStatusLabel(child.latest_weighing?.nutritional_status)}
-                                    </span>
-                                </div>
-
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    {child.parent && (
-                                        <div className="flex items-center gap-2">
-                                            <User className="w-4 h-4 text-gray-400" />
-                                            <span className="font-medium text-gray-900">{child.parent.name}</span>
-                                        </div>
-                                    )}
-                                    {child.posyandu && (
-                                        <div className="flex items-center gap-2">
-                                            <Building2 className="w-4 h-4 text-gray-400" />
-                                            <span className="font-medium text-gray-900">{child.posyandu.name}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="pt-3 border-t border-gray-100">
-                                    <button
-                                        onClick={() => handleViewDetail(child.id)}
-                                        className="w-full py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
-                                    >
-                                        Lihat Detail
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))
-                    )}
-                </div>
-
                 {/* Table */}
-                <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -533,8 +467,6 @@ export default function ChildrenMonitoring() {
 
 // Child Detail Modal
 function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
-    const controls = useDragControls();
-
     // Helper for date formatting
     const formatDate = (dateString) => {
         if (!dateString) return '-';
@@ -546,7 +478,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -556,36 +488,17 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
             />
 
             <motion.div
-                drag="y"
-                dragControls={controls}
-                dragListener={false}
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0, bottom: 0.2 }}
-                onDragEnd={(event, info) => {
-                    if (info.offset.y > 100) {
-                        onClose();
-                    }
-                }}
-                initial={{ opacity: 0, y: "100%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full md:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
             >
-                {/* Drag Handle */}
-                <div
-                    className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1 bg-white z-10"
-                    onPointerDown={(e) => controls.start(e)}
-                >
-                    <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                </div>
-
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
                     <h2 className="text-xl font-bold text-gray-800">Detail Anak</h2>
                     <button
                         onClick={onClose}
-                        className="hidden md:flex p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
                         <X className="w-5 h-5 text-gray-500" />
                     </button>
@@ -717,7 +630,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                 <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm w-full md:w-auto"
+                        className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm"
                     >
                         Tutup
                     </button>

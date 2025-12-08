@@ -34,6 +34,12 @@ export default function DataAnakDetail() {
     const [activeTab, setActiveTab] = useState('history'); // history, meals, immunization
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+    // Pagination states for each tab
+    const ITEMS_PER_PAGE = 5;
+    const [historyPage, setHistoryPage] = useState(1);
+    const [mealsPage, setMealsPage] = useState(1);
+    const [immunizationPage, setImmunizationPage] = useState(1);
+
     useEffect(() => {
         if (id) {
             fetchChildDetail(id);
@@ -80,6 +86,91 @@ export default function DataAnakDetail() {
     const handleEditSuccess = (message) => {
         fetchChildDetail(id);
         // Optional: Show success message
+    };
+
+    // Pagination helper function
+    const paginate = (items, page, perPage) => {
+        if (!items || items.length === 0) return { items: [], totalPages: 0 };
+        const totalPages = Math.ceil(items.length / perPage);
+        const start = (page - 1) * perPage;
+        const end = start + perPage;
+        return {
+            items: items.slice(start, end),
+            totalPages,
+            total: items.length,
+        };
+    };
+
+    // Pagination UI Component
+    const PaginationUI = ({ currentPage, totalPages, total, onPageChange, label }) => {
+        if (total === 0) return null;
+
+        return (
+            <div className="flex flex-col justify-center items-center gap-3 mt-6 pt-6 border-t border-gray-100">
+                {/* Navigation Buttons - Only show if more than 1 page */}
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm disabled:hover:bg-white"
+                        >
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {[...Array(totalPages)].map((_, index) => {
+                                const pageNum = index + 1;
+                                const isCurrentPage = pageNum === currentPage;
+
+                                // Show first page, last page, current page, and pages around current
+                                const showPage =
+                                    pageNum === 1 ||
+                                    pageNum === totalPages ||
+                                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1);
+
+                                if (!showPage) {
+                                    if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                                        return <span key={pageNum} className="px-1 text-gray-400 text-sm">...</span>;
+                                    }
+                                    return null;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => onPageChange(pageNum)}
+                                        className={`min-w-[32px] h-8 rounded-lg text-sm font-medium transition-all ${isCurrentPage
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-sm disabled:hover:bg-white"
+                        >
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+
+                {/* Page Info - Always Visible */}
+                <div className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
+                    Halaman {currentPage} dari {totalPages || 1} • Total: <span className="font-bold text-gray-700">{total}</span> {label}
+                </div>
+            </div>
+        );
     };
 
     // Loading state
@@ -338,264 +429,269 @@ export default function DataAnakDetail() {
                                 </div>
                             </div>
                         )}
-                        {activeTab === 'history' && (
-                            <div className="p-5 md:p-6">
-                                <div className="flex justify-between items-center mb-4 md:mb-6">
-                                    <h3 className="text-lg font-bold text-gray-900">Riwayat Pertumbuhan</h3>
-                                </div>
+                        {activeTab === 'history' && (() => {
+                            const historyPagination = paginate(childData.weighing_logs, historyPage, ITEMS_PER_PAGE);
+                            const paginatedLogs = historyPagination.items;
 
-                                {childData.weighing_logs.length === 0 ? (
-                                    <EmptyState message="Belum ada data penimbangan" />
-                                ) : (
-                                    <>
-                                        {/* Mobile View (Cards) */}
-                                        <div className="md:hidden flex flex-col gap-4">
-                                            {childData.weighing_logs.map((log) => (
-                                                <div key={log.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <p className="text-sm font-bold text-gray-900">
-                                                                {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                            </p>
-                                                            <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(log.nutritional_status)}`}>
-                                                                {getStatusLabel(log.nutritional_status)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                            return (
+                                <div className="p-5 md:p-6">
+                                    <div className="flex justify-between items-center mb-4 md:mb-6">
+                                        <h3 className="text-lg font-bold text-gray-900">Riwayat Pertumbuhan</h3>
+                                    </div>
 
-                                                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-gray-200/50">
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Berat</p>
-                                                            <p className="font-semibold text-gray-900">{log.weight_kg} kg</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tinggi</p>
-                                                            <p className="font-semibold text-gray-900">{log.height_cm} cm</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Lila</p>
-                                                            <p className="font-semibold text-gray-900">{log.muac_cm ? `${log.muac_cm} cm` : '-'}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div>
-                                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Z-Score</p>
-                                                        <div className="flex gap-3 text-xs font-mono bg-white p-2 rounded-lg border border-gray-100">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-gray-400 text-[10px]">HFA</span>
-                                                                <span className={log.zscore_hfa < -2 || log.zscore_hfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
-                                                                    {log.zscore_hfa ? Number(log.zscore_hfa).toFixed(2) : '-'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="w-px bg-gray-100"></div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-gray-400 text-[10px]">WFA</span>
-                                                                <span className={log.zscore_wfa < -2 || log.zscore_wfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
-                                                                    {log.zscore_wfa ? Number(log.zscore_wfa).toFixed(2) : '-'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="w-px bg-gray-100"></div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-gray-400 text-[10px]">WFH</span>
-                                                                <span className={log.zscore_wfh < -2 || log.zscore_wfh > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
-                                                                    {log.zscore_wfh ? Number(log.zscore_wfh).toFixed(2) : '-'}
+                                    {childData.weighing_logs.length === 0 ? (
+                                        <EmptyState message="Belum ada data penimbangan" />
+                                    ) : (
+                                        <>
+                                            {/* Mobile View (Cards) */}
+                                            <div className="md:hidden flex flex-col gap-4">
+                                                {paginatedLogs.map((log) => (
+                                                    <div key={log.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <p className="text-sm font-bold text-gray-900">
+                                                                    {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                </p>
+                                                                <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(log.nutritional_status)}`}>
+                                                                    {getStatusLabel(log.nutritional_status)}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
 
-                                        {/* Desktop View (Table) */}
-                                        <div className="hidden md:block overflow-x-auto no-scrollbar">
-                                            <table className="w-full">
-                                                <thead>
-                                                    <tr className="border-b border-gray-100">
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ANAK</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TANGGAL</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">BERAT</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">TINGGI</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LILA</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">LK</th>
-                                                        <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">CATATAN</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-50">
-                                                    {childData.weighing_logs.map((log) => (
-                                                        <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-4 px-4">
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-sm font-bold text-gray-900">{childData.full_name}</span>
-                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border w-fit ${getStatusColor(log.nutritional_status)}`}>
+                                                        <div className="grid grid-cols-3 gap-2 py-2 border-y border-gray-200/50">
+                                                            <div>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Berat</p>
+                                                                <p className="font-semibold text-gray-900">{log.weight_kg} kg</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tinggi</p>
+                                                                <p className="font-semibold text-gray-900">{log.height_cm} cm</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Lila</p>
+                                                                <p className="font-semibold text-gray-900">{log.muac_cm ? `${log.muac_cm} cm` : '-'}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Z-Score</p>
+                                                            <div className="flex gap-3 text-xs font-mono bg-white p-2 rounded-lg border border-gray-100">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-gray-400 text-[10px]">HFA</span>
+                                                                    <span className={log.zscore_hfa < -2 || log.zscore_hfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
+                                                                        {log.zscore_hfa ? Number(log.zscore_hfa).toFixed(2) : '-'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="w-px bg-gray-100"></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-gray-400 text-[10px]">WFA</span>
+                                                                    <span className={log.zscore_wfa < -2 || log.zscore_wfa > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
+                                                                        {log.zscore_wfa ? Number(log.zscore_wfa).toFixed(2) : '-'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="w-px bg-gray-100"></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-gray-400 text-[10px]">WFH</span>
+                                                                    <span className={log.zscore_wfh < -2 || log.zscore_wfh > 2 ? 'text-red-500 font-bold' : 'text-gray-700'}>
+                                                                        {log.zscore_wfh ? Number(log.zscore_wfh).toFixed(2) : '-'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Desktop View (Table) */}
+                                            <div className="hidden md:block overflow-x-auto no-scrollbar">
+                                                <table className="w-full">
+                                                    <thead>
+                                                        <tr className="border-b border-gray-100">
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tanggal</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Berat</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tinggi</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Lingkar Lengan</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status Gizi</th>
+                                                            <th className="text-left py-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Z-Score</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-50">
+                                                        {paginatedLogs.map((log) => (
+                                                            <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                                                                <td className="py-4 px-4 text-sm font-medium text-gray-900">
+                                                                    {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                </td>
+                                                                <td className="py-4 px-4 text-sm text-gray-600">{log.weight_kg} kg</td>
+                                                                <td className="py-4 px-4 text-sm text-gray-600">{log.height_cm} cm</td>
+                                                                <td className="py-4 px-4 text-sm text-gray-600">{log.muac_cm ? `${log.muac_cm} cm` : '-'}</td>
+                                                                <td className="py-4 px-4">
+                                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(log.nutritional_status)}`}>
                                                                         {getStatusLabel(log.nutritional_status)}
                                                                     </span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-sm font-bold text-gray-900">
-                                                                        {new Date(log.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                </td>
+                                                                <td className="py-4 px-4 text-sm text-gray-500 font-mono">
+                                                                    <div className="flex flex-col gap-0.5 text-xs">
+                                                                        <span>HFA: {log.zscore_hfa ? Number(log.zscore_hfa).toFixed(2) : '-'}</span>
+                                                                        <span>WFA: {log.zscore_wfa ? Number(log.zscore_wfa).toFixed(2) : '-'}</span>
+                                                                        <span>WFH: {log.zscore_wfh ? Number(log.zscore_wfh).toFixed(2) : '-'}</span>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={historyPage}
+                                                totalPages={historyPagination.totalPages}
+                                                total={historyPagination.total}
+                                                onPageChange={setHistoryPage}
+                                                label="penimbangan"
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })()}
+
+                        {activeTab === 'meals' && (() => {
+                            const mealsPagination = paginate(childData.meal_logs, mealsPage, ITEMS_PER_PAGE);
+                            const paginatedMeals = mealsPagination.items;
+
+                            return (
+                                <div className="p-5 md:p-6">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-6">Log Makanan Terakhir</h3>
+                                    {(!childData.meal_logs || childData.meal_logs.length === 0) ? (
+                                        <EmptyState message="Belum ada log makanan" />
+                                    ) : (
+                                        <>
+                                            <div className="relative">
+                                                {paginatedMeals.map((log, index) => (
+                                                    <div key={log.id} className="relative pl-8 pb-8 last:pb-0">
+                                                        {/* Timeline Line */}
+                                                        {index !== paginatedMeals.length - 1 && (
+                                                            <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-gray-100" />
+                                                        )}
+
+                                                        {/* Dot */}
+                                                        <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 z-10">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                                        </div>
+
+                                                        {/* Content Card */}
+                                                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-blue-200 transition-colors">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <span className="text-sm font-bold text-gray-900">
+                                                                    {new Date(log.eaten_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                </span>
+                                                                {log.time_of_day && (
+                                                                    <span className="px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-500 border border-gray-200">
+                                                                        {log.time_of_day}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-500">
-                                                                        {new Date(log.measured_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <span className="text-sm font-bold text-gray-900">{log.weight_kg}</span>
-                                                                <span className="text-xs text-gray-500 ml-1">kg</span>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <span className="text-sm font-bold text-gray-900">{log.height_cm}</span>
-                                                                <span className="text-xs text-gray-500 ml-1">cm</span>
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                {log.muac_cm ? (
-                                                                    <>
-                                                                        <span className="text-sm font-bold text-gray-900">{log.muac_cm}</span>
-                                                                        <span className="text-xs text-gray-500 ml-1">cm</span>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-gray-400">-</span>
                                                                 )}
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                {log.head_circumference_cm ? (
-                                                                    <>
-                                                                        <span className="text-sm font-bold text-gray-900">{log.head_circumference_cm}</span>
-                                                                        <span className="text-xs text-gray-500 ml-1">cm</span>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-gray-400">-</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="py-4 px-4">
-                                                                <div className="flex items-center gap-2 text-gray-500">
-                                                                    {log.notes ? (
-                                                                        <>
-                                                                            <FileText className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                                            <span className="text-xs truncate max-w-[150px]">{log.notes}</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <span className="text-gray-300">-</span>
+                                                            </div>
+                                                            <p className="text-gray-700 font-medium mb-2">{log.description}</p>
+                                                            {(log.ingredients || log.source) && (
+                                                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200/50">
+                                                                    {log.ingredients && (
+                                                                        <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                                                                            Bahan: {log.ingredients}
+                                                                        </span>
+                                                                    )}
+                                                                    {log.source && (
+                                                                        <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                                                                            Sumber: {log.source}
+                                                                        </span>
                                                                     )}
                                                                 </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
 
-                        {activeTab === 'meals' && (
-                            <div className="p-5 md:p-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6">Log Makanan Terakhir</h3>
-                                {(!childData.meal_logs || childData.meal_logs.length === 0) ? (
-                                    <EmptyState message="Belum ada log makanan" />
-                                ) : (
-                                    <div className="relative">
-                                        {childData.meal_logs.map((log, index) => (
-                                            <div key={log.id} className="relative pl-8 pb-8 last:pb-0">
-                                                {/* Timeline Line */}
-                                                {index !== childData.meal_logs.length - 1 && (
-                                                    <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-gray-100" />
-                                                )}
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={mealsPage}
+                                                totalPages={mealsPagination.totalPages}
+                                                total={mealsPagination.total}
+                                                onPageChange={setMealsPage}
+                                                label="log makanan"
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })()}
 
-                                                {/* Dot */}
-                                                <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 z-10">
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                                                </div>
+                        {activeTab === 'immunization' && (() => {
+                            const immunizationPagination = paginate(childData.immunization_schedules, immunizationPage, ITEMS_PER_PAGE);
+                            const paginatedSchedules = immunizationPagination.items;
 
-                                                {/* Content Card */}
-                                                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 hover:border-blue-200 transition-colors">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className="text-sm font-bold text-gray-900">
-                                                            {new Date(log.eaten_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                        </span>
-                                                        {log.time_of_day && (
-                                                            <span className="px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-500 border border-gray-200">
-                                                                {log.time_of_day}
+                            return (
+                                <div className="p-5 md:p-6">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-6">Jadwal Imunisasi</h3>
+                                    {(!childData.immunization_schedules || childData.immunization_schedules.length === 0) ? (
+                                        <EmptyState message="Belum ada jadwal imunisasi" />
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {paginatedSchedules.map((schedule) => (
+                                                    <div
+                                                        key={schedule.id}
+                                                        className={`p-4 rounded-2xl border transition-all ${schedule.completed_at
+                                                            ? 'bg-green-50/50 border-green-100'
+                                                            : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-sm'
+                                                            }`}
+                                                    >
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`p-2 rounded-full ${schedule.completed_at ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                                    <Syringe className="w-4 h-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-bold text-gray-900">{schedule.title}</h4>
+                                                                    <p className="text-xs text-gray-500">{schedule.type}</p>
+                                                                </div>
+                                                            </div>
+                                                            {schedule.completed_at ? (
+                                                                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                                            ) : (
+                                                                <Clock className="w-5 h-5 text-gray-300" />
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <Calendar className="w-4 h-4 text-gray-400" />
+                                                            <span className={schedule.completed_at ? 'text-green-700 font-medium' : 'text-gray-600'}>
+                                                                {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                             </span>
+                                                        </div>
+
+                                                        {schedule.completed_at && (
+                                                            <div className="mt-2 text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-lg w-fit">
+                                                                Selesai: {new Date(schedule.completed_at).toLocaleDateString('id-ID')}
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-700 font-medium mb-2">{log.description}</p>
-                                                    {(log.ingredients || log.source) && (
-                                                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200/50">
-                                                            {log.ingredients && (
-                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
-                                                                    Bahan: {log.ingredients}
-                                                                </span>
-                                                            )}
-                                                            {log.source && (
-                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
-                                                                    Sumber: {log.source}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
-                        {activeTab === 'immunization' && (
-                            <div className="p-5 md:p-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6">Jadwal Imunisasi</h3>
-                                {(!childData.immunization_schedules || childData.immunization_schedules.length === 0) ? (
-                                    <EmptyState message="Belum ada jadwal imunisasi" />
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {childData.immunization_schedules.map((schedule) => (
-                                            <div
-                                                key={schedule.id}
-                                                className={`p-4 rounded-2xl border transition-all ${schedule.completed_at
-                                                    ? 'bg-green-50/50 border-green-100'
-                                                    : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-sm'
-                                                    }`}
-                                            >
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`p-2 rounded-full ${schedule.completed_at ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                            <Syringe className="w-4 h-4" />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-gray-900">{schedule.title}</h4>
-                                                            <p className="text-xs text-gray-500">{schedule.type}</p>
-                                                        </div>
-                                                    </div>
-                                                    {schedule.completed_at ? (
-                                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                                    ) : (
-                                                        <Clock className="w-5 h-5 text-gray-300" />
-                                                    )}
-                                                </div>
-
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                                    <span className={schedule.completed_at ? 'text-green-700 font-medium' : 'text-gray-600'}>
-                                                        {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                    </span>
-                                                </div>
-
-                                                {schedule.completed_at && (
-                                                    <div className="mt-2 text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-lg w-fit">
-                                                        Selesai: {new Date(schedule.completed_at).toLocaleDateString('id-ID')}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={immunizationPage}
+                                                totalPages={immunizationPagination.totalPages}
+                                                total={immunizationPagination.total}
+                                                onPageChange={setImmunizationPage}
+                                                label="jadwal imunisasi"
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

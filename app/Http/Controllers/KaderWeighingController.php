@@ -64,20 +64,12 @@ class KaderWeighingController extends Controller
         $validated = $request->validate([
             'weighings' => ['required', 'array', 'min:1'],
             'weighings.*.child_id' => ['required', 'integer', 'exists:children,id'],
-            'weighings.*.measured_at' => ['required', 'date', 'before_or_equal:today'],
-            'weighings.*.weight_kg' => ['required', 'numeric', 'min:1', 'max:30'],
-            'weighings.*.height_cm' => ['required', 'numeric', 'min:40', 'max:130'],
-            'weighings.*.muac_cm' => ['nullable', 'numeric', 'min:8', 'max:25'],
-            'weighings.*.head_circumference_cm' => ['nullable', 'numeric', 'min:30', 'max:60'],
+            'weighings.*.measured_at' => ['required', 'date'],
+            'weighings.*.weight_kg' => ['required', 'numeric', 'min:0', 'max:100'],
+            'weighings.*.height_cm' => ['required', 'numeric', 'min:0', 'max:200'],
+            'weighings.*.muac_cm' => ['nullable', 'numeric', 'min:0', 'max:50'],
+            'weighings.*.head_circumference_cm' => ['nullable', 'numeric', 'min:0', 'max:60'],
             'weighings.*.notes' => ['nullable', 'string', 'max:500'],
-        ], [
-            'weighings.*.measured_at.before_or_equal' => 'Tanggal penimbangan tidak boleh di masa depan.',
-            'weighings.*.weight_kg.min' => 'Berat badan minimal 1 kg.',
-            'weighings.*.weight_kg.max' => 'Berat badan maksimal 30 kg (untuk anak 0-5 tahun).',
-            'weighings.*.height_cm.min' => 'Tinggi badan minimal 40 cm.',
-            'weighings.*.height_cm.max' => 'Tinggi badan maksimal 130 cm (untuk anak 0-5 tahun).',
-            'weighings.*.muac_cm.min' => 'Lingkar lengan minimal 8 cm.',
-            'weighings.*.muac_cm.max' => 'Lingkar lengan maksimal 25 cm.',
         ]);
 
         // Validate all children belong to kader's posyandu
@@ -93,40 +85,10 @@ class KaderWeighingController extends Controller
         }
 
         $savedWeighings = [];
-        $errors = [];
 
         DB::beginTransaction();
         try {
-            foreach ($validated['weighings'] as $index => $weighingData) {
-                $child = Child::find($weighingData['child_id']);
-                
-                // Validate measured_at is not before birth_date
-                if ($child && $weighingData['measured_at'] < $child->birth_date) {
-                    $errors[] = "Anak '{$child->full_name}': Tanggal penimbangan tidak boleh sebelum tanggal lahir.";
-                    continue;
-                }
-
-                // Check for duplicate weighing on same date
-                $existingWeighing = WeighingLog::where('child_id', $weighingData['child_id'])
-                    ->whereDate('measured_at', $weighingData['measured_at'])
-                    ->first();
-
-                if ($existingWeighing) {
-                    $errors[] = "Anak '{$child->full_name}': Sudah ada data penimbangan pada tanggal " . date('d/m/Y', strtotime($weighingData['measured_at'])) . ". Gunakan fitur edit jika ingin memperbarui.";
-                    continue;
-                }
-
-                // Additional age-based validation
-                $birthDate = new \Carbon\Carbon($child->birth_date);
-                $measuredDate = new \Carbon\Carbon($weighingData['measured_at']);
-                $ageInMonths = $birthDate->diffInMonths($measuredDate);
-
-                // Validate weight based on age
-                if ($ageInMonths < 12 && $weighingData['weight_kg'] > 15) {
-                    $errors[] = "Anak '{$child->full_name}': Berat {$weighingData['weight_kg']} kg terlalu tinggi untuk usia {$ageInMonths} bulan. Periksa kembali.";
-                    continue;
-                }
-
+            foreach ($validated['weighings'] as $weighingData) {
                 // Z-scores and nutritional_status will be auto-calculated by model event
                 $weighing = WeighingLog::create([
                     'child_id' => $weighingData['child_id'],
@@ -141,26 +103,11 @@ class KaderWeighingController extends Controller
                 $savedWeighings[] = $weighing;
             }
 
-            // If there are errors and no successful saves, rollback
-            if (count($errors) > 0 && count($savedWeighings) === 0) {
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'Tidak ada data yang berhasil disimpan.',
-                    'errors' => $errors,
-                ], 422);
-            }
-
             DB::commit();
-
-            $message = count($savedWeighings) . ' data penimbangan berhasil disimpan.';
-            if (count($errors) > 0) {
-                $message .= ' ' . count($errors) . ' data dilewati karena error.';
-            }
 
             return response()->json([
                 'data' => $savedWeighings,
-                'message' => $message,
-                'warnings' => count($errors) > 0 ? $errors : null,
+                'message' => count($savedWeighings) . ' data penimbangan berhasil disimpan.',
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();

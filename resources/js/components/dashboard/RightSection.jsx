@@ -47,7 +47,41 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
 
     return (
         <div className="flex flex-col gap-10">
-
+            {/* User Profile Mini Header (Desktop Right Sidebar) */}
+            <div className="hidden xl:flex items-center justify-end gap-4">
+                <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-4 outline-none cursor-pointer">
+                        <div className="text-right">
+                            <p className="text-sm font-bold text-gray-800">{user?.name}</p>
+                            <p className="text-xs text-gray-500 capitalize">{user?.role || 'Orang Tua'}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                            <img
+                                src={user?.profile_photo_url || `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer" onClick={openProfileModal}>
+                            <Icon icon="lucide:user" className="mr-2 h-4 w-4" />
+                            <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer" onClick={openSettingsModal}>
+                            <Icon icon="lucide:settings" className="mr-2 h-4 w-4" />
+                            <span>Setting</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50" onClick={handleLogoutClick}>
+                            <Icon icon="lucide:log-out" className="mr-2 h-4 w-4" />
+                            <span>Logout</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
 
             <div className="shrink-0">
                 <div className="flex items-center justify-between mb-4">

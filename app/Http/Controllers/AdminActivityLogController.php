@@ -38,15 +38,10 @@ class AdminActivityLogController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Pagination with default per_page of 50
-        $perPage = $request->get('per_page', 50);
-        $perPage = min((int)$perPage, 500); // Cap at 500 max
-
         $logs = $query->orderBy('created_at', 'desc')
-            ->paginate($perPage);
-
-        return response()->json([
-            'data' => $logs->map(function ($log) {
+            ->limit(100)
+            ->get()
+            ->map(function ($log) {
                 return [
                     'id' => $log->id,
                     'user' => $log->user ? [
@@ -58,29 +53,20 @@ class AdminActivityLogController extends Controller
                     'model_id' => $log->model_id,
                     'description' => $log->description,
                     'ip_address' => $log->ip_address,
-                    'metadata' => $log->metadata,
                     'created_at' => $log->created_at->format('Y-m-d H:i:s'),
                 ];
-            }),
-            'current_page' => $logs->currentPage(),
-            'last_page' => $logs->lastPage(),
-            'per_page' => $logs->perPage(),
-            'total' => $logs->total(),
-            'from' => $logs->firstItem(),
-            'to' => $logs->lastItem(),
+            });
+
+        return response()->json([
+            'data' => $logs,
         ], 200);
     }
 
     /**
      * Create activity log (helper method for other controllers)
      */
-    public static function log($action, $description, $model = null, $modelId = null, $metadata = [])
+    public static function log($action, $description, $model = null, $modelId = null)
     {
-        // Capture user-agent if not already in metadata
-        if (!isset($metadata['user_agent'])) {
-            $metadata['user_agent'] = request()->header('User-Agent');
-        }
-
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => $action,
@@ -88,7 +74,6 @@ class AdminActivityLogController extends Controller
             'model_id' => $modelId,
             'description' => $description,
             'ip_address' => request()->ip(),
-            'metadata' => !empty($metadata) ? json_encode($metadata) : null,
         ]);
     }
 }

@@ -136,6 +136,7 @@ export default function HistoryPage() {
 
   const handlePageChange = (page) => {
     fetchHistory(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const formatDate = (dateString) => {
@@ -394,29 +395,75 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {/* Pagination */}
-        {pagination.last_page > 1 && (
-          <div className="py-6 flex justify-center">
-            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-100 shadow-sm">
-              <button
-                onClick={() => handlePageChange(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-              >
-                ←
-              </button>
+        {/* Pagination & Info */}
+        {historyData.length > 0 && (
+          <div className="flex flex-col justify-center items-center gap-4 py-8">
+            {/* Navigation Buttons - Only show if more than 1 page */}
+            {pagination.last_page > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(pagination.current_page - 1)}
+                  disabled={pagination.current_page === 1}
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
 
-              <span className="px-3 text-sm font-medium text-gray-600">
-                Halaman {pagination.current_page} dari {pagination.last_page}
-              </span>
+                <div className="flex items-center gap-2">
+                  {[...Array(pagination.last_page)].map((_, index) => {
+                    const pageNum = index + 1;
+                    const isCurrentPage = pageNum === pagination.current_page;
 
-              <button
-                onClick={() => handlePageChange(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-              >
-                →
-              </button>
+                    // Show first page, last page, current page, and pages around current
+                    const showPage =
+                      pageNum === 1 ||
+                      pageNum === pagination.last_page ||
+                      (pageNum >= pagination.current_page - 1 && pageNum <= pagination.current_page + 1);
+
+                    if (!showPage) {
+                      // Show ellipsis
+                      if (pageNum === pagination.current_page - 2 || pageNum === pagination.current_page + 2) {
+                        return (
+                          <span key={pageNum} className="px-2 text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`min-w-[40px] h-10 rounded-xl font-medium transition-all ${isCurrentPage
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                          }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(pagination.current_page + 1)}
+                  disabled={pagination.current_page === pagination.last_page}
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Page Info - Always Visible */}
+            <div className="text-sm text-gray-500 bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
+              Halaman {pagination.current_page} dari {pagination.last_page} • Total: <span className="font-bold text-gray-900">{pagination.total}</span> riwayat
             </div>
           </div>
         )}

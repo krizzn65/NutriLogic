@@ -72,27 +72,12 @@ class AdminReportController extends Controller
         $type = $request->input('type', 'summary'); // summary, children, weighings
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        $posyanduId = $request->input('posyandu_id');
-
-        // Log export action
-        AdminActivityLogController::log(
-            'export',
-            "Admin mengexport laporan {$type}",
-            'Report',
-            null,
-            [
-                'export_type' => $type,
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-                'posyandu_id' => $posyanduId,
-            ]
-        );
 
         switch ($type) {
             case 'children':
-                return $this->exportChildren($posyanduId);
+                return $this->exportChildren();
             case 'weighings':
-                return $this->exportWeighings($dateFrom, $dateTo, $posyanduId);
+                return $this->exportWeighings($dateFrom, $dateTo);
             default:
                 return $this->exportSummary();
         }
@@ -117,13 +102,9 @@ class AdminReportController extends Controller
 
         $query = WeighingLog::select('child_id', 'nutritional_status')
             ->whereIn('id', function ($query) {
-                $query->select('wl.id')
-                    ->from('weighing_logs as wl')
-                    ->join(DB::raw('(SELECT child_id, MAX(measured_at) as max_date FROM weighing_logs GROUP BY child_id) as latest'),
-                        function ($join) {
-                            $join->on('wl.child_id', '=', 'latest.child_id')
-                                ->on('wl.measured_at', '=', 'latest.max_date');
-                        });
+                $query->select(DB::raw('MAX(id)'))
+                    ->from('weighing_logs')
+                    ->groupBy('child_id');
             });
 
         if ($posyanduId) {
@@ -213,15 +194,9 @@ class AdminReportController extends Controller
     /**
      * Export children data as CSV
      */
-    private function exportChildren($posyanduId = null)
+    private function exportChildren()
     {
-        $query = Child::with(['parent', 'posyandu']);
-
-        if ($posyanduId) {
-            $query->where('posyandu_id', $posyanduId);
-        }
-
-        $children = $query->get();
+        $children = Child::with(['parent', 'posyandu'])->get();
 
         $csvData = "ID,Nama Anak,Jenis Kelamin,Tanggal Lahir,Nama Orang Tua,Posyandu\n";
 
@@ -231,7 +206,7 @@ class AdminReportController extends Controller
                 $child->id,
                 $this->escapeCsv($child->full_name),
                 $child->gender === 'L' ? 'Laki-laki' : 'Perempuan',
-                $child->birth_date ? $child->birth_date->format('Y-m-d') : '-',
+                $child->date_of_birth ?? '-',
                 $this->escapeCsv($child->parent->name ?? '-'),
                 $this->escapeCsv($child->posyandu->name ?? '-')
             );
@@ -245,18 +220,12 @@ class AdminReportController extends Controller
     /**
      * Export weighings data as CSV
      */
-    private function exportWeighings($dateFrom, $dateTo, $posyanduId = null)
+    private function exportWeighings($dateFrom, $dateTo)
     {
         $query = WeighingLog::with(['child.parent', 'child.posyandu']);
 
         if ($dateFrom && $dateTo) {
             $query->whereBetween('measured_at', [$dateFrom, $dateTo]);
-        }
-
-        if ($posyanduId) {
-            $query->whereHas('child', function ($q) use ($posyanduId) {
-                $q->where('posyandu_id', $posyanduId);
-            });
         }
 
         $weighings = $query->orderBy('measured_at', 'desc')->get();

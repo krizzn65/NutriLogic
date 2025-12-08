@@ -132,7 +132,7 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
                     )}
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="p-4 w-auto bg-white shadow-xl border border-gray-100 rounded-xl z-50" align="start">
+            <DropdownMenuContent className="p-4 w-auto bg-white shadow-xl border border-gray-100 rounded-xl" align="start">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-bold text-gray-800 capitalize">

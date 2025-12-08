@@ -16,14 +16,6 @@ export default function ActivityLogs() {
     const [error, setError] = useState(null);
     const [logs, setLogs] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
-    const [pagination, setPagination] = useState({
-        current_page: 1,
-        last_page: 1,
-        per_page: 50,
-        total: 0,
-        from: 0,
-        to: 0,
-    });
     const [filters, setFilters] = useState({
         action: '',
         model: '',
@@ -33,22 +25,19 @@ export default function ActivityLogs() {
     });
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [openDropdown, setOpenDropdown] = useState(null);
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
     const hasHydratedLogs = React.useRef(false);
     const activeLogsRequestId = React.useRef(0);
 
-    const fetchLogs = useCallback(async ({ forceRefresh = false, showLoader = false, page = 1 } = {}) => {
+    const fetchLogs = useCallback(async ({ forceRefresh = false, showLoader = false } = {}) => {
         const hasFilter = filters.action || filters.model || filters.user_id || filters.date_from || filters.date_to;
 
-        if (!hasFilter && !forceRefresh && page === 1) {
+        if (!hasFilter && !forceRefresh) {
             const cachedLogs = getCachedData('admin_logs');
             if (cachedLogs) {
-                setLogs(cachedLogs.data || []);
-                setPagination(cachedLogs.pagination || pagination);
+                setLogs(cachedLogs);
                 setLoading(false);
                 return;
             }
@@ -59,7 +48,7 @@ export default function ActivityLogs() {
         }
 
         setError(null);
-        const params = { page, per_page: pagination.per_page };
+        const params = {};
         if (filters.action) params.action = filters.action;
         if (filters.model) params.model = filters.model;
         if (filters.user_id) params.user_id = filters.user_id;
@@ -76,20 +65,10 @@ export default function ActivityLogs() {
             }
 
             const logsData = response.data?.data || [];
-            const paginationData = {
-                current_page: response.data?.current_page || 1,
-                last_page: response.data?.last_page || 1,
-                per_page: response.data?.per_page || 50,
-                total: response.data?.total || 0,
-                from: response.data?.from || 0,
-                to: response.data?.to || 0,
-            };
-
             setLogs(logsData);
-            setPagination(paginationData);
 
-            if (!hasFilter && page === 1) {
-                setCachedData('admin_logs', { data: logsData, pagination: paginationData }, 60);
+            if (!hasFilter) {
+                setCachedData('admin_logs', logsData, 60);
             }
 
             setLoading(false);
@@ -101,7 +80,7 @@ export default function ActivityLogs() {
             setError(err.response?.data?.message || 'Gagal memuat log aktivitas');
             setLoading(false);
         }
-    }, [filters, pagination.per_page, getCachedData, setCachedData]);
+    }, [filters, getCachedData, setCachedData]);
 
     // Fetch users for filter dropdown
     const fetchUsers = useCallback(async () => {
@@ -134,8 +113,7 @@ export default function ActivityLogs() {
 
         const cachedLogs = getCachedData('admin_logs');
         if (cachedLogs) {
-            setLogs(cachedLogs.data || []);
-            setPagination(cachedLogs.pagination || pagination);
+            setLogs(cachedLogs);
             setLoading(false);
             fetchLogs({ forceRefresh: true, showLoader: false });
         } else {
@@ -146,7 +124,7 @@ export default function ActivityLogs() {
     // Auto-fetch when filters change
     useEffect(() => {
         if (!hasHydratedLogs.current) return; // Skip initial render
-
+        
         const hasFilter = filters.action || filters.model || filters.user_id || filters.date_from || filters.date_to;
         if (hasFilter) {
             fetchLogs({ forceRefresh: true, showLoader: false });
@@ -172,23 +150,23 @@ export default function ActivityLogs() {
             alert('Tidak ada data untuk diexport');
             return;
         }
-
+        
         try {
             setIsExporting(true);
-
+            
             // Prepare data - ensure all required fields exist
             const validLogs = logs.filter(log => log && log.created_at);
-
+            
             if (validLogs.length === 0) {
                 throw new Error('Tidak ada data valid untuk diexport');
             }
-
+            
             // Export to Excel with current filters
             const result = await exportActivityLogsToExcel(validLogs, filters);
-
+            
             if (result && result.success) {
                 console.log(`✓ Export berhasil: ${result.filename}`);
-
+                
                 // Show success notification briefly
                 setTimeout(() => {
                     setIsExporting(false);
@@ -196,14 +174,14 @@ export default function ActivityLogs() {
             } else {
                 throw new Error('Export gagal tanpa pesan error');
             }
-
+            
         } catch (error) {
             console.error('Error exporting to Excel:', error);
-
+            
             // User-friendly error message
             const errorMessage = error.message || 'Terjadi kesalahan saat mengexport data';
             alert(`Gagal mengexport data:\n${errorMessage}\n\nSilakan coba lagi atau hubungi administrator.`);
-
+            
             setIsExporting(false);
         }
     };
@@ -266,84 +244,72 @@ export default function ActivityLogs() {
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
             <PageHeader title="Log Aktivitas" subtitle="Riwayat aktivitas pengguna sistem" />
-            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Filters & Controls */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-0 md:mb-4">
-                        <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="text-sm font-semibold text-gray-700 flex items-center gap-2 md:cursor-default"
-                        >
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                             <Filter className="w-4 h-4" />
-                            <span>Filter & Kontrol</span>
-                            <ChevronDown className={`w-4 h-4 md:hidden transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                            Filter & Kontrol
+                        </h3>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setAutoRefresh(!autoRefresh)}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${autoRefresh
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
-                                title="Auto Refresh"
                             >
                                 <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
-                                <span className="hidden md:inline">Auto Refresh {autoRefresh ? 'ON' : 'OFF'}</span>
+                                Auto Refresh {autoRefresh ? 'ON' : 'OFF'}
                             </button>
                             <button
                                 onClick={handleExportToExcel}
                                 disabled={logs.length === 0 || isExporting}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-                                title="Export Excel"
                             >
                                 {isExporting ? (
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                 ) : (
                                     <Download className="w-4 h-4" />
                                 )}
-                                <span className="hidden md:inline">{isExporting ? 'Exporting...' : 'Export Excel'}</span>
+                                {isExporting ? 'Exporting...' : 'Export Excel'}
                             </button>
                         </div>
                     </div>
 
-                    <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mt-4 md:mt-0 ${isFilterOpen ? 'block' : 'hidden md:grid'}`}>
-                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'action' ? 'z-50' : 'z-10'}`}>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="relative z-10">
                             <CustomDropdown
                                 label="Aksi"
                                 value={filters.action}
                                 options={actionOptions}
                                 onChange={(value) => setFilters({ ...filters, action: value })}
-                                isOpen={openDropdown === 'action'}
-                                onToggle={(val) => setOpenDropdown(val ? 'action' : null)}
                             />
                         </div>
 
-                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'model' ? 'z-50' : 'z-10'}`}>
+                        <div className="relative z-10">
                             <CustomDropdown
                                 label="Model"
                                 value={filters.model}
                                 options={modelOptions}
                                 onChange={(value) => setFilters({ ...filters, model: value })}
-                                isOpen={openDropdown === 'model'}
-                                onToggle={(val) => setOpenDropdown(val ? 'model' : null)}
                             />
                         </div>
 
-                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'user' ? 'z-50' : 'z-10'}`}>
+                        <div className="relative z-10">
                             <CustomDropdown
                                 label="User"
                                 value={filters.user_id}
                                 options={userOptions}
                                 onChange={(value) => setFilters({ ...filters, user_id: value })}
-                                isOpen={openDropdown === 'user'}
-                                onToggle={(val) => setOpenDropdown(val ? 'user' : null)}
                             />
                         </div>
 
                         <div className="relative z-10">
                             <CustomDatePicker
-                                label="Dari"
+                                label="Dari Tanggal"
                                 value={filters.date_from}
                                 onChange={(value) => setFilters({ ...filters, date_from: value })}
                             />
@@ -351,7 +317,7 @@ export default function ActivityLogs() {
 
                         <div className="relative z-10">
                             <CustomDatePicker
-                                label="Sampai"
+                                label="Sampai Tanggal"
                                 value={filters.date_to}
                                 onChange={(value) => setFilters({ ...filters, date_to: value })}
                             />
@@ -392,7 +358,7 @@ export default function ActivityLogs() {
                 )}
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {[
                         { label: 'Login', count: logs.filter(l => l.action === 'login').length, color: 'green' },
                         { label: 'Logout', count: logs.filter(l => l.action === 'logout').length, color: 'gray' },
@@ -413,56 +379,8 @@ export default function ActivityLogs() {
                     ))}
                 </div>
 
-                {/* Mobile View: Cards */}
-                <div className="md:hidden space-y-4">
-                    {logs.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200 p-4">
-                            {hasActiveFilters ? 'Tidak ada log yang sesuai dengan filter' : 'Belum ada log aktivitas'}
-                        </div>
-                    ) : (
-                        logs.map((log) => (
-                            <div key={log.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-gray-100 rounded-full">
-                                            <User className="w-4 h-4 text-gray-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-gray-900">{log.user?.name || 'System'}</p>
-                                            <p className="text-xs text-gray-500">
-                                                {new Date(log.created_at).toLocaleString('id-ID', {
-                                                    day: 'numeric',
-                                                    month: 'short',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
-                                        {log.action}
-                                    </span>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelColor(log.model)}`}>
-                                            {log.model || '-'}
-                                        </span>
-                                        <span className="text-gray-400 text-xs">•</span>
-                                        <span className="text-xs text-gray-500">{log.ip_address || '-'}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                        {log.description}
-                                    </p>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {/* Desktop View: Table */}
-                <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Table */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -488,114 +406,56 @@ export default function ActivityLogs() {
                                             key={log.id}
                                             className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                                         >
-                                            <td className="py-3 px-4 text-sm text-gray-600">
-                                                <div className="flex items-center gap-1">
-                                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                                    {new Date(log.created_at).toLocaleString('id-ID', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-1 text-sm text-gray-700">
-                                                    <User className="w-4 h-4 text-gray-400" />
-                                                    {log.user?.name || 'System'}
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
-                                                    {log.action}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModelColor(log.model)}`}>
-                                                    {log.model || '-'}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-gray-700">
-                                                {log.description}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-gray-500">
-                                                {log.ip_address || '-'}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Pagination Controls */}
-                {pagination.last_page > 1 && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="text-sm text-gray-600">
-                                Menampilkan <span className="font-medium">{pagination.from}</span> - <span className="font-medium">{pagination.to}</span> dari <span className="font-medium">{pagination.total}</span> log
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => fetchLogs({ forceRefresh: true, page: pagination.current_page - 1 })}
-                                    disabled={pagination.current_page === 1 || loading}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <div className="flex items-center gap-1">
-                                    {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
-                                        let pageNum;
-                                        if (pagination.last_page <= 5) {
-                                            pageNum = i + 1;
-                                        } else if (pagination.current_page <= 3) {
-                                            pageNum = i + 1;
-                                        } else if (pagination.current_page >= pagination.last_page - 2) {
-                                            pageNum = pagination.last_page - 4 + i;
-                                        } else {
-                                            pageNum = pagination.current_page - 2 + i;
-                                        }
-                                        
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => fetchLogs({ forceRefresh: true, page: pageNum })}
-                                                disabled={loading}
-                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                                    pagination.current_page === pageNum
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'border border-gray-300 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    onClick={() => fetchLogs({ forceRefresh: true, page: pagination.current_page + 1 })}
-                                    disabled={pagination.current_page === pagination.last_page || loading}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
+                                                <td className="py-3 px-4 text-sm text-gray-600">
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar className="w-4 h-4 text-gray-400" />
+                                                        {new Date(log.created_at).toLocaleString('id-ID', {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-1 text-sm text-gray-700">
+                                                        <User className="w-4 h-4 text-gray-400" />
+                                                        {log.user?.name || 'System'}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
+                                                        {log.action}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModelColor(log.model)}`}>
+                                                        {log.model || '-'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-700">
+                                                    {log.description}
+                                                </td>
+                                                <td className="py-3 px-4 text-sm text-gray-500">
+                                                    {log.ip_address || '-'}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
-                )}
-
-                {/* Info */}
+                    </div>                {/* Info */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                         <Activity className="w-5 h-5 text-blue-600 mt-0.5" />
                         <div className="text-sm text-blue-800">
-                            <strong>Catatan:</strong> Log aktivitas sistem dengan pagination (max 500 per halaman).
+                            <strong>Catatan:</strong> Halaman ini menampilkan maksimal 100 log aktivitas terbaru dari sistem.
                             Gunakan filter untuk mempersempit pencarian. Auto-refresh dapat diaktifkan untuk pemantauan real-time setiap 30 detik.
-                            {pagination.total > 0 && (
+                            {logs.length > 0 && (
                                 <div className="mt-2 text-blue-700">
-                                    Total <strong>{pagination.total}</strong> log aktivitas tersedia.
+                                    Menampilkan <strong>{logs.length}</strong> log aktivitas.
                                 </div>
                             )}
                         </div>
@@ -608,18 +468,19 @@ export default function ActivityLogs() {
 
 // Helper Components
 
-function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
+function CustomDropdown({ label, value, options, onChange }) {
+    const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                onToggle(false);
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen, onToggle]);
+    }, []);
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));
 
@@ -629,7 +490,7 @@ function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
                 {label}
             </label>
             <button
-                onClick={() => onToggle(!isOpen)}
+                onClick={() => setIsOpen(!isOpen)}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-left flex items-center justify-between hover:bg-gray-50 transition-colors text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
                 <span className="truncate">
@@ -653,7 +514,7 @@ function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
                                     key={option.value}
                                     onClick={() => {
                                         onChange(option.value);
-                                        onToggle(false);
+                                        setIsOpen(false);
                                     }}
                                     className="px-3 py-2 rounded-md hover:bg-blue-50 cursor-pointer flex items-center justify-between group transition-colors"
                                 >

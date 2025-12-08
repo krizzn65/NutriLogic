@@ -70,7 +70,11 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
             const day = String(today.getDate()).padStart(2, '0');
             const todayDate = `${year}-${month}-${day}`;
 
-            const todayLog = logs.find(log => log.date === todayDate);
+            // Find today's log - handle both "2025-12-07" and "2025-12-07T00:00:00.000000Z" formats
+            const todayLog = logs.find(log => {
+                const logDate = log.date?.split('T')[0]; // Extract YYYY-MM-DD part
+                return logDate === todayDate;
+            });
 
             if (todayLog) {
                 setStatus(todayLog.status);

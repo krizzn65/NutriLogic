@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { Building2, Plus, Edit2, Power, MapPin, Users, Baby } from "lucide-react";
-import { motion, AnimatePresence, useDragControls } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
 
@@ -13,11 +13,6 @@ export default function PosyanduManagement() {
     const [filterStatus, setFilterStatus] = useState("all");
     const [showModal, setShowModal] = useState(false);
     const [editingPosyandu, setEditingPosyandu] = useState(null);
-    const [confirmationModal, setConfirmationModal] = useState({
-        isOpen: false,
-        posyandu: null,
-        action: null // 'aktifkan' or 'nonaktifkan'
-    });
 
     // Data caching
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
@@ -152,27 +147,17 @@ export default function PosyanduManagement() {
         setShowModal(true);
     };
 
-    const handleToggleActive = (posyandu) => {
+    const handleToggleActive = async (posyandu) => {
         const action = posyandu.is_active ? 'nonaktifkan' : 'aktifkan';
-        setConfirmationModal({
-            isOpen: true,
-            posyandu,
-            action
-        });
-    };
-
-    const confirmToggle = async () => {
-        const { posyandu, action } = confirmationModal;
-        if (!posyandu) return;
+        if (!window.confirm(`Apakah Anda yakin ingin ${action} posyandu ${posyandu.name}?`)) {
+            return;
+        }
 
         // Optimistic update - update UI immediately
         const previousPosyandus = [...posyandus];
         setPosyandus(prev => prev.map(p =>
             p.id === posyandu.id ? { ...p, is_active: !p.is_active } : p
         ));
-
-        // Close modal immediately
-        setConfirmationModal({ isOpen: false, posyandu: null, action: null });
 
         try {
             await api.patch(`/admin/posyandus/${posyandu.id}/toggle-active`);
@@ -208,10 +193,10 @@ export default function PosyanduManagement() {
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
             <PageHeader title="Manajemen Posyandu" subtitle="Kelola data posyandu di sistem" />
 
-            <div className="flex-1 overflow-auto p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            <div className="flex-1 overflow-auto p-6 space-y-6">
 
                 {/* Filter Tabs with Add Button */}
-                <motion.div
+                <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
@@ -232,23 +217,23 @@ export default function PosyanduManagement() {
                             className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'active'
                                 ? 'text-blue-600 border-b-2 border-blue-600'
                                 : 'text-gray-600 hover:text-gray-800'
-                                }`}
-                        >
-                            Aktif
-                        </button>
-                        <button
-                            onClick={() => handleFilterChange('inactive')}
-                            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'inactive'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
-                        >
-                            Nonaktif
-                        </button>
+                            }`}
+                    >
+                        Aktif
+                    </button>
+                    <button
+                        onClick={() => handleFilterChange('inactive')}
+                        className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'inactive'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-600 hover:text-gray-800'
+                            }`}
+                    >
+                        Nonaktif
+                    </button>
                     </div>
                     <button
                         onClick={handleAddNew}
-                        className="hidden md:flex px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all items-center gap-2 shadow-sm mb-0.5"
+                        className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-sm mb-0.5"
                     >
                         <Plus className="w-4 h-4" />
                         Tambah Posyandu
@@ -268,8 +253,8 @@ export default function PosyanduManagement() {
                     </div>
                 )}
 
-                {/* Desktop Table */}
-                <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Table */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -291,8 +276,8 @@ export default function PosyanduManagement() {
                                     </tr>
                                 ) : (
                                     posyandus.map((posyandu, index) => (
-                                        <motion.tr
-                                            key={posyandu.id}
+                                        <motion.tr 
+                                            key={posyandu.id} 
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.05, duration: 0.3 }}
@@ -361,126 +346,32 @@ export default function PosyanduManagement() {
                         </table>
                     </div>
                 </div>
-
-                {/* Mobile Card List */}
-                <div className="md:hidden space-y-3">
-                    {posyandus.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
-                            Tidak ada data posyandu
-                        </div>
-                    ) : (
-                        posyandus.map((posyandu, index) => (
-                            <motion.div
-                                key={posyandu.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05, duration: 0.3 }}
-                                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-blue-50 rounded-lg">
-                                            <Building2 className="w-5 h-5 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800">{posyandu.name}</h3>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium mt-1 ${posyandu.is_active
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {posyandu.is_active ? 'Aktif' : 'Nonaktif'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button
-                                            onClick={() => handleEdit(posyandu)}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleToggleActive(posyandu)}
-                                            className={`p-2 rounded-lg transition-colors ${posyandu.is_active
-                                                ? 'text-red-600 hover:bg-red-50'
-                                                : 'text-green-600 hover:bg-green-50'
-                                                }`}
-                                        >
-                                            <Power className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2 mb-3">
-                                    <div className="flex items-start gap-2 text-sm text-gray-600">
-                                        <MapPin className="w-4 h-4 mt-0.5 text-gray-400 shrink-0" />
-                                        <div>
-                                            <div>{posyandu.village}, {posyandu.city}</div>
-                                            {posyandu.rt_rw && <div className="text-xs text-gray-500">RT/RW: {posyandu.rt_rw}</div>}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
-                                    <div className="flex items-center gap-1.5">
-                                        <Users className="w-4 h-4 text-gray-400" />
-                                        <span className="text-sm font-medium text-gray-700">{posyandu.kader_count} Kader</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Baby className="w-4 h-4 text-gray-400" />
-                                        <span className="text-sm font-medium text-gray-700">{posyandu.children_count} Anak</span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))
-                    )}
-                </div>
             </div>
 
-            {/* Mobile FAB */}
-            <button
-                onClick={handleAddNew}
-                className="md:hidden fixed bottom-24 right-4 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:scale-90 transition-all z-40"
-            >
-                <Plus className="w-6 h-6" />
-            </button>
-
-            {/* Confirmation Modal */}
-            <ConfirmationModal
-                isOpen={confirmationModal.isOpen}
-                action={confirmationModal.action}
-                posyandu={confirmationModal.posyandu}
-                onConfirm={confirmToggle}
-                onCancel={() => setConfirmationModal({ isOpen: false, posyandu: null, action: null })}
-            />
-
             {/* Modal */}
-            <AnimatePresence>
-                {showModal && (
-                    <PosyanduModal
-                        posyandu={editingPosyandu}
-                        onClose={() => setShowModal(false)}
-                        onSuccess={() => {
-                            setShowModal(false);
-                            // Invalidate all posyandu caches first
-                            invalidateCache('admin_posyandus');
-                            invalidateCache('admin_posyandus_all');
-                            invalidateCache('admin_posyandus_active');
-                            invalidateCache('admin_posyandus_inactive');
-                            invalidateCache('admin_dashboard');
-                            // Force refresh current filter to bypass cache
-                            fetchPosyandus(filterStatus, { forceRefresh: true, showLoader: false });
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+            {showModal && (
+                <PosyanduModal
+                    posyandu={editingPosyandu}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={() => {
+                        setShowModal(false);
+                        // Invalidate all posyandu caches first
+                        invalidateCache('admin_posyandus');
+                        invalidateCache('admin_posyandus_all');
+                        invalidateCache('admin_posyandus_active');
+                        invalidateCache('admin_posyandus_inactive');
+                        invalidateCache('admin_dashboard');
+                        // Force refresh current filter to bypass cache
+                        fetchPosyandus(filterStatus, { forceRefresh: true, showLoader: false });
+                    }}
+                />
+            )}
         </div>
     );
 }
 
 // Modal Component
 function PosyanduModal({ posyandu, onClose, onSuccess }) {
-    const controls = useDragControls();
     const [formData, setFormData] = useState({
         name: '',
         village: '',
@@ -528,31 +419,8 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-50 p-0 md:p-4">
-            <motion.div
-                drag="y"
-                dragControls={controls}
-                dragListener={false}
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0, bottom: 0.2 }}
-                onDragEnd={(event, info) => {
-                    if (info.offset.y > 100) {
-                        onClose();
-                    }
-                }}
-                initial={{ opacity: 0, y: "100%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white rounded-t-2xl md:rounded-xl w-full md:max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
-            >
-                {/* Drag Handle */}
-                <div
-                    className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1"
-                    onPointerDown={(e) => controls.start(e)}
-                >
-                    <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
                         {posyandu ? 'Edit Posyandu' : 'Tambah Posyandu Baru'}
@@ -684,78 +552,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                         </button>
                     </div>
                 </form>
-            </motion.div>
+            </div>
         </div>
     );
 }
-
-// Confirmation Modal Component
-function ConfirmationModal({ isOpen, action, posyandu, onConfirm, onCancel }) {
-    const controls = useDragControls();
-
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-[60] p-0 md:p-4">
-                    <motion.div
-                        key="confirmation-modal"
-                        drag="y"
-                        dragControls={controls}
-                        dragListener={false}
-                        dragConstraints={{ top: 0, bottom: 0 }}
-                        dragElastic={{ top: 0, bottom: 0.2 }}
-                        onDragEnd={(event, info) => {
-                            if (info.offset.y > 100) {
-                                onCancel();
-                            }
-                        }}
-                        initial={{ opacity: 0, y: "100%" }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: "100%" }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="bg-white rounded-t-2xl md:rounded-xl shadow-xl w-full md:max-w-md overflow-hidden"
-                    >
-                        {/* Drag Handle */}
-                        <div
-                            className="w-full h-6 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing pt-2 pb-1"
-                            onPointerDown={(e) => controls.start(e)}
-                        >
-                            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                        </div>
-
-                        <div className="p-6 text-center pt-2 md:pt-6">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${action === 'nonaktifkan' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-                                }`}>
-                                <Power className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                Konfirmasi {action === 'nonaktifkan' ? 'Nonaktifkan' : 'Aktifkan'}
-                            </h3>
-                            <p className="text-gray-600 mb-6">
-                                Apakah Anda yakin ingin {action} posyandu <span className="font-semibold">{posyandu?.name}</span>?
-                            </p>
-                            <div className="flex gap-3 justify-center">
-                                <button
-                                    onClick={onCancel}
-                                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={onConfirm}
-                                    className={`px-4 py-2 text-white rounded-lg transition-colors font-medium ${action === 'nonaktifkan'
-                                        ? 'bg-red-600 hover:bg-red-700'
-                                        : 'bg-green-600 hover:bg-green-700'
-                                        }`}
-                                >
-                                    Ya, {action === 'nonaktifkan' ? 'Nonaktifkan' : 'Aktifkan'}
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
-    );
-}
-

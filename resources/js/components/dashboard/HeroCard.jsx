@@ -10,7 +10,7 @@ export default function HeroCard({ userName }) {
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-12 -mt-12 blur-2xl"></div>
             <div className="absolute bottom-0 left-16 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
 
-            <div className="relative flex flex-row items-end justify-between gap-3 pl-4 pr-4 pt-4 pb-0 md:p-5 md:pb-0">
+            <div className="relative z-10 flex flex-row items-end justify-between gap-3 pl-4 pr-4 pt-4 pb-0 md:p-5 md:pb-0">
                 <div className="flex-1 pb-10 md:pb-5">
                     <h2 className="text-xl md:text-2xl font-bold mb-2 leading-tight">
                         Selamat Datang, <br /> {userName}!
@@ -28,7 +28,7 @@ export default function HeroCard({ userName }) {
                 </div>
 
                 {/* Illustration */}
-                <div className="flex items-end justify-end w-32 md:w-48 md:h-20 shrink-0 relative md:z-50">
+                <div className="flex items-end justify-end w-32 md:w-48 md:h-20 shrink-0">
                     <img
                         src={assets.ibu_anak}
                         alt="Ibu dan Anak"

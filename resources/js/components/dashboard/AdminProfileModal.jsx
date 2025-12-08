@@ -7,7 +7,6 @@ import {
 } from "../ui/dialog";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
-import SuccessModal from "../ui/SuccessModal";
 
 export default function AdminProfileModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(true);
@@ -28,13 +27,6 @@ export default function AdminProfileModal({ isOpen, onClose }) {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    // Success Modal State
-    const [successModal, setSuccessModal] = useState({
-        isOpen: false,
-        title: '',
-        message: ''
-    });
 
     // Confirmation Modal State
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -136,11 +128,7 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                 new_password: '',
                 confirm_password: '',
             });
-            setSuccessModal({
-                isOpen: true,
-                title: 'Password Berhasil Diubah',
-                message: 'Password Anda telah berhasil diperbarui.'
-            });
+            onClose();
         }, 1000);
     };
 
@@ -345,16 +333,6 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                 description={confirmConfig.description}
                 confirmText={confirmConfig.confirmText}
                 variant={confirmConfig.variant}
-            />
-
-            <SuccessModal
-                isOpen={successModal.isOpen}
-                onClose={() => {
-                    setSuccessModal({ isOpen: false, title: '', message: '' });
-                    onClose();
-                }}
-                title={successModal.title}
-                message={successModal.message}
             />
         </>
     );

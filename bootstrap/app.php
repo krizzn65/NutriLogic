@@ -15,10 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'kader' => \App\Http\Middleware\EnsureUserIsKader::class,
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
-            'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
         ]);
         $middleware->append(\App\Http\Middleware\UpdateUserActivity::class);
-        $middleware->append(\App\Http\Middleware\CheckMaintenanceMode::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

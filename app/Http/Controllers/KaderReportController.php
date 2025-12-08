@@ -7,6 +7,7 @@ use App\Models\WeighingLog;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 
 class KaderReportController extends Controller
@@ -24,27 +25,9 @@ class KaderReportController extends Controller
             ], 400);
         }
 
-        $validated = $request->validate([
-            'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date'],
-            'month' => ['nullable', 'integer', 'between:1,12'],
-            'year' => ['nullable', 'integer', 'min:2020', 'max:2030'],
-        ]);
-
-        // Determine date range based on filters
-        if ($validated['month'] ?? null && $validated['year'] ?? null) {
-            // Month/year filter takes precedence
-            $dateFrom = Carbon::createFromDate($validated['year'], $validated['month'], 1)->startOfMonth()->toDateString();
-            $dateTo = Carbon::createFromDate($validated['year'], $validated['month'], 1)->endOfMonth()->toDateString();
-        } elseif ($validated['date_from'] ?? null && $validated['date_to'] ?? null) {
-            // Use custom date range
-            $dateFrom = $validated['date_from'];
-            $dateTo = $validated['date_to'];
-        } else {
-            // Default to current month
-            $dateFrom = Carbon::now()->startOfMonth()->toDateString();
-            $dateTo = Carbon::now()->endOfMonth()->toDateString();
-        }
+        // Default to current month if no dates provided
+        $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->toDateString());
+        $dateTo = $request->input('date_to', Carbon::now()->endOfMonth()->toDateString());
 
         // Get all children IDs in posyandu
         $childIds = Child::where('posyandu_id', $user->posyandu_id)
@@ -68,9 +51,8 @@ class KaderReportController extends Controller
             'lebih' => 0,
             'gemuk' => 0,
         ];
-
         // Use a single query with subquery to get latest status for each child
-        $latestStatuses = \DB::table('children')
+        $latestStatuses = DB::table('children')
             ->leftJoin('weighing_logs', function ($join) {
                 $join->on('children.id', '=', 'weighing_logs.child_id')
                     ->whereRaw('weighing_logs.id = (
@@ -127,17 +109,14 @@ class KaderReportController extends Controller
             ], 400);
         }
 
-        $validated = $request->validate([
+        $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'child_id' => ['nullable', 'integer', 'exists:children,id'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
-            'month' => ['nullable', 'integer', 'between:1,12'],
-            'year' => ['nullable', 'integer', 'min:2020', 'max:2030'],
-            'status' => ['nullable', 'string', 'in:normal,kurang,sangat_kurang,pendek,sangat_pendek,kurus,sangat_kurus,lebih,gemuk'],
         ]);
 
-        $perPage = $validated['per_page'] ?? 20;
+        $perPage = $request->input('per_page', 20);
 
         // Get all children IDs in posyandu
         $childIds = Child::where('posyandu_id', $user->posyandu_id)
@@ -148,27 +127,16 @@ class KaderReportController extends Controller
             ->whereIn('child_id', $childIds);
 
         // Apply filters
-        if ($validated['child_id'] ?? null) {
-            $query->where('child_id', $validated['child_id']);
+        if ($request->filled('child_id')) {
+            $query->where('child_id', $request->input('child_id'));
         }
 
-        // Date filtering with month/year priority
-        if (($validated['month'] ?? null) && ($validated['year'] ?? null)) {
-            $startOfMonth = Carbon::createFromDate($validated['year'], $validated['month'], 1)->startOfMonth();
-            $endOfMonth = Carbon::createFromDate($validated['year'], $validated['month'], 1)->endOfMonth();
-            $query->whereBetween('measured_at', [$startOfMonth, $endOfMonth]);
-        } else {
-            if ($validated['start_date'] ?? null) {
-                $query->where('measured_at', '>=', $validated['start_date']);
-            }
-            if ($validated['end_date'] ?? null) {
-                $query->where('measured_at', '<=', $validated['end_date']);
-            }
+        if ($request->filled('start_date')) {
+            $query->where('measured_at', '>=', $request->input('start_date'));
         }
 
-        // Status filter
-        if ($validated['status'] ?? null) {
-            $query->where('nutritional_status', $validated['status']);
+        if ($request->filled('end_date')) {
+            $query->where('measured_at', '<=', $request->input('end_date'));
         }
 
         // Get paginated results
@@ -235,7 +203,7 @@ class KaderReportController extends Controller
 
         // Generate CSV
         $csvData = "ID,Nama Lengkap,NIK,Tanggal Lahir,Jenis Kelamin,Nama Orang Tua,Status Gizi Terakhir\n";
-        
+
         foreach ($children as $child) {
             $csvData .= sprintf(
                 "%d,%s,%s,%s,%s,%s,%s\n",
@@ -287,7 +255,7 @@ class KaderReportController extends Controller
 
         // Generate CSV
         $csvData = "Tanggal,Nama Anak,Berat (kg),Tinggi (cm),Lengan (cm),Kepala (cm),Status Gizi,Catatan\n";
-        
+
         foreach ($weighings as $weighing) {
             $csvData .= sprintf(
                 "%s,%s,%.1f,%.1f,%s,%s,%s,%s\n",

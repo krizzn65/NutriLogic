@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import PageHeader from "../ui/PageHeader";
-import DashboardLayout from "../dashboard/DashboardLayout";
+import PageHeader from "../dashboard/PageHeader";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -134,313 +133,311 @@ export default function BroadcastKader() {
     };
 
     return (
-        <DashboardLayout
-            header={
-                <PageHeader title="Broadcast Pengumuman" subtitle="Portal Kader" showProfile={true} />
-            }
-        >
+        <div className="flex flex-1 w-full h-full overflow-auto bg-gray-50">
+            <div className="p-4 md:p-8 w-full h-full flex flex-col gap-6">
+                <PageHeader title="Broadcast Pengumuman" subtitle="Portal Kader" />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
-                {/* Send Broadcast Form - 8 columns */}
-                <div className="lg:col-span-8">
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 h-full flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <Icon icon="lucide:send" className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-bold text-gray-900">Buat Pengumuman</h2>
-                                    <p className="text-sm text-gray-500">Kirim notifikasi ke semua orang tua terdaftar</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                {/* Success Alert */}
-                                <AnimatePresence>
-                                    {success && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="bg-emerald-50 border border-emerald-100 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-3"
-                                        >
-                                            <Icon icon="lucide:check-circle-2" className="w-5 h-5 text-emerald-600" />
-                                            <span className="font-medium text-sm">{success}</span>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                {/* Error Alert */}
-                                <AnimatePresence>
-                                    {error && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="bg-red-50 border border-red-100 text-red-800 px-4 py-3 rounded-xl flex items-center gap-3"
-                                        >
-                                            <Icon icon="lucide:alert-circle" className="w-5 h-5 text-red-600" />
-                                            <span className="font-medium text-sm">{error}</span>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Jenis Pengumuman
-                                        </label>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                            {[
-                                                { id: 'pengumuman_umum', label: 'Umum', icon: 'lucide:megaphone' },
-                                                { id: 'jadwal_posyandu', label: 'Jadwal', icon: 'lucide:calendar' },
-                                                { id: 'info_gizi', label: 'Info Gizi', icon: 'lucide:info' },
-                                                { id: 'lainnya', label: 'Lainnya', icon: 'lucide:file-text' },
-                                            ].map((type) => {
-                                                const isSelected = formData.type === type.id;
-                                                return (
-                                                    <button
-                                                        key={type.id}
-                                                        type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, type: type.id }))}
-                                                        className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all ${isSelected
-                                                            ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200'
-                                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                                                            }`}
-                                                    >
-                                                        <Icon icon={type.icon} className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
-                                                        <span className="text-xs font-medium">{type.label}</span>
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
+                    {/* Send Broadcast Form - 8 columns */}
+                    <div className="lg:col-span-8">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 h-full flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Icon icon="lucide:send" className="w-6 h-6 text-blue-600" />
                                     </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-900">Buat Pengumuman</h2>
+                                        <p className="text-sm text-gray-500">Kirim notifikasi ke semua orang tua terdaftar</p>
+                                    </div>
+                                </div>
 
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Isi Pesan
-                                        </label>
-                                        <div className="relative">
-                                            <textarea
-                                                name="message"
-                                                value={formData.message}
-                                                onChange={handleChange}
-                                                required
-                                                rows="4"
-                                                maxLength="1000"
-                                                placeholder="Tulis pesan pengumuman anda disini..."
-                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed"
-                                            ></textarea>
-                                            <div className="absolute bottom-3 right-3">
-                                                <span className={`text-xs font-medium px-2 py-1 rounded-md ${formData.message.length > 900
-                                                    ? 'bg-red-50 text-red-600'
-                                                    : 'bg-gray-100 text-gray-500'
-                                                    }`}>
-                                                    {formData.message.length}/1000
-                                                </span>
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    {/* Success Alert */}
+                                    <AnimatePresence>
+                                        {success && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="bg-emerald-50 border border-emerald-100 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-3"
+                                            >
+                                                <Icon icon="lucide:check-circle-2" className="w-5 h-5 text-emerald-600" />
+                                                <span className="font-medium text-sm">{success}</span>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Error Alert */}
+                                    <AnimatePresence>
+                                        {error && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="bg-red-50 border border-red-100 text-red-800 px-4 py-3 rounded-xl flex items-center gap-3"
+                                            >
+                                                <Icon icon="lucide:alert-circle" className="w-5 h-5 text-red-600" />
+                                                <span className="font-medium text-sm">{error}</span>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Jenis Pengumuman
+                                            </label>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {[
+                                                    { id: 'pengumuman_umum', label: 'Umum', icon: 'lucide:megaphone' },
+                                                    { id: 'jadwal_posyandu', label: 'Jadwal', icon: 'lucide:calendar' },
+                                                    { id: 'info_gizi', label: 'Info Gizi', icon: 'lucide:info' },
+                                                    { id: 'lainnya', label: 'Lainnya', icon: 'lucide:file-text' },
+                                                ].map((type) => {
+                                                    const isSelected = formData.type === type.id;
+                                                    return (
+                                                        <button
+                                                            key={type.id}
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, type: type.id }))}
+                                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all ${isSelected
+                                                                ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200'
+                                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                                                                }`}
+                                                        >
+                                                            <Icon icon={type.icon} className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
+                                                            <span className="text-xs font-medium">{type.label}</span>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Isi Pesan
+                                            </label>
+                                            <div className="relative">
+                                                <textarea
+                                                    name="message"
+                                                    value={formData.message}
+                                                    onChange={handleChange}
+                                                    required
+                                                    rows="4"
+                                                    maxLength="1000"
+                                                    placeholder="Tulis pesan pengumuman anda disini..."
+                                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed"
+                                                ></textarea>
+                                                <div className="absolute bottom-3 right-3">
+                                                    <span className={`text-xs font-medium px-2 py-1 rounded-md ${formData.message.length > 900
+                                                        ? 'bg-red-50 text-red-600'
+                                                        : 'bg-gray-100 text-gray-500'
+                                                        }`}>
+                                                        {formData.message.length}/1000
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="pt-2">
-                                    <button
-                                        type="submit"
-                                        disabled={sending || !formData.message.trim()}
-                                        className="w-full md:w-auto md:px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
-                                    >
-                                        {sending ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                <span>Mengirim...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Icon icon="lucide:send" className="w-4 h-4" />
-                                                <span>Kirim Broadcast</span>
-                                            </>
-                                        )}
-                                    </button>
+                                    <div className="pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={sending || !formData.message.trim()}
+                                            className="w-full md:w-auto md:px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                        >
+                                            {sending ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    <span>Mengirim...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icon icon="lucide:send" className="w-4 h-4" />
+                                                    <span>Kirim Broadcast</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stats & Info - 4 columns */}
+                    <div className="lg:col-span-4 flex flex-col gap-6 h-full">
+                        {/* Stats Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex-1 flex flex-col justify-between">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Icon icon="lucide:activity" className="w-4 h-4 text-gray-500" />
+                                Ringkasan Aktivitas
+                            </h3>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="text-2xl font-bold text-gray-900 mb-1">{broadcasts.length}</div>
+                                    <div className="text-xs text-gray-500 font-medium">Total Terkirim</div>
                                 </div>
-                            </form>
+                                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <div className="text-2xl font-bold text-blue-700 mb-1">
+                                        {broadcasts.filter(b => new Date(b.created_at).toDateString() === new Date().toDateString()).length}
+                                    </div>
+                                    <div className="text-xs text-blue-600 font-medium">Hari Ini</div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 space-y-3">
+                                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Distribusi Tipe</div>
+                                {[
+                                    { label: 'Umum', count: broadcasts.filter(b => b.type === 'pengumuman_umum').length, color: 'bg-purple-500' },
+                                    { label: 'Jadwal', count: broadcasts.filter(b => b.type === 'jadwal_posyandu').length, color: 'bg-blue-500' },
+                                    { label: 'Info Gizi', count: broadcasts.filter(b => b.type === 'info_gizi').length, color: 'bg-green-500' },
+                                ].map((stat, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2 h-2 rounded-full ${stat.color}`} />
+                                            <span className="text-gray-600">{stat.label}</span>
+                                        </div>
+                                        <span className="font-medium text-gray-900">{stat.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Quick Tips */}
+                        <div className="bg-blue-600 rounded-2xl shadow-sm p-6 text-white">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-white/20 rounded-lg">
+                                    <Icon icon="lucide:alert-circle" className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-sm mb-1">Tips Efektif</h3>
+                                    <p className="text-xs text-blue-50 leading-relaxed">
+                                        Gunakan bahasa yang singkat dan jelas. Pilih tipe pengumuman yang sesuai agar orang tua lebih mudah memfilter informasi penting.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Stats & Info - 4 columns */}
-                <div className="lg:col-span-4 flex flex-col gap-6 h-full">
-                    {/* Stats Card */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex-1 flex flex-col justify-between">
-                        <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Icon icon="lucide:activity" className="w-4 h-4 text-gray-500" />
-                            Ringkasan Aktivitas
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">{broadcasts.length}</div>
-                                <div className="text-xs text-gray-500 font-medium">Total Terkirim</div>
-                            </div>
-                            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                <div className="text-2xl font-bold text-blue-700 mb-1">
-                                    {broadcasts.filter(b => new Date(b.created_at).toDateString() === new Date().toDateString()).length}
-                                </div>
-                                <div className="text-xs text-blue-600 font-medium">Hari Ini</div>
-                            </div>
+                {/* History Section */}
+                <div className="mt-2">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h3 className="text-lg font-bold text-gray-900">Riwayat Pesan</h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Icon icon="lucide:clock" className="w-4 h-4" />
+                            <span>Terurut dari yang terbaru</span>
                         </div>
+                    </div>
 
-                        <div className="mt-6 space-y-3">
-                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Distribusi Tipe</div>
-                            {[
-                                { label: 'Umum', count: broadcasts.filter(b => b.type === 'pengumuman_umum').length, color: 'bg-purple-500' },
-                                { label: 'Jadwal', count: broadcasts.filter(b => b.type === 'jadwal_posyandu').length, color: 'bg-blue-500' },
-                                { label: 'Info Gizi', count: broadcasts.filter(b => b.type === 'info_gizi').length, color: 'bg-green-500' },
-                            ].map((stat, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${stat.color}`} />
-                                        <span className="text-gray-600">{stat.label}</span>
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {[0.1, 0.15, 0.2, 0.25, 0.3, 0.35].map((delay, i) => (
+                                <div key={i} className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="h-8 w-8 rounded-lg bg-gray-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay}s` }}></div>
+                                        </div>
+                                        <div className="h-5 w-20 rounded-full bg-gray-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.05}s` }}></div>
+                                        </div>
                                     </div>
-                                    <span className="font-medium text-gray-900">{stat.count}</span>
+                                    <div className="space-y-2 mb-4">
+                                        <div className="h-4 w-full rounded bg-gray-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.1}s` }}></div>
+                                        </div>
+                                        <div className="h-4 w-3/4 rounded bg-gray-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.15}s` }}></div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                                        <div className="h-3 w-3 rounded-full bg-gray-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.2}s` }}></div>
+                                        </div>
+                                        <div className="h-3 w-24 rounded bg-gray-200 overflow-hidden relative">
+                                            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.25}s` }}></div>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Quick Tips */}
-                    <div className="bg-blue-600 rounded-2xl shadow-sm p-6 text-white">
-                        <div className="flex items-start gap-3">
-                            <div className="p-2 bg-white/20 rounded-lg">
-                                <Icon icon="lucide:alert-circle" className="w-5 h-5 text-white" />
+                    ) : broadcasts.length === 0 ? (
+                        <div className="bg-white rounded-2xl border border-gray-200 border-dashed p-12 text-center">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Icon icon="lucide:megaphone" className="w-8 h-8 text-gray-400" />
                             </div>
-                            <div>
-                                <h3 className="font-semibold text-sm mb-1">Tips Efektif</h3>
-                                <p className="text-xs text-blue-50 leading-relaxed">
-                                    Gunakan bahasa yang singkat dan jelas. Pilih tipe pengumuman yang sesuai agar orang tua lebih mudah memfilter informasi penting.
-                                </p>
-                            </div>
+                            <h3 className="text-gray-900 font-medium mb-1">Belum ada riwayat</h3>
+                            <p className="text-gray-500 text-sm">Broadcast yang Anda kirim akan muncul di sini</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* History Section */}
-            <div className="mt-2">
-                <div className="flex items-center justify-between mb-4 px-1">
-                    <h3 className="text-lg font-bold text-gray-900">Riwayat Pesan</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Icon icon="lucide:clock" className="w-4 h-4" />
-                        <span>Terurut dari yang terbaru</span>
-                    </div>
-                </div>
-
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[0.1, 0.15, 0.2, 0.25, 0.3, 0.35].map((delay, i) => (
-                            <div key={i} className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="h-8 w-8 rounded-lg bg-gray-200 overflow-hidden relative">
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay}s` }}></div>
-                                    </div>
-                                    <div className="h-5 w-20 rounded-full bg-gray-200 overflow-hidden relative">
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.05}s` }}></div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2 mb-4">
-                                    <div className="h-4 w-full rounded bg-gray-200 overflow-hidden relative">
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.1}s` }}></div>
-                                    </div>
-                                    <div className="h-4 w-3/4 rounded bg-gray-200 overflow-hidden relative">
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.15}s` }}></div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                                    <div className="h-3 w-3 rounded-full bg-gray-200 overflow-hidden relative">
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.2}s` }}></div>
-                                    </div>
-                                    <div className="h-3 w-24 rounded bg-gray-200 overflow-hidden relative">
-                                        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/60 to-transparent" style={{ animationDelay: `${delay + 0.25}s` }}></div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : broadcasts.length === 0 ? (
-                    <div className="bg-white rounded-2xl border border-gray-200 border-dashed p-12 text-center">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Icon icon="lucide:megaphone" className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-gray-900 font-medium mb-1">Belum ada riwayat</h3>
-                        <p className="text-gray-500 text-sm">Broadcast yang Anda kirim akan muncul di sini</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {broadcasts.map((broadcast, index) => {
-                            const iconName = getTypeIcon(broadcast.type);
-                            return (
-                                <motion.div
-                                    key={broadcast.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="group bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col h-full"
-                                >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className={`p-2 rounded-lg ${getTypeBadgeColor(broadcast.type)} bg-opacity-50`}>
-                                            <Icon icon={iconName} className="w-4 h-4" />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-400 font-medium font-mono">
-                                                {new Date(broadcast.created_at).toLocaleDateString('id-ID', {
-                                                    day: 'numeric',
-                                                    month: 'short'
-                                                })}
-                                            </span>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(broadcast.id);
-                                                }}
-                                                className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                                title="Hapus Broadcast"
-                                            >
-                                                <Icon icon="lucide:trash-2" className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1">
-                                        <div className="mb-2">
-                                            <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md border ${getTypeBadgeColor(broadcast.type)}`}>
-                                                {getTypeLabel(broadcast.type)}
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-800 text-sm leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all">
-                                            {broadcast.message}
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-600">
-                                                {broadcast.sender?.name?.charAt(0) || 'U'}
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {broadcasts.map((broadcast, index) => {
+                                const iconName = getTypeIcon(broadcast.type);
+                                return (
+                                    <motion.div
+                                        key={broadcast.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="group bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col h-full"
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className={`p-2 rounded-lg ${getTypeBadgeColor(broadcast.type)} bg-opacity-50`}>
+                                                <Icon icon={iconName} className="w-4 h-4" />
                                             </div>
-                                            <span className="text-xs text-gray-500 truncate max-w-[100px]">
-                                                {broadcast.sender?.name || 'Unknown'}
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-400 font-medium font-mono">
+                                                    {new Date(broadcast.created_at).toLocaleDateString('id-ID', {
+                                                        day: 'numeric',
+                                                        month: 'short'
+                                                    })}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(broadcast.id);
+                                                    }}
+                                                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                    title="Hapus Broadcast"
+                                                >
+                                                    <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <div className="mb-2">
+                                                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md border ${getTypeBadgeColor(broadcast.type)}`}>
+                                                    {getTypeLabel(broadcast.type)}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-800 text-sm leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all">
+                                                {broadcast.message}
+                                            </p>
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                                                    {broadcast.sender?.name?.charAt(0) || 'U'}
+                                                </div>
+                                                <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                                                    {broadcast.sender?.name || 'Unknown'}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400">
+                                                {new Date(broadcast.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
-                                        <span className="text-[10px] text-gray-400">
-                                            {new Date(broadcast.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                )}
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
-
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
                 {deleteModal.show && (
@@ -485,6 +482,6 @@ export default function BroadcastKader() {
                     </div>
                 )}
             </AnimatePresence>
-        </DashboardLayout>
+        </div>
     );
 }
