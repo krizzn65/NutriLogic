@@ -6,7 +6,8 @@ import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import DataAnakSkeleton from "../loading/DataAnakSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
+
 import { DataAnakTable } from "./DataAnakTable";
 
 export default function DataAnakList() {
@@ -108,48 +109,53 @@ export default function DataAnakList() {
     }
 
     return (
-        <div className="flex flex-1 w-full h-full overflow-auto no-scrollbar md:scrollbar-auto">
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50 flex flex-col gap-6">
+        <div className="flex flex-col flex-1 w-full h-full bg-gray-50 overflow-hidden">
+            {/* Header */}
+            <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative z-50"
+            >
+                <PageHeader
+                    title="Data Anak"
+                    subtitle="Portal Orang Tua"
+                    showProfile={true}
+                />
+            </motion.div>
+
+            <div className="flex-1 overflow-auto no-scrollbar md:scrollbar-auto p-4 md:p-10 flex flex-col gap-6">
                 {/* Success Message */}
                 <AnimatePresence>
                     {successMessage && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
                             className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between"
                         >
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <span>{successMessage}</span>
-                        </div>
-                        <button
-                            onClick={() => setSuccessMessage(null)}
-                            className="text-green-600 hover:text-green-800"
-                        >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                        </button>
-                    </motion.div>
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                <span>{successMessage}</span>
+                            </div>
+                            <button
+                                onClick={() => setSuccessMessage(null)}
+                                className="text-green-600 hover:text-green-800"
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                        </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <PageHeader title="Data Anak" subtitle="Portal Orang Tua" />
-                </motion.div>
-
                 {/* Table/List View */}
                 {children.length === 0 ? (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3 }}

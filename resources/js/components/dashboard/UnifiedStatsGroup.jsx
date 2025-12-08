@@ -2,13 +2,13 @@ import React from 'react';
 import { Icon } from '@iconify/react';
 
 const StatItem = ({ title, value, badgeText, badgeColor, iconName, isLast }) => (
-    <div className={`relative flex flex-col justify-between p-4 md:p-6 ${!isLast ? 'border-r border-white/20' : ''} overflow-hidden group min-w-[120px]`}>
+    <div className={`relative flex flex-col justify-between p-4 md:p-6 ${!isLast ? 'border-r border-white/20' : ''} overflow-hidden group min-w-[100px] md:min-w-[120px]`}>
         <div className="flex flex-col z-10">
-            <span className="text-white/90 text-[10px] md:text-sm font-medium mb-1">{title}</span>
-            <h3 className="text-white text-xl md:text-3xl font-bold mb-2">{value}</h3>
+            <span className="text-white/90 text-[10px] md:text-sm font-medium mb-1 truncate">{title}</span>
+            <h3 className="text-white text-lg md:text-3xl font-bold mb-2 truncate">{value}</h3>
 
-            <div className={`flex items-center gap-1 ${badgeColor || 'bg-white/20'} w-fit px-3 py-1 rounded-full backdrop-blur-sm`}>
-                <span className="text-white text-[8px] md:text-[10px] font-medium tracking-wide">{badgeText}</span>
+            <div className={`flex items-center gap-1 ${badgeColor || 'bg-white/20'} w-fit px-3 py-1 rounded-full backdrop-blur-sm max-w-full`}>
+                <span className="text-white text-[8px] md:text-[10px] font-medium tracking-wide truncate">{badgeText}</span>
             </div>
         </div>
 

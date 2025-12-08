@@ -59,7 +59,7 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
                             <DropdownMenuTrigger asChild>
                                 <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm">
                                     <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
-                                    <span>{displayChild?.full_name || "Pilih Anak"}</span>
+                                    <span className="truncate max-w-[120px]">{displayChild?.full_name || "Pilih Anak"}</span>
                                     <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4" />
                                 </button>
                             </DropdownMenuTrigger>
@@ -71,9 +71,9 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
                                         className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                                     >
                                         <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
-                                            {child.full_name.charAt(0)}
+                                            {(child.full_name || '?')[0]}
                                         </div>
-                                        <span>{child.full_name}</span>
+                                        <span className="truncate">{child.full_name || 'Nama Anak'}</span>
                                         {child.id === (selectedChildId || displayChild?.id) && (
                                             <Icon icon="lucide:check" className="ml-auto text-blue-600 w-4 h-4" />
                                         )}

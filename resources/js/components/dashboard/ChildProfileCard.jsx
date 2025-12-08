@@ -31,14 +31,14 @@ export default function ChildProfileCard({ child, onClick, onShowCard }) {
                         <div className="flex gap-3 items-center">
                             <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-50 group-hover:bg-white/20 p-0.5 shadow-inner transition-colors">
                                 <img
-                                    src={child.gender === 'L' ? assets.kepala_bayi : child.gender === 'P' ? assets.kepala_bayi_cewe : `https://api.dicebear.com/9.x/adventurer/svg?seed=${child.full_name}&backgroundColor=b6e3f4`}
-                                    alt={child.full_name}
+                                    src={child.gender === 'L' ? assets.kepala_bayi : child.gender === 'P' ? assets.kepala_bayi_cewe : `https://api.dicebear.com/9.x/adventurer/svg?seed=${child.full_name || 'child'}&backgroundColor=b6e3f4`}
+                                    alt={child.full_name || 'Anak'}
                                     className="w-full h-full rounded-full object-cover"
                                 />
                             </div>
-                            <div>
-                                <h3 className="text-base md:text-xl font-bold text-gray-800 group-hover:text-white transition-colors line-clamp-1">
-                                    {child.full_name}
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base md:text-xl font-bold text-gray-800 group-hover:text-white transition-colors truncate">
+                                    {child.full_name || 'Nama Anak'}
                                 </h3>
                                 <p className="text-[10px] md:text-sm text-gray-500 group-hover:text-blue-100 font-medium mt-0.5 md:mt-1 transition-colors">
                                     {child.birth_date ? formatAgeFromBirthDate(child.birth_date) : formatAge(child.age_in_months)} • {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
