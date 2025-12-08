@@ -1,358 +1,418 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ResetPasswordForm } from "./ResetPasswordForm";
+import { motion, AnimatePresence } from "framer-motion";
+import { Icon } from '@iconify/react';
+import api from '../../lib/api';
 
 export default function ForgotPassword() {
+  const [step, setStep] = useState(1); // 1: phone input, 2: token+password input
+  const [phone, setPhone] = useState('');
+  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [debugToken, setDebugToken] = useState(''); // TEMPORARY: for testing
   const navigate = useNavigate();
 
-  const handleVerifyCode = async (code) => {
-    // Simulate API call to verify code
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Simulate successful verification
-        resolve(true);
-      }, 1000);
-    });
+  // Password validation
+  const validatePassword = (pwd) => {
+    if (pwd.length < 8) return 'Password minimal 8 karakter.';
+    if (!/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/\d/.test(pwd)) {
+      return 'Password harus mengandung huruf besar, huruf kecil, dan angka.';
+    }
+    return null;
   };
 
-  const handleResetPassword = async (password) => {
-    // Simulate API call to reset password
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        alert('Password berhasil direset!');
-        navigate('/auth');
-        resolve(true);
-      }, 1000);
-    });
+  // Step 1: Request reset token via SMS/WA
+  const handleRequestReset = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      const response = await api.post('/forgot-password', { phone });
+      setSuccess(response.data.message);
+      setDebugToken(response.data.debug_token || ''); // TEMPORARY
+      setStep(2);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal mengirim kode reset password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCancel = () => {
-    navigate('/auth');
+  // Step 2: Reset password with token
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Validate token is 6 digits
+    if (!/^[0-9]{6}$/.test(token)) {
+      setError('Kode harus 6 digit angka.');
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Konfirmasi password tidak cocok.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await api.post('/reset-password', {
+        phone,
+        token,
+        password,
+        password_confirmation: confirmPassword,
+      });
+      setSuccess('Password berhasil direset! Redirecting...');
+      setTimeout(() => navigate('/auth'), 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal reset password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <motion.div 
-      className="forgot-password-page" 
-      style={{ 
-        minHeight: '100vh', 
-        background: 'linear-gradient(135deg, #FFFFFFFF 0%, #FFFFFFFF 100%)',
+    <motion.div
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        background: 'linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-      padding: '20px'
-    }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+        padding: '20px',
+        fontFamily: 'Poppins, sans-serif',
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: 'Poppins', 'Montserrat', 'Outfit', sans-serif;
-        }
-
-        .back-button {
-          position: fixed;
-          top: 20px;
-          left: 20px;
-          z-index: 1000;
-          background: white;
-          color: #667eea;
-          border: 2px solid #667eea;
-          padding: 10px 20px;
-          border-radius: 50px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .back-button:hover {
-          background: #667eea;
-          color: white;
-          transform: translateX(-5px);
-        }
-
-        .forgot-password-container {
-          position: relative;
-          width: 100%;
-          max-width: 550px;
-          background: white;
-          border-radius: 20px;
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-          overflow: hidden;
-          padding: 60px 50px;
-        }
-
-        /* Override shadcn styles to match theme */
-        .forgot-password-container [class*="rounded-lg"],
-        .forgot-password-container > div > div {
-          border: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-          background: transparent !important;
-          max-width: 100% !important;
-        }
-
-        .forgot-password-container h1 {
-          font-size: 2rem !important;
-          color: #444 !important;
-          margin-bottom: 10px !important;
-          font-weight: 700 !important;
-          text-align: center;
-        }
-
-        .forgot-password-container p {
-          font-size: 0.95rem !important;
-          color: #666 !important;
-          margin-bottom: 30px !important;
-          text-align: center;
-        }
-
-        /* OTP Input Container */
-        .forgot-password-container div[class*="space-y-2"] {
-          margin-bottom: 20px;
-        }
-
-        .forgot-password-container div[class*="flex justify-center"] {
-          gap: 10px;
-          justify-content: center;
-        }
-
-        /* OTP Input Styling */
-        .forgot-password-container input[type="text"],
-        .forgot-password-container input[maxlength="1"] {
-          width: 50px !important;
-          height: 55px !important;
-          background-color: #f0f0f0 !important;
-          border: 2px solid transparent !important;
-          border-radius: 10px !important;
-          color: #333 !important;
-          font-size: 1.5rem !important;
-          font-weight: 600 !important;
-          box-shadow: none !important;
-          text-align: center !important;
-          padding: 0 !important;
-        }
-
-        .forgot-password-container input[type="text"]:focus,
-        .forgot-password-container input[maxlength="1"]:focus {
-          background-color: #e8e8e8 !important;
-          border-color: #00BFEF !important;
-          outline: none !important;
-          ring: 0 !important;
-          box-shadow: none !important;
-        }
-
-        .forgot-password-container input[type="text"]:disabled,
-        .forgot-password-container input[maxlength="1"]:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        /* Password Input Container */
-        .forgot-password-container div[class*="relative"] {
-          position: relative;
-          width: 100%;
-        }
-
-        /* Hide password manager icons */
-        .forgot-password-container input[type="password"]::-ms-reveal,
-        .forgot-password-container input[type="password"]::-ms-clear {
-          display: none !important;
-        }
-
-        .forgot-password-container input::-webkit-credentials-auto-fill-button {
-          display: none !important;
-        }
-
-        /* Hide all SVG icons inside password input except the eye icon */
-        .forgot-password-container div[class*="relative"] svg:not([class*="h-5"]) {
-          display: none !important;
-        }
-
-        /* Password Input Styling */
-        .forgot-password-container input[type="password"],
-        .forgot-password-container input[type="text"][placeholder*="•"] {
-          width: 100% !important;
-          background-color: #f0f0f0 !important;
-          border: 2px solid transparent !important;
-          border-radius: 55px !important;
-          height: 55px !important;
-          padding: 0 50px 0 20px !important;
-          font-size: 1rem !important;
-          color: #333 !important;
-          box-shadow: none !important;
-        }
-
-        .forgot-password-container input[type="password"]:focus,
-        .forgot-password-container input[type="text"][placeholder*="•"]:focus {
-          background-color: #e8e8e8 !important;
-          border-color: #00BFEF !important;
-          outline: none !important;
-          box-shadow: none !important;
-          ring: 0 !important;
-        }
-
-        .forgot-password-container input[type="password"]::placeholder,
-        .forgot-password-container input[type="text"][placeholder*="•"]::placeholder {
-          color: #aaa !important;
-          font-weight: 400 !important;
-        }
-
-        /* Eye icon button */
-        .forgot-password-container button[aria-label*="password"] {
-          position: absolute;
-          right: 15px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: transparent !important;
-          border: none !important;
-          padding: 0 !important;
-          width: auto !important;
-          height: auto !important;
-          box-shadow: none !important;
-          color: #666 !important;
-          z-index: 10;
-        }
-
-        .forgot-password-container button[aria-label*="password"]:hover {
-          background: transparent !important;
-          color: #333 !important;
-          transform: translateY(-50%) !important;
-        }
-
-        /* Hide the eye icon on the left side */
-        .forgot-password-container div[class*="relative"] > button:first-of-type {
-          display: none !important;
-        }
-
-        .forgot-password-container div[class*="relative"] > button:last-of-type {
-          display: flex !important;
-        }
-
-        /* Submit & Cancel Buttons */
-        .forgot-password-container div[class*="mt-8"] {
-          margin-top: 30px !important;
-          display: flex;
-          justify-content: flex-end;
-          gap: 15px;
-        }
-
-        .forgot-password-container button[type="submit"] {
-          background-color: #00BFEF !important;
-          height: 49px !important;
-          border-radius: 49px !important;
-          border: none !important;
-          box-shadow: none !important;
-          color: white !important;
-          font-weight: 600 !important;
-          text-transform: uppercase !important;
-          padding: 0 30px !important;
-          min-width: 150px !important;
-        }
-
-        .forgot-password-container button[type="submit"]:hover:not(:disabled) {
-          background-color: #0ADFDD !important;
-          transform: translateY(-2px);
-          box-shadow: 0 5px 15px rgba(0, 191, 239, 0.4) !important;
-        }
-
-        .forgot-password-container button[type="submit"]:disabled {
-          background-color: #ccc !important;
-          cursor: not-allowed !important;
-          transform: none !important;
-        }
-
-        .forgot-password-container button[type="button"]:not([aria-label]) {
-          border: 2px solid #667eea !important;
-          color: #667eea !important;
-          background: white !important;
-          border-radius: 49px !important;
-          height: 49px !important;
-          box-shadow: none !important;
-          font-weight: 600 !important;
-          padding: 0 25px !important;
-          min-width: 100px !important;
-        }
-
-        .forgot-password-container button[type="button"]:not([aria-label]):hover {
-          background-color: #667eea !important;
-          color: white !important;
-        }
-
-        /* Password requirements styling */
-        .forgot-password-container [class*="text-green"] {
-          color: #28a745 !important;
-        }
-
-        .forgot-password-container [class*="text-muted"] {
-          color: #666 !important;
-        }
-
-        .forgot-password-container div[class*="text-sm text-green"] {
-          color: #28a745 !important;
-          font-weight: 500;
-        }
-
-        .forgot-password-container div[class*="text-sm text-muted"] {
-          color: #666 !important;
-        }
-
-        .forgot-password-container p[class*="text-center"] {
-          text-align: center;
-          margin: 10px 0;
-        }
-
-        .forgot-password-container hr {
-          border-color: #e0e0e0 !important;
-          margin: 25px 0 !important;
-          border-top: 1px solid #e0e0e0;
-          border-bottom: none;
-        }
-
-        .forgot-password-container h2 {
-          font-size: 1.2rem !important;
-          color: #444 !important;
-          font-weight: 600 !important;
-          margin-bottom: 15px !important;
-        }
-
-        /* Grid for password requirements */
-        .forgot-password-container div[class*="grid"] {
-          margin-top: 15px;
-        }
-
-        @media (max-width: 570px) {
-          .forgot-password-container {
-            padding: 40px 30px;
-          }
-        }
-      `}</style>
-
-      <button onClick={() => navigate('/auth')} className="back-button">
+      <motion.button
+        onClick={() => navigate('/auth')}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: '20px',
+          background: 'white',
+          color: '#00BFEF',
+          border: '2px solid #00BFEF',
+          padding: '10px 20px',
+          borderRadius: '50px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        }}
+        whileHover={{ scale: 1.05, background: '#00BFEF', color: 'white' }}
+      >
         <span>←</span>
         <span>Kembali</span>
-      </button>
+      </motion.button>
 
-      <div className="forgot-password-container">
-        <ResetPasswordForm
-          email="085xxxxxxx"
-          onVerifyCode={handleVerifyCode}
-          onSubmit={handleResetPassword}
-          onCancel={handleCancel}
-        />
-      </div>
+      <motion.div
+        style={{
+          width: '100%',
+          maxWidth: '450px',
+          background: 'white',
+          borderRadius: '20px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+          padding: '40px',
+        }}
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+      >
+        <h2 style={{ fontSize: '2rem', color: '#333', marginBottom: '10px', textAlign: 'center', fontWeight: 700 }}>
+          {step === 1 ? 'Lupa Password' : 'Reset Password'}
+        </h2>
+        <p style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center', marginBottom: '30px' }}>
+          {step === 1
+            ? 'Masukkan nomor telepon Anda untuk menerima kode reset via SMS/WA'
+            : 'Masukkan kode 6 digit dan password baru Anda'}
+        </p>
+
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              style={{
+                padding: '12px 16px',
+                background: 'rgba(255, 59, 48, 0.1)',
+                border: '1px solid rgba(255, 59, 48, 0.2)',
+                borderRadius: '12px',
+                color: '#FF3B30',
+                fontSize: '0.85rem',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <Icon icon="solar:danger-circle-bold-duotone" style={{ fontSize: '1.25rem' }} />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              style={{
+                padding: '12px 16px',
+                background: 'rgba(52, 199, 89, 0.1)',
+                border: '1px solid rgba(52, 199, 89, 0.2)',
+                borderRadius: '12px',
+                color: '#34C759',
+                fontSize: '0.85rem',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <Icon icon="solar:check-circle-bold-duotone" style={{ fontSize: '1.25rem' }} />
+              <span>{success}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {step === 1 ? (
+          <form onSubmit={handleRequestReset}>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px', display: 'block' }}>
+                Nomor Telepon
+              </label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#f0f0f0',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                gap: '10px',
+              }}>
+                <Icon icon="fluent:phone-16-filled" style={{ fontSize: '1.2rem', color: '#666' }} />
+                <input
+                  type="tel"
+                  placeholder="08xxxxxxxxxx"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    fontSize: '1rem',
+                    color: '#333',
+                  }}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: loading ? '#ccc' : '#00BFEF',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: '0.3s',
+              }}
+            >
+              {loading ? 'Mengirim...' : 'Kirim Kode Reset'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleResetPassword}>
+            {debugToken && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  padding: '12px',
+                  background: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '8px',
+                  marginBottom: '15px',
+                  fontSize: '0.8rem',
+                  color: '#856404',
+                }}
+              >
+                <strong>DEBUG TOKEN:</strong> {debugToken}
+                <br />
+                <small>(Copy token ini untuk testing. Hapus di production!)</small>
+              </motion.div>
+            )}
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px', display: 'block' }}>
+                Kode Reset (6 Digit)
+              </label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#f0f0f0',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                gap: '10px',
+              }}>
+                <Icon icon="mdi:key" style={{ fontSize: '1.2rem', color: '#666' }} />
+                <input
+                  type="text"
+                  placeholder="Masukkan 6 digit kode"
+                  value={token}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); // Only numbers
+                    if (value.length <= 6) setToken(value);
+                  }}
+                  maxLength={6}
+                  required
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    fontSize: '1.2rem',
+                    color: '#333',
+                    letterSpacing: '0.3em',
+                    textAlign: 'center',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px', display: 'block' }}>
+                Password Baru
+              </label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#f0f0f0',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                gap: '10px',
+              }}>
+                <Icon icon="material-symbols:lock" style={{ fontSize: '1.2rem', color: '#666' }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password baru"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    fontSize: '1rem',
+                    color: '#333',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+                >
+                  <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} style={{ fontSize: '1.2rem' }} />
+                </button>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px', display: 'block' }}>
+                Konfirmasi Password
+              </label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#f0f0f0',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                gap: '10px',
+              }}>
+                <Icon icon="material-symbols:lock-outline" style={{ fontSize: '1.2rem', color: '#666' }} />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Konfirmasi password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    fontSize: '1rem',
+                    color: '#333',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+                >
+                  <Icon icon={showConfirmPassword ? 'mdi:eye-off' : 'mdi:eye'} style={{ fontSize: '1.2rem' }} />
+                </button>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '20px' }}>
+              Min. 8 karakter, mengandung huruf besar, huruf kecil, dan angka
+            </p>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: loading ? '#ccc' : '#00BFEF',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {loading ? 'Mereset...' : 'Reset Password'}
+            </button>
+          </form>
+        )}
+      </motion.div>
     </motion.div>
   );
 }

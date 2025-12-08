@@ -3,6 +3,7 @@
 use App\Http\Controllers\AtRiskController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChildController;
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\ImmunizationScheduleController;
 use App\Http\Controllers\MealLogController;
 use App\Http\Controllers\NutriAssistController;
@@ -27,8 +28,12 @@ Route::get('/debug-user', function () {
 });
 
 // Public authentication routes
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+
+// Forgot Password routes (with strict rate limiting)
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:3,1');
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:5,1');
 
 // Public routes (no auth required)
 Route::get('/posyandus', [PosyanduController::class, 'index']); // Public untuk registrasi

@@ -11,11 +11,23 @@ class PosyanduController extends Controller
     /**
      * Get list of posyandus
      * Admin/Kader: can see all or their own posyandu
-     * Ibu: can see posyandus (for registration)
+     * Ibu/Guest: can see active posyandus (for registration)
      */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        // If no user (public access for registration), return only active posyandus with minimal data
+        if (!$user) {
+            $posyandus = Posyandu::where('is_active', true)
+                ->select('id', 'name', 'village', 'address')
+                ->orderBy('name', 'asc')
+                ->get();
+
+            return response()->json([
+                'data' => $posyandus,
+            ], 200);
+        }
 
         $query = Posyandu::withCount(['children', 'users']);
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\PointsService;
+use App\Services\LoginAttemptService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,7 +12,8 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     public function __construct(
-        private PointsService $pointsService
+        private PointsService $pointsService,
+        private LoginAttemptService $loginAttemptService
     ) {
     }
     /**
@@ -22,22 +24,67 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        // Trim all inputs to prevent leading/trailing spaces
+        $request->merge([
+            'name' => trim($request->name ?? ''),
+            'email' => trim($request->email ?? ''),
+            'phone' => trim($request->phone ?? ''),
+        ]);
+
+        // Custom validation to prevent user enumeration
+        $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'string', 'email', 'max:191', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => ['required', 'string', 'email', 'max:191'],
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^(08|62)\d{8,13}$/'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'rt' => ['nullable', 'string', 'max:10'],
+            'rw' => ['nullable', 'string', 'max:10'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+            ],
             'role' => ['nullable', 'string', 'in:admin,kader,ibu'],
             'posyandu_id' => ['nullable', 'integer', 'exists:posyandus,id'],
+        ], [
+            'email.email' => 'Format email tidak valid.',
+            'phone.regex' => 'Format nomor telepon tidak valid. Gunakan format 08xxxxxxxxxx atau 62xxxxxxxxxx.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
+
+        // Check if email or phone already exists
+        $emailExists = User::where('email', $request->email)->exists();
+        $phoneExists = $request->phone ? User::where('phone', $request->phone)->exists() : false;
+
+        if ($emailExists || $phoneExists) {
+            // Generic error message to prevent enumeration
+            // Log detailed reason server-side for admin investigation
+            AdminActivityLogController::log(
+                'registration_failed',
+                "Registrasi gagal - Email/Phone sudah terdaftar: {$request->email} / {$request->phone}",
+                'User',
+                null,
+                ['ip' => $request->ip(), 'user_agent' => $request->userAgent()]
+            );
+
+            return response()->json([
+                'message' => 'Registrasi gagal. Periksa kembali data yang Anda masukkan.',
+            ], 422);
+        }
+
+        $validated = $request->all();
 
         // Force role to 'ibu' for public registration endpoint
         // Admin and kader roles should only be created via seeder or internal panel
         $validated['role'] = 'ibu';
         $validated['posyandu_id'] = null; // Ibu doesn't need posyandu_id
 
-        // Hash password (will also be hashed by model cast, but explicit for clarity)
-        $validated['password'] = Hash::make($validated['password']);
+        // Password will be automatically hashed by model cast ('password' => 'hashed')
+        // Do NOT manually Hash::make here to avoid double hashing!
 
         // Create user
         $user = User::create($validated);
@@ -56,28 +103,79 @@ class AuthController extends Controller
 
     /**
      * Login user and return token.
+     * Supports login with phone number or full name.
      */
     public function login(Request $request): JsonResponse
     {
+        // Trim identifier to prevent login failures from spaces
+        $request->merge([
+            'identifier' => trim($request->identifier ?? ''),
+        ]);
+
         $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        // Find user by email
-        $user = User::where('email', $request->email)->first();
+        $identifier = $request->identifier;
+        $ipAddress = $request->ip();
+
+        // Check if account is locked
+        if ($this->loginAttemptService->isLocked($identifier, $ipAddress)) {
+            $lockoutMinutes = $this->loginAttemptService->getLockoutTime($identifier, $ipAddress);
+            
+            return response()->json([
+                'message' => "Akun terkunci karena terlalu banyak percobaan login gagal. Coba lagi dalam {$lockoutMinutes} menit.",
+                'locked_until' => $lockoutMinutes,
+            ], 429);
+        }
+
+        // Find user by phone OR name (case insensitive for name)
+        $user = User::where('phone', $identifier)
+            ->orWhere('name', $identifier)
+            ->first();
 
         // Check password
         if (!$user || !Hash::check($request->password, $user->password)) {
+            // Record failed attempt
+            $this->loginAttemptService->recordFailedAttempt($identifier, $ipAddress, $request->userAgent());
+            
+            // Get remaining attempts
+            $failedAttempts = $this->loginAttemptService->getFailedAttempts($identifier);
+            $maxAttempts = $this->loginAttemptService->getMaxAttempts();
+            $remainingAttempts = max(0, $maxAttempts - $failedAttempts);
+
             // Log failed login attempt
             if ($user) {
-                AdminActivityLogController::log('login', "Login gagal untuk user: {$user->name}", 'User', $user->id);
+                AdminActivityLogController::log(
+                    'login_failed', 
+                    "Login gagal untuk user: {$user->name} (Attempt {$failedAttempts}/{$maxAttempts})",
+                    'User', 
+                    $user->id,
+                    ['ip' => $ipAddress, 'user_agent' => $request->userAgent()]
+                );
             }
             
+            $message = 'No. Telepon/Nama atau password salah.';
+            if ($remainingAttempts > 0 && $remainingAttempts <= 2) {
+                $message .= " Sisa percobaan: {$remainingAttempts}x.";
+            }
+
             return response()->json([
-                'message' => 'Email atau password salah.',
+                'message' => $message,
+                'remaining_attempts' => $remainingAttempts,
             ], 401);
         }
+
+        // Check if user is active
+        if (!$user->is_active) {
+            return response()->json([
+                'message' => 'Akun Anda tidak aktif. Silakan hubungi admin.',
+            ], 401);
+        }
+
+        // Record successful login
+        $this->loginAttemptService->recordSuccessfulAttempt($identifier, $ipAddress, $request->userAgent());
 
         // Single Session Enforcement: Revoke all previous tokens
         $user->tokens()->delete();
@@ -127,6 +225,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
+        $user->load('posyandu');
         
         return response()->json([
             'user' => [
@@ -134,6 +233,13 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'address' => $user->address,
+                'rt' => $user->rt,
+                'rw' => $user->rw,
+                'posyandu' => $user->posyandu ? [
+                    'id' => $user->posyandu->id,
+                    'name' => $user->posyandu->name,
+                ] : null,
                 'role' => $user->role,
                 'profile_photo_url' => $user->profile_photo_path 
                     ? asset('storage/' . $user->profile_photo_path) 

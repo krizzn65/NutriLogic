@@ -6,7 +6,8 @@ import {
     Dialog,
     DialogContent,
 } from "../ui/dialog";
-import { Camera, X, Loader2 } from "lucide-react";
+import { Camera, X, Loader2, ChevronDown, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useProfileModal } from "../../contexts/ProfileModalContext";
 
@@ -20,8 +21,14 @@ export default function ProfileModal({ isOpen, onClose }) {
         name: "",
         email: "",
         phone: "",
+        address: "",
+        rt: "",
+        rw: "",
+        posyandu_id: "",
         profile_photo_url: null,
     });
+    const [posyandus, setPosyandus] = useState([]);
+    const [isPosyanduDropdownOpen, setIsPosyanduDropdownOpen] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const fileInputRef = useRef(null);
@@ -30,6 +37,7 @@ export default function ProfileModal({ isOpen, onClose }) {
     // Get user role to determine endpoint
     const user = getUser();
     const isKader = user?.role === 'kader';
+    const isIbu = user?.role === 'ibu';
     const profileEndpoint = isKader ? '/kader/profile' : '/parent/profile';
 
     const fetchProfile = useCallback(async () => {
@@ -50,6 +58,10 @@ export default function ProfileModal({ isOpen, onClose }) {
                 name: user.name || "",
                 email: user.email || "",
                 phone: user.phone || "",
+                address: user.address || "",
+                rt: user.rt || "",
+                rw: user.rw || "",
+                posyandu_id: user.posyandu?.id || "",
                 profile_photo_url: user.profile_photo_url || null,
             };
             setProfileData(data);
@@ -65,13 +77,29 @@ export default function ProfileModal({ isOpen, onClose }) {
         }
     }, [getCachedData, setCachedData]);
 
+    const fetchPosyandus = useCallback(async () => {
+        try {
+            const cachedPosyandus = getCachedData('posyandus_list');
+            if (cachedPosyandus) {
+                setPosyandus(cachedPosyandus);
+                return;
+            }
+            const response = await api.get('/posyandus');
+            setPosyandus(response.data.data || []);
+            setCachedData('posyandus_list', response.data.data || []);
+        } catch (err) {
+            console.error("Error fetching posyandus:", err);
+        }
+    }, [getCachedData, setCachedData]);
+
     useEffect(() => {
         if (isOpen) {
             fetchProfile();
+            fetchPosyandus();
             setPhotoPreview(null);
             setSelectedPhoto(null);
         }
-    }, [isOpen, fetchProfile]);
+    }, [isOpen, fetchProfile, fetchPosyandus]);
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
@@ -97,6 +125,10 @@ export default function ProfileModal({ isOpen, onClose }) {
             formData.append('name', profileData.name);
             formData.append('email', profileData.email);
             if (profileData.phone) formData.append('phone', profileData.phone);
+            if (profileData.address) formData.append('address', profileData.address);
+            if (profileData.rt) formData.append('rt', profileData.rt);
+            if (profileData.rw) formData.append('rw', profileData.rw);
+            if (profileData.posyandu_id) formData.append('posyandu_id', profileData.posyandu_id);
             if (selectedPhoto) {
                 formData.append('profile_photo', selectedPhoto);
             }
@@ -109,7 +141,11 @@ export default function ProfileModal({ isOpen, onClose }) {
             });
 
             setSuccessMessage("Profil berhasil diperbarui!");
-            setProfileData(response.data.data);
+            setProfileData(prev => ({
+                ...prev,
+                ...response.data.data,
+                posyandu_id: response.data.data.posyandu?.id || "",
+            }));
             setPhotoPreview(null);
             setSelectedPhoto(null);
 
@@ -141,7 +177,7 @@ export default function ProfileModal({ isOpen, onClose }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent hideClose={true} className="w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-3xl md:rounded-[80px] overflow-hidden">
+            <DialogContent hideClose={true} className={`w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-2xl ${isPosyanduDropdownOpen ? 'overflow-visible' : 'overflow-hidden'} max-h-[90vh]`}>
                 {/* Profile Header Section - LEFT aligned */}
                 <div className="px-8 pt-8 relative">
                     <div className="flex items-start gap-6 mb-6">
@@ -178,13 +214,13 @@ export default function ProfileModal({ isOpen, onClose }) {
                 </div>
 
                 {/* Content Area */}
-                <div className="px-8 pb-8">
+                <div className="px-8 pb-8 overflow-y-auto max-h-[60vh]" style={{ overflow: isPosyanduDropdownOpen ? 'visible' : 'auto' }}>
                     {loading ? (
                         <div className="py-12 flex justify-center">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                         </div>
                     ) : (
-                        <form onSubmit={handleProfileSubmit} className="space-y-6">
+                        <form onSubmit={handleProfileSubmit} className="space-y-6 overflow-visible">
                             {successMessage && (
                                 <div className="p-4 bg-green-50 text-green-700 rounded-xl text-sm font-medium flex items-center gap-2">
                                     <span>✓</span> {successMessage}
@@ -197,7 +233,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                             )}
 
                             {/* Form Fields */}
-                            <div className="space-y-4">
+                            <div className="space-y-4 overflow-visible">
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-gray-900">Nama Lengkap</label>
                                     <input
@@ -232,6 +268,108 @@ export default function ProfileModal({ isOpen, onClose }) {
                                         placeholder="Masukkan nomor telepon (opsional)"
                                     />
                                 </div>
+
+                                {/* Fields khusus untuk Orang Tua */}
+                                {isIbu && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-gray-900">Alamat</label>
+                                            <textarea
+                                                value={profileData.address}
+                                                onChange={(e) => handleInputChange("address", e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400 resize-none"
+                                                placeholder="Masukkan alamat lengkap"
+                                                rows={2}
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <div className="flex-1 space-y-2">
+                                                <label className="text-sm font-bold text-gray-900">RT</label>
+                                                <input
+                                                    type="text"
+                                                    value={profileData.rt}
+                                                    onChange={(e) => handleInputChange("rt", e.target.value)}
+                                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
+                                                    placeholder="001"
+                                                    maxLength={10}
+                                                />
+                                            </div>
+                                            <div className="flex-1 space-y-2">
+                                                <label className="text-sm font-bold text-gray-900">RW</label>
+                                                <input
+                                                    type="text"
+                                                    value={profileData.rw}
+                                                    onChange={(e) => handleInputChange("rw", e.target.value)}
+                                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
+                                                    placeholder="002"
+                                                    maxLength={10}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-gray-900">Posyandu</label>
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    id="posyandu-button"
+                                                    onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-left flex items-center justify-between focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                                >
+                                                    <span className={!profileData.posyandu_id ? "text-gray-400 text-sm" : "text-gray-900 text-sm"}>
+                                                        {profileData.posyandu_id
+                                                            ? posyandus.find(p => p.id === parseInt(profileData.posyandu_id))?.name || "Posyandu Terpilih"
+                                                            : "Pilih Posyandu"}
+                                                    </span>
+                                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {isPosyanduDropdownOpen && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-50" onClick={() => setIsPosyanduDropdownOpen(false)} />
+                                                            <motion.div
+                                                                initial={{ opacity: 0, y: -10 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                exit={{ opacity: 0, y: -10 }}
+                                                                className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto"
+                                                                style={{ zIndex: 9999 }}
+                                                            >
+                                                                <div
+                                                                    onClick={() => {
+                                                                        handleInputChange("posyandu_id", "");
+                                                                        setIsPosyanduDropdownOpen(false);
+                                                                    }}
+                                                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                                                >
+                                                                    <span className="text-sm text-gray-500">Tidak memilih</span>
+                                                                </div>
+                                                                {posyandus.map((posyandu) => (
+                                                                    <div
+                                                                        key={posyandu.id}
+                                                                        onClick={() => {
+                                                                            handleInputChange("posyandu_id", posyandu.id);
+                                                                            setIsPosyanduDropdownOpen(false);
+                                                                        }}
+                                                                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                                                    >
+                                                                        <span className={`text-sm ${parseInt(profileData.posyandu_id) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                                            {posyandu.name}
+                                                                        </span>
+                                                                        {parseInt(profileData.posyandu_id) === posyandu.id && (
+                                                                            <Check className="w-4 h-4 text-blue-600" />
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </motion.div>
+                                                        </>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Submit Button */}
@@ -262,3 +400,4 @@ export default function ProfileModal({ isOpen, onClose }) {
         </Dialog>
     );
 }
+

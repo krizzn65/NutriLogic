@@ -4,15 +4,15 @@ const TOKEN_KEY = 'nutrilogic_token';
 const USER_KEY = 'nutrilogic_user';
 
 /**
- * Login user with email and password
- * @param {string} email - User email
+ * Login user with phone/name and password
+ * @param {string} identifier - User phone number or full name
  * @param {string} password - User password
  * @returns {Promise<{user: object, token: string}>}
  */
-export async function login(email, password) {
+export async function login(identifier, password) {
   try {
     const response = await api.post('/login', {
-      email,
+      identifier,
       password,
     });
 
@@ -44,7 +44,7 @@ export function getToken() {
 export function getUser() {
   const userStr = localStorage.getItem(USER_KEY);
   if (!userStr) return null;
-  
+
   try {
     return JSON.parse(userStr);
   } catch (error) {

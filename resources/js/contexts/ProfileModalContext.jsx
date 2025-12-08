@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState } from 'react';
-import ProfileModal from '../components/dashboard/ProfileModal';
 
 const ProfileModalContext = createContext();
 
@@ -28,7 +27,6 @@ export const ProfileModalProvider = ({ children }) => {
             notifyProfileUpdate
         }}>
             {children}
-            <ProfileModal isOpen={isOpen} onClose={closeProfileModal} />
         </ProfileModalContext.Provider>
     );
 };
