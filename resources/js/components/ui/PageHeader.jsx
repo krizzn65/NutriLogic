@@ -254,7 +254,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </button>
 
                                 {isNotificationOpen && (
-                                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
                                         <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
                                             <h3 className="font-semibold text-gray-800">Notifikasi</h3>
                                             <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">{notifications.length} Baru</span>
@@ -330,7 +330,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                             </button>
 
                             {isDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
                                     <div className="px-4 py-3 border-b border-gray-50 md:hidden">
                                         <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
                                         <p className="text-xs text-gray-500 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>

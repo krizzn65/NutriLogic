@@ -28,7 +28,7 @@ export default function HeroCard({ userName }) {
                 </div>
 
                 {/* Illustration */}
-                <div className="flex items-end justify-end w-32 md:w-48 md:h-20 shrink-0 relative md:z-50">
+                <div className="flex items-end justify-end w-32 md:w-40 md:h-20 shrink-0 relative md:z-10">
                     <img
                         src={assets.ibu_anak}
                         alt="Ibu dan Anak"
