@@ -14,7 +14,7 @@ export default function UserManagement() {
     const [error, setError] = useState(null);
     const [users, setUsers] = useState([]);
     const [posyandus, setPosyandus] = useState([]);
-    
+
     // Get current logged-in user for self-edit protection
     const [currentUser] = useState(() => {
         const userData = localStorage.getItem('nutrilogic_user');
@@ -176,7 +176,7 @@ export default function UserManagement() {
             alert('Anda tidak dapat mengedit akun Anda sendiri.');
             return;
         }
-        
+
         setEditingUser(user);
         setShowModal(true);
     };
@@ -187,7 +187,7 @@ export default function UserManagement() {
             alert('Anda tidak dapat menonaktifkan akun Anda sendiri.');
             return;
         }
-        
+
         const action = user.is_active ? 'nonaktifkan' : 'aktifkan';
 
         setConfirmationModal({
@@ -225,7 +225,7 @@ export default function UserManagement() {
             alert('Gunakan fitur ubah password di profil untuk mengubah password Anda sendiri.');
             return;
         }
-        
+
         setResetPasswordModal({
             isOpen: true,
             user: user
@@ -553,6 +553,9 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || '',
+        address: user?.address || '',
+        rt: user?.rt || '',
+        rw: user?.rw || '',
         role: user?.role || role,
         posyandu_id: user?.posyandu?.id || '',
     });
@@ -659,10 +662,58 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                         />
                     </div>
 
-                    {formData.role === 'kader' && (
+                    {/* Fields khusus untuk Orang Tua */}
+                    {formData.role === 'ibu' && (
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Alamat
+                                </label>
+                                <textarea
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    placeholder="Masukkan alamat lengkap"
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 resize-none"
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        RT
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.rt}
+                                        onChange={(e) => setFormData({ ...formData, rt: e.target.value })}
+                                        placeholder="001"
+                                        maxLength={10}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        RW
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.rw}
+                                        onChange={(e) => setFormData({ ...formData, rw: e.target.value })}
+                                        placeholder="002"
+                                        maxLength={10}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Posyandu dropdown - tampil untuk kader dan ibu */}
+                    {(formData.role === 'kader' || formData.role === 'ibu') && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Posyandu <span className="text-red-500">*</span>
+                                Posyandu {formData.role === 'kader' && <span className="text-red-500">*</span>}
                             </label>
                             <div className="relative">
                                 <button

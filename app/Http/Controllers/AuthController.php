@@ -80,8 +80,8 @@ class AuthController extends Controller
         $validated['role'] = 'ibu';
         $validated['posyandu_id'] = null; // Ibu doesn't need posyandu_id
 
-        // Hash password (will also be hashed by model cast, but explicit for clarity)
-        $validated['password'] = Hash::make($validated['password']);
+        // Password will be automatically hashed by model cast ('password' => 'hashed')
+        // Do NOT manually Hash::make here to avoid double hashing!
 
         // Create user
         $user = User::create($validated);
@@ -222,6 +222,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
+        $user->load('posyandu');
         
         return response()->json([
             'user' => [
@@ -229,6 +230,13 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'address' => $user->address,
+                'rt' => $user->rt,
+                'rw' => $user->rw,
+                'posyandu' => $user->posyandu ? [
+                    'id' => $user->posyandu->id,
+                    'name' => $user->posyandu->name,
+                ] : null,
                 'role' => $user->role,
                 'profile_photo_url' => $user->profile_photo_path 
                     ? asset('storage/' . $user->profile_photo_path) 

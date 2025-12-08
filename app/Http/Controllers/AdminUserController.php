@@ -41,6 +41,9 @@ class AdminUserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'address' => $user->address,
+                'rt' => $user->rt,
+                'rw' => $user->rw,
                 'role' => $user->role,
                 'is_active' => $user->is_active ?? true,
                 'posyandu' => $user->posyandu ? [
@@ -65,7 +68,10 @@ class AdminUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'phone' => ['required', 'string', 'max:20'],
-            'role' => ['required', Rule::in(['kader', 'admin'])],
+            'address' => ['nullable', 'string', 'max:500'],
+            'rt' => ['nullable', 'string', 'max:10'],
+            'rw' => ['nullable', 'string', 'max:10'],
+            'role' => ['required', Rule::in(['kader', 'ibu', 'admin'])],
             'posyandu_id' => ['nullable', 'exists:posyandus,id'],
         ]);
 
@@ -116,6 +122,9 @@ class AdminUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'phone' => ['required', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'rt' => ['nullable', 'string', 'max:10'],
+            'rw' => ['nullable', 'string', 'max:10'],
             'role' => ['required', Rule::in(['kader', 'ibu', 'admin'])],
             'posyandu_id' => ['nullable', 'exists:posyandus,id'],
         ]);
