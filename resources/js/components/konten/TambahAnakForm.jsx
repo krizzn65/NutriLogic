@@ -62,12 +62,36 @@ export default function TambahAnakForm() {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.full_name.trim()) {
+        // Nama lengkap - trim dan minimal 2 karakter
+        const trimmedName = formData.full_name.trim();
+        if (!trimmedName) {
             newErrors.full_name = "Nama lengkap wajib diisi";
+        } else if (trimmedName.length < 2) {
+            newErrors.full_name = "Nama minimal 2 karakter";
         }
 
+        // NIK - jika diisi, harus 16 digit numerik
+        if (formData.nik) {
+            const nikTrimmed = formData.nik.trim();
+            if (!/^\d{16}$/.test(nikTrimmed)) {
+                newErrors.nik = "NIK harus 16 digit angka";
+            }
+        }
+
+        // Tanggal lahir - wajib dan tidak boleh masa depan atau terlalu lama
         if (!formData.birth_date) {
             newErrors.birth_date = "Tanggal lahir wajib diisi";
+        } else {
+            const birthDate = new Date(formData.birth_date);
+            const today = new Date();
+            const maxAge = new Date();
+            maxAge.setFullYear(maxAge.getFullYear() - 18); // Maksimal 18 tahun (anak posyandu)
+            
+            if (birthDate > today) {
+                newErrors.birth_date = "Tanggal lahir tidak boleh di masa depan";
+            } else if (birthDate < maxAge) {
+                newErrors.birth_date = "Usia anak melebihi batas maksimal (18 tahun)";
+            }
         }
 
         if (!formData.gender) {
@@ -109,12 +133,13 @@ export default function TambahAnakForm() {
 
             const dataToSubmit = {
                 ...formData,
+                full_name: formData.full_name.trim(),
+                nik: formData.nik ? formData.nik.trim() : null,
                 parent_id: user.id,
                 posyandu_id: parseInt(user.posyandu_id), // Ambil dari user, bukan formData
                 birth_weight_kg: formData.birth_weight_kg ? parseFloat(formData.birth_weight_kg) : null,
                 birth_height_cm: formData.birth_height_cm ? parseFloat(formData.birth_height_cm) : null,
-                nik: formData.nik || null,
-                notes: formData.notes || null,
+                notes: formData.notes ? formData.notes.trim() : null,
             };
 
             await api.post('/children', dataToSubmit);
@@ -229,6 +254,8 @@ export default function TambahAnakForm() {
                                         value={formData.nik}
                                         onChange={handleChange}
                                         maxLength="16"
+                                        pattern="[0-9]*"
+                                        inputMode="numeric"
                                         className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.nik ? 'border-red-500' : 'border-gray-200'
                                             }`}
                                         placeholder="Masukkan 16 digit NIK"
@@ -251,6 +278,7 @@ export default function TambahAnakForm() {
                                             value={formData.birth_date}
                                             onChange={handleChange}
                                             max={new Date().toISOString().split('T')[0]}
+                                            min={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                                             className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.birth_date ? 'border-red-500' : 'border-gray-200'
                                                 }`}
                                         />

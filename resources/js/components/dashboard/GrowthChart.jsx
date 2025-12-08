@@ -5,6 +5,7 @@ import api from '../../lib/api';
 export default function GrowthChart({ childId }) {
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState('month');
     const [hoveredPoint, setHoveredPoint] = useState(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -16,11 +17,22 @@ export default function GrowthChart({ childId }) {
     const fetchGrowthData = async () => {
         try {
             setLoading(true);
+            setError(null);
             const params = childId ? { child_id: childId } : {};
             const response = await api.get('/parent/growth-chart', { params });
-            setChartData(response.data.data.chartData || []);
+            const rawData = response.data.data.chartData || [];
+            
+            // Filter out invalid data points (missing weight or NaN values)
+            const validData = rawData.filter(point => 
+                point.averageWeight != null && 
+                !isNaN(point.averageWeight) && 
+                point.averageWeight > 0
+            );
+            
+            setChartData(validData);
         } catch (error) {
             console.error('Error fetching growth chart data:', error);
+            setError('Gagal memuat data grafik. Silakan coba lagi.');
         } finally {
             setLoading(false);
         }
@@ -66,14 +78,18 @@ export default function GrowthChart({ childId }) {
         const chartHeight = height - padding.top - padding.bottom;
         const chartWidth = width - padding.left - padding.right;
 
-        const weights = chartData.map(d => d.averageWeight);
+        // Guard against invalid weights with fallback
+        const weights = chartData.map(d => d.averageWeight).filter(w => !isNaN(w) && w > 0);
+        if (weights.length === 0) return [];
+        
         const maxWeight = Math.max(...weights, 15);
-        const minWeight = Math.min(...weights, 0) - 1;
+        const minWeight = Math.max(0, Math.min(...weights) - 1); // Ensure minWeight is not negative
         const range = maxWeight - minWeight || 1;
 
         return chartData.map((point, index) => {
+            const weight = point.averageWeight || 0;
             const x = padding.left + (index / Math.max(chartData.length - 1, 1)) * chartWidth;
-            const y = padding.top + chartHeight - ((point.averageWeight - minWeight) / range) * chartHeight;
+            const y = padding.top + chartHeight - ((weight - minWeight) / range) * chartHeight;
             return {
                 x,
                 y,
@@ -113,10 +129,13 @@ export default function GrowthChart({ childId }) {
 
     // Get Y-axis labels
     const getYAxisLabels = () => {
-        if (chartData.length === 0) return [];
-        const weights = chartData.map(d => d.averageWeight);
+        if (chartData.length === 0) return ['15', '12', '9', '6', '3'];
+        
+        const weights = chartData.map(d => d.averageWeight).filter(w => !isNaN(w) && w > 0);
+        if (weights.length === 0) return ['15', '12', '9', '6', '3'];
+        
         const maxWeight = Math.ceil(Math.max(...weights, 15));
-        const minWeight = Math.floor(Math.min(...weights, 0));
+        const minWeight = Math.floor(Math.max(0, Math.min(...weights)));
         const steps = 5;
         const stepSize = (maxWeight - minWeight) / (steps - 1);
 
@@ -163,6 +182,21 @@ export default function GrowthChart({ childId }) {
                 {loading ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                ) : error ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                            <svg className="w-12 h-12 mx-auto mb-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="text-gray-600 mb-2">{error}</p>
+                            <button
+                                onClick={fetchGrowthData}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                Coba Lagi
+                            </button>
+                        </div>
                     </div>
                 ) : chartData.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center text-gray-400">

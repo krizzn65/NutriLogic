@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { formatAge } from "../../lib/utils";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
 import NutriAssistSkeleton from "../loading/NutriAssistSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -218,21 +218,24 @@ export default function NutriAssistPage() {
   }
 
   return (
-    <div className="flex flex-1 w-full h-full overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50">
-      <div className="w-full h-full overflow-y-auto custom-scrollbar no-scrollbar md:scrollbar-auto">
-        <div className="w-full p-4 md:p-8 lg:p-10">
+    <div className="flex flex-col flex-1 w-full h-full overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative z-50"
+      >
+        <PageHeader title="Nutri-Assist" subtitle="SMART MEAL PLANNER" />
+      </motion.div>
 
-          {/* Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <PageHeader title="Nutri-Assist" subtitle="Smart Meal Planner" />
+      <div className="flex-1 w-full overflow-y-auto custom-scrollbar no-scrollbar md:scrollbar-auto">
+        <div className="w-full p-4 md:p-8 lg:p-10">
+          <div className="mb-8">
             <p className="text-gray-500 mt-2 max-w-2xl text-lg">
               Asisten pintar yang membantu Anda meracik menu bergizi dari bahan yang tersedia di rumah.
             </p>
-          </motion.div>
+          </div>
 
           {/* Error Alert */}
           <AnimatePresence>

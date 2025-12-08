@@ -13,7 +13,7 @@ export default function HeroCard({ userName }) {
             <div className="relative flex flex-row items-end justify-between gap-3 pl-4 pr-4 pt-4 pb-0 md:p-5 md:pb-0">
                 <div className="flex-1 pb-10 md:pb-5">
                     <h2 className="text-xl md:text-2xl font-bold mb-2 leading-tight">
-                        Selamat Datang, <br /> {userName}!
+                        Selamat Datang, <br /> {userName || 'Orang Tua'}!
                     </h2>
                     <p className="text-blue-50 text-sm md:text-base mb-4 max-w-xs">
                         Pantau tumbuh kembang buah hati Anda dengan mudah dan akurat bersama NutriLogic.

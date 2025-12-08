@@ -126,10 +126,10 @@ export default function DashboardKaderContent() {
     criticalSchedules.forEach(schedule => {
       const isImmunization = schedule.type === 'imunisasi' || schedule.title.toLowerCase().includes('imunisasi');
       const isPMT = schedule.type === 'pmt' || schedule.title.toLowerCase().includes('pmt');
-      
+
       let title = "Jadwal Posyandu Mendesak";
       let icon = "📅";
-      
+
       if (isImmunization) {
         title = "Imunisasi Mendesak";
         icon = "💉";
@@ -152,7 +152,7 @@ export default function DashboardKaderContent() {
     earlyWarningSchedules.forEach(schedule => {
       const isImmunization = schedule.type === 'imunisasi' || schedule.title.toLowerCase().includes('imunisasi');
       const isPMT = schedule.type === 'pmt' || schedule.title.toLowerCase().includes('pmt');
-      
+
       if (isImmunization || isPMT) {
         notifs.push({
           id: `early_warning_${schedule.id}`,
@@ -345,7 +345,7 @@ export default function DashboardKaderContent() {
         </div>
 
         {/* 2. Priority Action Card (Span 1) */}
-        <div 
+        <div
           onClick={() => navigate('/dashboard/anak-prioritas')}
           className="col-span-1 bg-red-50/80 backdrop-blur-sm rounded-3xl p-4 md:p-5 shadow-sm border border-red-100 hover:shadow-lg hover:shadow-red-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer"
         >
@@ -374,7 +374,7 @@ export default function DashboardKaderContent() {
         </div>
 
         {/* 3. Consultation Action Card (Span 1) */}
-        <div 
+        <div
           onClick={() => navigate('/dashboard/konsultasi')}
           className="col-span-1 bg-purple-50/80 backdrop-blur-sm rounded-3xl p-4 md:p-5 shadow-sm border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col relative overflow-hidden group cursor-pointer"
         >
@@ -489,7 +489,7 @@ export default function DashboardKaderContent() {
                 >
                   <CalendarIcon className="w-5 h-5" />
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/dashboard/jadwal')}
                   className="hidden lg:flex group/btn items-center gap-1 text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-wider"
                 >

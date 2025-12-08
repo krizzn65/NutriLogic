@@ -3,7 +3,7 @@ import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import HistoryPageSkeleton from "../loading/HistoryPageSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
 import { DatePicker } from "../ui/date-picker";
 import {
   DropdownMenu,
@@ -30,6 +30,7 @@ export default function HistoryPage() {
     end_date: "",
   });
   const [children, setChildren] = useState([]);
+  const [childrenError, setChildrenError] = useState(null);
   const { getCachedData, setCachedData } = useDataCache();
   const [isInitialMount, setIsInitialMount] = useState(true);
 
@@ -49,6 +50,7 @@ export default function HistoryPage() {
 
   const fetchChildren = async () => {
     try {
+      setChildrenError(null);
       const cachedData = getCachedData('children');
       if (cachedData) {
         setChildren(cachedData);
@@ -60,6 +62,7 @@ export default function HistoryPage() {
       setCachedData('children', data);
     } catch (err) {
       console.error("Error fetching children:", err);
+      setChildrenError("Gagal memuat daftar anak");
     }
   };
 
@@ -199,7 +202,7 @@ export default function HistoryPage() {
             </div>
             <div>
               <p className="font-semibold text-gray-900">{getTypeLabel(type)}</p>
-              <p className="text-xs text-gray-500">{child_name}</p>
+              <p className="text-xs text-gray-500 truncate max-w-[150px]">{child_name || 'Anak'}</p>
             </div>
           </div>
 
@@ -207,7 +210,7 @@ export default function HistoryPage() {
           <div className="flex-1 text-sm text-gray-600">
             {type === "weighing" && (
               <div className="flex flex-wrap gap-x-6 gap-y-1">
-                <span>Berat: <span className="font-medium text-gray-900">{data.weight_kg} kg</span></span>
+                <span>Berat: <span className="font-medium text-gray-900">{data.weight_kg ?? '-'} {data.weight_kg ? 'kg' : ''}</span></span>
                 {data.height_cm && <span>Tinggi: <span className="font-medium text-gray-900">{data.height_cm} cm</span></span>}
                 {data.nutritional_status && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(data.nutritional_status)}`}>
@@ -219,7 +222,7 @@ export default function HistoryPage() {
 
             {type === "meal" && (
               <div className="space-y-1">
-                <p><span className="font-medium text-gray-900">{data.time_of_day}</span> - {data.description || "Tidak ada deskripsi"}</p>
+                <p className="truncate max-w-md"><span className="font-medium text-gray-900">{data.time_of_day}</span> - {data.description || "Tidak ada deskripsi"}</p>
                 {data.ingredients && <p className="text-xs text-gray-500 truncate max-w-md">{data.ingredients}</p>}
               </div>
             )}
@@ -276,20 +279,23 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-white overflow-x-hidden">
-      {/* Header - Preserved Padding */}
-      <div className="px-4 pt-5 md:px-10 md:pt-10 pb-2 bg-white z-10">
+    <div className="flex flex-col w-full h-full bg-white overflow-hidden">
+      {/* Page Header */}
+      <div className="relative z-50">
         <PageHeader title="Riwayat" subtitle="Portal Orang Tua" />
+      </div>
 
+      {/* Filters */}
+      <div className="px-4 py-4 md:px-10 bg-white z-40 border-b border-gray-100">
         {/* Modern Filter Bar */}
-        <div className="mt-6 flex flex-col md:flex-row gap-3 items-center justify-between pb-4 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
             {/* Child Filter Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100">
                   <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
-                  <span>
+                  <span className="truncate max-w-[120px]">
                     {filters.child_id
                       ? children.find(c => c.id == filters.child_id)?.full_name || "Semua Anak"
                       : "Semua Anak"}
@@ -304,6 +310,11 @@ export default function HistoryPage() {
                 >
                   <span className="font-medium">Semua Anak</span>
                 </DropdownMenuItem>
+                {children.length === 0 && childrenError && (
+                  <div className="px-3 py-2 text-xs text-red-600">
+                    {childrenError}
+                  </div>
+                )}
                 {children.map((child) => (
                   <DropdownMenuItem
                     key={child.id}
@@ -311,9 +322,9 @@ export default function HistoryPage() {
                     className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                   >
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
-                      {child.full_name.charAt(0)}
+                      {(child.full_name || '?')[0]}
                     </div>
-                    <span>{child.full_name}</span>
+                    <span className="truncate">{child.full_name || 'Nama Anak'}</span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

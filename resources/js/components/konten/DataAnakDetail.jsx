@@ -129,6 +129,19 @@ export default function DataAnakDetail() {
     const latestWeighing = childData.weighing_logs?.[0]; // Assuming weighing_logs are sorted by date descending
     const currentWeight = latestWeighing?.weight_kg;
     const currentHeight = latestWeighing?.height_cm;
+    
+    // Guard arrays with fallback
+    const weighingLogs = childData.weighing_logs || [];
+    const mealLogs = childData.meal_logs || [];
+    const immunizationSchedules = childData.immunization_schedules || [];
+    
+    // Determine health status based on nutritional status
+    const latestStatus = childData.latest_nutritional_status;
+    const isHealthy = latestStatus && !latestStatus.is_at_risk;
+    const statusLabel = isHealthy ? 'Sehat' : 'Perlu Perhatian';
+    const statusColor = isHealthy 
+        ? 'bg-green-50 text-green-600 border-green-100' 
+        : 'bg-yellow-50 text-yellow-600 border-yellow-100';
 
     return (
         <div className="flex flex-1 w-full h-full overflow-auto no-scrollbar bg-gray-50">
@@ -169,9 +182,9 @@ export default function DataAnakDetail() {
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-1 md:mb-2">
                                     <h2 className="text-xl md:text-3xl font-bold text-gray-900 truncate">{childData.full_name}</h2>
-                                    <span className="px-2 md:px-3 py-0.5 md:py-1 bg-green-50 text-green-600 text-[10px] md:text-xs font-bold rounded-full border border-green-100 flex items-center gap-1.5 shrink-0">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        Sehat
+                                    <span className={`px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-full border flex items-center gap-1.5 shrink-0 ${statusColor}`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`} />
+                                        {statusLabel}
                                     </span>
                                 </div>
                                 <div className="flex flex-wrap gap-2 md:gap-4 text-gray-500 text-xs md:text-sm font-medium">
@@ -344,13 +357,13 @@ export default function DataAnakDetail() {
                                     <h3 className="text-lg font-bold text-gray-900">Riwayat Pertumbuhan</h3>
                                 </div>
 
-                                {childData.weighing_logs.length === 0 ? (
+                                {weighingLogs.length === 0 ? (
                                     <EmptyState message="Belum ada data penimbangan" />
                                 ) : (
                                     <>
                                         {/* Mobile View (Cards) */}
                                         <div className="md:hidden flex flex-col gap-4">
-                                            {childData.weighing_logs.map((log) => (
+                                            {weighingLogs.map((log) => (
                                                 <div key={log.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
                                                     <div className="flex justify-between items-start">
                                                         <div>
@@ -422,7 +435,7 @@ export default function DataAnakDetail() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-50">
-                                                    {childData.weighing_logs.map((log) => (
+                                                    {weighingLogs.map((log) => (
                                                         <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                                                             <td className="py-4 px-4">
                                                                 <div className="flex flex-col gap-1">
@@ -475,7 +488,7 @@ export default function DataAnakDetail() {
                                                                     {log.notes ? (
                                                                         <>
                                                                             <FileText className="w-4 h-4 text-yellow-500 shrink-0" />
-                                                                            <span className="text-xs truncate max-w-[150px]">{log.notes}</span>
+                                                                            <span className="text-xs truncate max-w-[200px]" title={log.notes}>{log.notes}</span>
                                                                         </>
                                                                     ) : (
                                                                         <span className="text-gray-300">-</span>
@@ -495,14 +508,14 @@ export default function DataAnakDetail() {
                         {activeTab === 'meals' && (
                             <div className="p-5 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-900 mb-6">Log Makanan Terakhir</h3>
-                                {(!childData.meal_logs || childData.meal_logs.length === 0) ? (
+                                {mealLogs.length === 0 ? (
                                     <EmptyState message="Belum ada log makanan" />
                                 ) : (
                                     <div className="relative">
-                                        {childData.meal_logs.map((log, index) => (
+                                        {mealLogs.map((log, index) => (
                                             <div key={log.id} className="relative pl-8 pb-8 last:pb-0">
                                                 {/* Timeline Line */}
-                                                {index !== childData.meal_logs.length - 1 && (
+                                                {index !== mealLogs.length - 1 && (
                                                     <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-gray-100" />
                                                 )}
 
@@ -523,16 +536,16 @@ export default function DataAnakDetail() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-700 font-medium mb-2">{log.description}</p>
+                                                    <p className="text-gray-700 font-medium mb-2 line-clamp-2">{log.description}</p>
                                                     {(log.ingredients || log.source) && (
                                                         <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200/50">
                                                             {log.ingredients && (
-                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200 truncate max-w-full">
                                                                     Bahan: {log.ingredients}
                                                                 </span>
                                                             )}
                                                             {log.source && (
-                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
+                                                                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200 truncate max-w-full">
                                                                     Sumber: {log.source}
                                                                 </span>
                                                             )}
@@ -549,11 +562,11 @@ export default function DataAnakDetail() {
                         {activeTab === 'immunization' && (
                             <div className="p-5 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-900 mb-6">Jadwal Imunisasi</h3>
-                                {(!childData.immunization_schedules || childData.immunization_schedules.length === 0) ? (
+                                {immunizationSchedules.length === 0 ? (
                                     <EmptyState message="Belum ada jadwal imunisasi" />
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {childData.immunization_schedules.map((schedule) => (
+                                        {immunizationSchedules.map((schedule) => (
                                             <div
                                                 key={schedule.id}
                                                 className={`p-4 rounded-2xl border transition-all ${schedule.completed_at
