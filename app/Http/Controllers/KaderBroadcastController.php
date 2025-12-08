@@ -123,6 +123,11 @@ class KaderBroadcastController extends Controller
             ], 404);
         }
 
+        // Delete associated notifications first
+        Notification::where('type', 'broadcast')
+            ->where('metadata->broadcast_id', $broadcast->id)
+            ->delete();
+
         $broadcast->delete();
 
         return response()->json([

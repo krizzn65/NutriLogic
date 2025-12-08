@@ -25,7 +25,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
             // Determine the correct API endpoint based on user role
             const user = getUser();
             if (!user) return;
-            
+
             let endpoint = '/notifications/unread';
             if (user.role === 'kader') {
                 endpoint = '/kader/notifications/unread';
@@ -34,7 +34,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
             } else if (user.role === 'ibu') {
                 endpoint = '/parent/notifications/unread';
             }
-            
+
             const response = await api.get(endpoint);
             const dbNotifications = response.data.data.map(notif => ({
                 id: `db_${notif.id}`,
@@ -45,10 +45,11 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                 timestamp: notif.timestamp,
                 dbId: notif.id, // Store original DB ID
                 source: 'database', // Mark as database notification
+                is_read: notif.is_read, // Map is_read status
             }));
-            
+
             console.log('Fetched DB notifications:', dbNotifications.length);
-            
+
             // Always update database notifications
             setNotifications(prev => {
                 // Keep non-database notifications (maintenance, AI notifications)
@@ -65,16 +66,16 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
     useEffect(() => {
         const userData = getUser();
         setUser(userData);
-        
+
         // Fetch notifications from database
         if (userData) {
             fetchNotifications();
-            
+
             // Poll for new notifications every 30 seconds
             const pollInterval = setInterval(() => {
                 fetchNotifications();
             }, 30000);
-            
+
             return () => clearInterval(pollInterval);
         }
     }, [fetchNotifications]);
@@ -128,16 +129,16 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                 ...n,
                 source: 'ai', // Mark as AI notification
             }));
-            
+
             // Save AI notifications to localStorage for persistence across pages
             if (filteredNotifications.length > 0) {
                 localStorage.setItem('aiNotifications', JSON.stringify(filteredNotifications));
             }
-            
+
             setNotifications(prev => {
                 // Keep maintenance and database notifications
-                const persistentNotifs = prev.filter(n => 
-                    n.id === 'maintenance-mode-active' || 
+                const persistentNotifs = prev.filter(n =>
+                    n.id === 'maintenance-mode-active' ||
                     n.source === 'database'
                 );
                 return [...persistentNotifs, ...filteredNotifications];
@@ -150,16 +151,16 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                     const aiNotifications = JSON.parse(savedAiNotifs);
                     const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
                     const activeAiNotifs = aiNotifications.filter(n => !dismissedIds.includes(n.id));
-                    
+
                     if (activeAiNotifs.length > 0) {
                         setNotifications(prev => {
                             // Only add AI notifications if they're not already there
                             const hasAiNotifs = prev.some(n => n.source === 'ai');
                             if (hasAiNotifs) return prev;
-                            
+
                             // Keep maintenance and database notifications
-                            const persistentNotifs = prev.filter(n => 
-                                n.id === 'maintenance-mode-active' || 
+                            const persistentNotifs = prev.filter(n =>
+                                n.id === 'maintenance-mode-active' ||
                                 n.source === 'database'
                             );
                             return [...persistentNotifs, ...activeAiNotifs];
@@ -184,6 +185,16 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
             api.post(`/notifications/${notification.dbId}/read`).catch(err => {
                 console.error('Failed to mark notification as read:', err);
             });
+
+            // If it's a broadcast, don't remove it, just mark as read locally
+            if (notification.type === 'broadcast') {
+                setNotifications(prev => prev.map(n =>
+                    n.id === notification.id ? { ...n, is_read: true } : n
+                ));
+            } else {
+                // For other DB notifications, remove from list (standard behavior)
+                setNotifications(prev => prev.filter(n => n.id !== notification.id));
+            }
         } else if (notification.source === 'ai') {
             // Save dismissed notification ID to localStorage for AI notifications
             const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
@@ -191,7 +202,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                 dismissedIds.push(notification.id);
                 localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedIds));
             }
-            
+
             // Also update aiNotifications in localStorage
             const savedAiNotifs = localStorage.getItem('aiNotifications');
             if (savedAiNotifs) {
@@ -205,8 +216,13 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
             }
         }
 
-        setNotifications(prev => prev.filter(n => n.id !== notification.id));
         setIsNotificationOpen(false);
+
+        // Skip navigation for broadcast notifications - just close and mark as read
+        if (notification.type === 'broadcast') {
+            return;
+        }
+
         if (notification.link) {
             navigate(notification.link);
         }
@@ -240,11 +256,11 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                     className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
                                 >
                                     <Bell className="w-5 h-5" />
-                                    {notifications.length > 0 && (
+                                    {notifications.filter(n => !n.is_read).length > 0 && (
                                         <>
-                                            {notifications.filter(n => n.type === 'danger').length > 0 ? (
+                                            {notifications.filter(n => n.type === 'danger' && !n.is_read).length > 0 ? (
                                                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                                                    {notifications.filter(n => n.type === 'danger').length}
+                                                    {notifications.filter(n => n.type === 'danger' && !n.is_read).length}
                                                 </span>
                                             ) : (
                                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
@@ -254,10 +270,10 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </button>
 
                                 {isNotificationOpen && (
-                                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
                                         <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
                                             <h3 className="font-semibold text-gray-800">Notifikasi</h3>
-                                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">{notifications.length} Baru</span>
+                                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">{notifications.filter(n => !n.is_read).length} Baru</span>
                                         </div>
                                         <div className="max-h-[300px] overflow-y-auto">
                                             {notifications.length > 0 ? (
@@ -265,7 +281,8 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                                     <div
                                                         key={notif.id}
                                                         onClick={() => handleNotificationClick(notif)}
-                                                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 relative group"
+                                                        className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 relative group ${notif.is_read ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50 bg-white'
+                                                            }`}
                                                     >
                                                         <div className="flex gap-3">
                                                             <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${notif.type === 'danger' ? 'bg-red-500' :
@@ -304,71 +321,71 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
 
                             {/* Profile Avatar */}
                             <div className="relative">
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="flex items-center gap-3 pl-4 border-l border-gray-200 focus:outline-none"
-                            >
-                                <div className="text-right hidden md:block">
-                                    <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'User'}</p>
-                                    <p className="text-xs text-gray-500 mt-1 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
-                                </div>
-                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow">
-                                    {user?.profile_photo_url ? (
-                                        <img 
-                                            src={user.profile_photo_url} 
-                                            alt={user.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <img 
-                                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
-                                            alt={user?.name || 'User'}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    )}
-                                </div>
-                            </button>
-
-                            {isDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="px-4 py-3 border-b border-gray-50 md:hidden">
-                                        <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
-                                        <p className="text-xs text-gray-500 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="flex items-center gap-3 pl-4 border-l border-gray-200 focus:outline-none"
+                                >
+                                    <div className="text-right hidden md:block">
+                                        <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'User'}</p>
+                                        <p className="text-xs text-gray-500 mt-1 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            setIsProfileModalOpen(true);
-                                            setIsDropdownOpen(false);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                    >
-                                        <UserCog className="w-4 h-4" />
-                                        Profil Saya
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setIsSettingsModalOpen(true);
-                                            setIsDropdownOpen(false);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                    >
-                                        <Settings className="w-4 h-4" />
-                                        Pengaturan
-                                    </button>
-                                    <div className="h-px bg-gray-100 my-1"></div>
-                                    <button
-                                        onClick={() => {
-                                            setConfirmOpen(true);
-                                            setIsDropdownOpen(false);
-                                        }}
-                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        Keluar
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow">
+                                        {user?.profile_photo_url ? (
+                                            <img
+                                                src={user.profile_photo_url}
+                                                alt={user.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
+                                                alt={user?.name || 'User'}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
+                                        <div className="px-4 py-3 border-b border-gray-50 md:hidden">
+                                            <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
+                                            <p className="text-xs text-gray-500 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setIsProfileModalOpen(true);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                        >
+                                            <UserCog className="w-4 h-4" />
+                                            Profil Saya
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsSettingsModalOpen(true);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            Pengaturan
+                                        </button>
+                                        <div className="h-px bg-gray-100 my-1"></div>
+                                        <button
+                                            onClick={() => {
+                                                setConfirmOpen(true);
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Keluar
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

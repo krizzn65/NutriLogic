@@ -40,14 +40,17 @@ class NotificationController extends Controller
     }
 
     /**
-     * Get unread notifications only
+     * Get unread notifications only (and persistent broadcasts)
      */
     public function unread(Request $request): JsonResponse
     {
         $user = $request->user();
         
         $notifications = Notification::forUser($user->id)
-            ->unread()
+            ->where(function($query) {
+                $query->where('is_read', false)
+                      ->orWhere('type', 'broadcast');
+            })
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($notification) {

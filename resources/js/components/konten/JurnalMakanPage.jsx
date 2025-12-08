@@ -3,8 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import api from '../../lib/api';
-import PageHeader from '../dashboard/PageHeader';
-import DashboardLayout from '../dashboard/DashboardLayout';
+import PageHeader from '../ui/PageHeader';
 import QuickAddForm from '../jurnal/QuickAddForm';
 import NoMealsEmptyState from '../jurnal/NoMealsEmptyState';
 import TodayStatusCard from '../pmt/TodayStatusCard';
@@ -13,8 +12,6 @@ import PMTStatsCard from '../pmt/PMTStatsCard';
 import EnhancedChildSelector from '../jurnal/EnhancedChildSelector';
 import JurnalViewSelector from '../jurnal/JurnalViewSelector';
 import NoChildrenEmptyState from '../jurnal/NoChildrenEmptyState';
-import ChildSelectorSkeleton from '../jurnal/ChildSelectorSkeleton';
-import TimelineSkeleton from '../jurnal/TimelineSkeleton';
 import ErrorBoundary from '../ErrorBoundary';
 import MealDataTable from '../jurnal/MealDataTable';
 
@@ -106,60 +103,51 @@ function JurnalMakanPageContent() {
 
     if (loading) {
         return (
-            <DashboardLayout>
-                <div className="min-h-screen bg-gray-50/50 font-sans">
-                    <div className="max-w-6xl mx-auto p-6 md:p-10">
-                        <div className="animate-pulse space-y-8">
-                            <div className="h-8 w-48 bg-gray-200 rounded"></div>
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                                <div className="space-y-4">
-                                    <div className="h-12 w-full bg-gray-200 rounded"></div>
-                                    <div className="h-64 w-full bg-gray-200 rounded"></div>
-                                </div>
-                                <div className="lg:col-span-2 space-y-4">
-                                    <div className="h-32 w-full bg-gray-200 rounded"></div>
-                                    <div className="h-64 w-full bg-gray-200 rounded"></div>
-                                </div>
+            <div className="flex flex-col h-full w-full bg-gray-50/50 font-sans">
+                <div className="relative z-50">
+                    <PageHeader title="Jurnal Makan" subtitle="Portal Orang Tua" />
+                </div>
+                <div className="flex-1 overflow-auto p-6 md:p-10">
+                    <div className="max-w-6xl mx-auto animate-pulse space-y-8">
+                        <div className="h-8 w-48 bg-gray-200 rounded"></div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                            <div className="space-y-4">
+                                <div className="h-12 w-full bg-gray-200 rounded"></div>
+                                <div className="h-64 w-full bg-gray-200 rounded"></div>
+                            </div>
+                            <div className="lg:col-span-2 space-y-4">
+                                <div className="h-32 w-full bg-gray-200 rounded"></div>
+                                <div className="h-64 w-full bg-gray-200 rounded"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (children.length === 0) {
-        return (
-            <DashboardLayout>
-                <div className="min-h-screen bg-gray-50/50 font-sans">
-                    <div className="max-w-6xl mx-auto p-6 md:p-10">
-                        <PageHeader
-                            title="Jurnal Makan"
-                            subtitle="Catat nutrisi harian anak"
-                        />
-                        <div className="mt-8">
-                            <NoChildrenEmptyState />
-                        </div>
-                    </div>
-                </div>
-            </DashboardLayout>
+            </div>
         );
     }
 
     return (
-        <DashboardLayout>
-            <div className="min-h-screen bg-gray-50/50 font-sans text-gray-900">
-                <main className="w-full">
+        <div className="flex flex-col h-full w-full bg-gray-50/50 font-sans text-gray-900">
+            <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative z-50"
+            >
+                <PageHeader title="Jurnal Makan" subtitle="Portal Orang Tua" />
+            </motion.div>
 
-                    {/* Padded Content Area */}
-                    <div className="p-4 md:p-8">
-                        {/* Clean Split Layout */}
+            <div className="flex-1 w-full overflow-y-auto custom-scrollbar no-scrollbar md:scrollbar-auto">
+                <div className="p-4 md:p-8">
+                    {children.length === 0 ? (
+                        <div className="max-w-6xl mx-auto mt-8">
+                            <NoChildrenEmptyState />
+                        </div>
+                    ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-10">
-
                             {/* Left Sidebar: Navigation & Stats */}
                             <div className="lg:col-span-4 space-y-4 lg:space-y-6">
                                 <div className="mb-2">
-                                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Jurnal Makan</h1>
                                     <p className="text-gray-500 mt-1 text-lg">Pantau asupan nutrisi {selectedChild?.full_name?.split(' ')[0] || 'anak'}.</p>
                                 </div>
 
@@ -203,7 +191,7 @@ function JurnalMakanPageContent() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3 }}
-                                    className="space-y-8 mt-4 lg:mt-24"
+                                    className="space-y-8 mt-4 lg:mt-0"
                                 >
                                     {activeTab === 'jurnal' ? (
                                         <>
@@ -243,64 +231,64 @@ function JurnalMakanPageContent() {
                                 </motion.div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Full Width Data Table (Outside Padded Area) */}
-                    {activeTab === 'jurnal' && meals.length > 0 && (
-                        <MealDataTable
-                            meals={meals}
-                            loading={mealsLoading}
-                            onDelete={handleDeleteMeal}
-                        />
                     )}
+                </div>
 
-                    {/* Mobile FAB & Modal */}
-                    {activeTab === 'jurnal' && (
-                        <>
-                            {/* FAB */}
-                            <motion.button
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                onClick={() => setIsAddMealModalOpen(true)}
-                                className="fixed bottom-24 right-6 lg:hidden z-40 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center hover:bg-blue-700 active:scale-95 transition-all"
-                            >
-                                <Plus className="w-6 h-6" />
-                            </motion.button>
+                {/* Full Width Data Table (Outside Padded Area) */}
+                {activeTab === 'jurnal' && meals.length > 0 && (
+                    <MealDataTable
+                        meals={meals}
+                        loading={mealsLoading}
+                        onDelete={handleDeleteMeal}
+                    />
+                )}
 
-                            {/* Modal */}
-                            <AnimatePresence>
-                                {isAddMealModalOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
-                                            onClick={() => setIsAddMealModalOpen(false)}
+                {/* Mobile FAB & Modal */}
+                {activeTab === 'jurnal' && (
+                    <>
+                        {/* FAB */}
+                        <motion.button
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            onClick={() => setIsAddMealModalOpen(true)}
+                            className="fixed bottom-24 right-6 lg:hidden z-40 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center hover:bg-blue-700 active:scale-95 transition-all"
+                        >
+                            <Plus className="w-6 h-6" />
+                        </motion.button>
+
+                        {/* Modal */}
+                        <AnimatePresence>
+                            {isAddMealModalOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
+                                        onClick={() => setIsAddMealModalOpen(false)}
+                                    />
+                                    <motion.div
+                                        initial={{ opacity: 0, y: '100%' }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: '100%' }}
+                                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                                        className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl p-6 lg:hidden max-h-[90vh] overflow-y-auto"
+                                    >
+                                        <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+                                        <QuickAddForm
+                                            childId={selectedChildId}
+                                            onSuccess={() => {
+                                                handleMealAdded();
+                                                setIsAddMealModalOpen(false);
+                                            }}
+                                            initialData={prefilledMeal}
                                         />
-                                        <motion.div
-                                            initial={{ opacity: 0, y: '100%' }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: '100%' }}
-                                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                                            className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl p-6 lg:hidden max-h-[90vh] overflow-y-auto"
-                                        >
-                                            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-                                            <QuickAddForm
-                                                childId={selectedChildId}
-                                                onSuccess={() => {
-                                                    handleMealAdded();
-                                                    setIsAddMealModalOpen(false);
-                                                }}
-                                                initialData={prefilledMeal}
-                                            />
-                                        </motion.div>
-                                    </>
-                                )}
-                            </AnimatePresence>
-                        </>
-                    )}
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </>
+                )}
 
-                </main>
             </div>
-        </DashboardLayout>
+        </div>
     );
 }
 

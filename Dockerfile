@@ -59,6 +59,9 @@ COPY . .
 # Copy built assets from node-builder
 COPY --from=node-builder /app/public/build ./public/build
 
+# Create required directories for supervisor
+RUN mkdir -p /var/log/supervisor /var/run
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \

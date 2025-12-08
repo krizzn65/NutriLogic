@@ -208,6 +208,19 @@ export default function DataAnakDetail() {
     const currentWeight = latestWeighing?.weight_kg;
     const currentHeight = latestWeighing?.height_cm;
 
+    // Guard arrays with fallback
+    const weighingLogs = childData.weighing_logs || [];
+    const mealLogs = childData.meal_logs || [];
+    const immunizationSchedules = childData.immunization_schedules || [];
+
+    // Determine health status based on nutritional status
+    const latestStatus = childData.latest_nutritional_status;
+    const isHealthy = latestStatus && !latestStatus.is_at_risk;
+    const statusLabel = isHealthy ? 'Sehat' : 'Perlu Perhatian';
+    const statusColor = isHealthy
+        ? 'bg-green-50 text-green-600 border-green-100'
+        : 'bg-yellow-50 text-yellow-600 border-yellow-100';
+
     return (
         <div className="flex flex-1 w-full h-full overflow-auto no-scrollbar bg-gray-50">
             <div className="p-4 md:p-8 w-full max-w-7xl mx-auto flex flex-col gap-6 md:gap-8">
@@ -247,9 +260,9 @@ export default function DataAnakDetail() {
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-1 md:mb-2">
                                     <h2 className="text-xl md:text-3xl font-bold text-gray-900 truncate">{childData.full_name}</h2>
-                                    <span className="px-2 md:px-3 py-0.5 md:py-1 bg-green-50 text-green-600 text-[10px] md:text-xs font-bold rounded-full border border-green-100 flex items-center gap-1.5 shrink-0">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        Sehat
+                                    <span className={`px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-full border flex items-center gap-1.5 shrink-0 ${statusColor}`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`} />
+                                        {statusLabel}
                                     </span>
                                 </div>
                                 <div className="flex flex-wrap gap-2 md:gap-4 text-gray-500 text-xs md:text-sm font-medium">
@@ -422,7 +435,7 @@ export default function DataAnakDetail() {
                                     <h3 className="text-lg font-bold text-gray-900">Riwayat Pertumbuhan</h3>
                                 </div>
 
-                                {childData.weighing_logs.length === 0 ? (
+                                {weighingLogs.length === 0 ? (
                                     <EmptyState message="Belum ada data penimbangan" />
                                 ) : (() => {
                                     const historyData = paginate(childData.weighing_logs, historyPage);
@@ -635,7 +648,7 @@ export default function DataAnakDetail() {
                         {activeTab === 'meals' && (
                             <div className="p-5 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-900 mb-6">Log Makanan Terakhir</h3>
-                                {(!childData.meal_logs || childData.meal_logs.length === 0) ? (
+                                {mealLogs.length === 0 ? (
                                     <EmptyState message="Belum ada log makanan" />
                                 ) : (() => {
                                     const mealsData = paginate(childData.meal_logs, mealsPage);
@@ -703,7 +716,7 @@ export default function DataAnakDetail() {
                         {activeTab === 'immunization' && (
                             <div className="p-5 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-900 mb-6">Jadwal Imunisasi</h3>
-                                {(!childData.immunization_schedules || childData.immunization_schedules.length === 0) ? (
+                                {immunizationSchedules.length === 0 ? (
                                     <EmptyState message="Belum ada jadwal imunisasi" />
                                 ) : (() => {
                                     const immunizationData = paginate(childData.immunization_schedules, immunizationPage);

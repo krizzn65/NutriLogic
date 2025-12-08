@@ -74,20 +74,20 @@ export default function AuthSwitch() {
   const validateEmail = (email) => {
     // RFC 5322 compliant email regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (!emailRegex.test(email)) {
       return 'Format email tidak valid.';
     }
-    
+
     // Additional checks for common errors
     if (email.includes('..')) {
       return 'Email tidak boleh mengandung titik ganda berturut-turut.';
     }
-    
+
     if (email.startsWith('.') || email.endsWith('.')) {
       return 'Email tidak boleh diawali atau diakhiri dengan titik.';
     }
-    
+
     return null;
   };
 
@@ -95,11 +95,11 @@ export default function AuthSwitch() {
   const validatePhone = (phone) => {
     // Indonesian phone number format
     const phoneRegex = /^(08|62)\d{8,13}$/;
-    
+
     if (!phoneRegex.test(phone)) {
       return 'Format nomor telepon tidak valid. Gunakan format 08xxxxxxxxxx atau 62xxxxxxxxxx.';
     }
-    
+
     return null;
   };
 
@@ -167,7 +167,7 @@ export default function AuthSwitch() {
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.';
-      
+
       // Parse validation errors from backend
       const errors = err.response?.data?.errors;
       if (errors) {
@@ -177,7 +177,7 @@ export default function AuthSwitch() {
           errFields[field] = true;
         });
         setFieldErrors(errFields);
-        
+
         // Show specific field errors
         const fieldErrors = Object.values(errors).flat();
         setSignUpError(fieldErrors.join(' '));
@@ -888,7 +888,7 @@ export default function AuthSwitch() {
                   // Handle error with lockout information
                   const errorMessage = err.response?.data?.message || 'Login gagal. Periksa kembali nomor telepon/nama dan password Anda.';
                   const statusCode = err.response?.status;
-                  
+
                   // Show lockout warning if account is locked (429 status)
                   if (statusCode === 429) {
                     const lockedUntil = err.response?.data?.locked_until;
@@ -941,7 +941,7 @@ export default function AuthSwitch() {
                 <input
                   type="text"
                   placeholder="No. Telepon / Nama Lengkap"
-                  autoComplete="username"
+                  autoComplete="off"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value.trim())}
                   required
@@ -953,7 +953,7 @@ export default function AuthSwitch() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value.trim())}
                   required
