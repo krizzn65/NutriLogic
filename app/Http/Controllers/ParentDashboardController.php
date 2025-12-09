@@ -218,6 +218,7 @@ class ParentDashboardController extends Controller
             $childrenData[] = [
                 'id' => $child->id,
                 'full_name' => $child->full_name,
+                'nik' => $child->nik,
                 'birth_date' => $child->birth_date->format('Y-m-d'),
                 'gender' => $child->gender,
                 'age_in_months' => $child->age_in_months, // Use model accessor

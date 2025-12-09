@@ -67,14 +67,6 @@ export default function SidebarOrangTua() {
         },
     ];
 
-    const backLink = {
-        label: "Kembali",
-        href: "/",
-        icon: (
-            <ArrowLeft className="text-white h-5 w-5 shrink-0" />
-        ),
-    };
-
     return (
         <>
             <Sidebar open={open} setOpen={setOpen}>
@@ -85,9 +77,6 @@ export default function SidebarOrangTua() {
                             {links.map((link, idx) => (
                                 <SidebarLink key={idx} link={link} />
                             ))}
-                            <div className="mt-4 border-t border-white/20 pt-4">
-                                <SidebarLink link={backLink} />
-                            </div>
                         </div>
                     </div>
                 </SidebarBody>

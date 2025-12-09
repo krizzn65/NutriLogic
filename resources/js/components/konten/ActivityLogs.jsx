@@ -19,7 +19,7 @@ export default function ActivityLogs() {
     const [pagination, setPagination] = useState({
         current_page: 1,
         last_page: 1,
-        per_page: 50,
+        per_page: 20,
         total: 0,
         from: 0,
         to: 0,
@@ -79,7 +79,7 @@ export default function ActivityLogs() {
             const paginationData = {
                 current_page: response.data?.current_page || 1,
                 last_page: response.data?.last_page || 1,
-                per_page: response.data?.per_page || 50,
+                per_page: response.data?.per_page || 20,
                 total: response.data?.total || 0,
                 from: response.data?.from || 0,
                 to: response.data?.to || 0,
@@ -530,68 +530,21 @@ export default function ActivityLogs() {
                     </div>
                 </div>
 
-                {/* Pagination Controls */}
-                {pagination.last_page > 1 && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="text-sm text-gray-600">
-                                Menampilkan <span className="font-medium">{pagination.from}</span> - <span className="font-medium">{pagination.to}</span> dari <span className="font-medium">{pagination.total}</span> log
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => fetchLogs({ forceRefresh: true, page: pagination.current_page - 1 })}
-                                    disabled={pagination.current_page === 1 || loading}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <div className="flex items-center gap-1">
-                                    {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
-                                        let pageNum;
-                                        if (pagination.last_page <= 5) {
-                                            pageNum = i + 1;
-                                        } else if (pagination.current_page <= 3) {
-                                            pageNum = i + 1;
-                                        } else if (pagination.current_page >= pagination.last_page - 2) {
-                                            pageNum = pagination.last_page - 4 + i;
-                                        } else {
-                                            pageNum = pagination.current_page - 2 + i;
-                                        }
-                                        
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => fetchLogs({ forceRefresh: true, page: pageNum })}
-                                                disabled={loading}
-                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                                    pagination.current_page === pageNum
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'border border-gray-300 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    onClick={() => fetchLogs({ forceRefresh: true, page: pagination.current_page + 1 })}
-                                    disabled={pagination.current_page === pagination.last_page || loading}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {/* Unified Pagination for Both Mobile & Desktop */}
+                <PaginationUI
+                    currentPage={pagination.current_page}
+                    totalPages={pagination.last_page}
+                    total={pagination.total}
+                    onPageChange={(page) => fetchLogs({ forceRefresh: true, page })}
+                    label="log aktivitas"
+                />
 
                 {/* Info */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                         <Activity className="w-5 h-5 text-blue-600 mt-0.5" />
                         <div className="text-sm text-blue-800">
-                            <strong>Catatan:</strong> Log aktivitas sistem dengan pagination (max 500 per halaman).
+                            <strong>Catatan:</strong> Log aktivitas sistem dengan pagination (max 50 per halaman).
                             Gunakan filter untuk mempersempit pencarian. Auto-refresh dapat diaktifkan untuk pemantauan real-time setiap 30 detik.
                             {pagination.total > 0 && (
                                 <div className="mt-2 text-blue-700">
@@ -607,6 +560,59 @@ export default function ActivityLogs() {
 }
 
 // Helper Components
+
+// Pagination UI Component (consistent with DataAnakDetail)
+function PaginationUI({ currentPage, totalPages, total, onPageChange, label }) {
+    if (total === 0) return null;
+
+    return (
+        <div className="flex flex-col items-center gap-3 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                    >
+                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <div className="flex items-center gap-1">
+                        {[...Array(totalPages)].map((_, i) => {
+                            const pageNum = i + 1;
+                            const show = pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1;
+                            if (!show && (pageNum === currentPage - 2 || pageNum === currentPage + 2)) {
+                                return <span key={i} className="px-1 text-gray-400 text-sm">...</span>;
+                            }
+                            if (!show) return null;
+                            return (
+                                <button
+                                    key={i}
+                                    onClick={() => onPageChange(pageNum)}
+                                    className={`min-w-[32px] h-8 rounded-lg text-sm font-medium transition-all ${pageNum === currentPage
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <button
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                    >
+                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                    </button>
+                </div>
+            )}
+            <div className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
+                Halaman {currentPage} dari {totalPages || 1} • Total: <span className="font-bold text-gray-700">{total}</span> {label}
+            </div>
+        </div>
+    );
+}
 
 function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
     const dropdownRef = useRef(null);
