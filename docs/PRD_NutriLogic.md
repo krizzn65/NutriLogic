@@ -3,7 +3,7 @@
 
 ---
 
-## 📋 Informasi Dokumen
+ ## 📋 Informasi Dokumen
 
 | Informasi | Detail |
 |-----------|--------|
