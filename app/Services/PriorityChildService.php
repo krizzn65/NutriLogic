@@ -8,7 +8,7 @@ use Carbon\Carbon;
 class PriorityChildService
 {
     /**
-     * Get all priority children in a posyandu
+     * Get all children eligible for priority queue based on PMT compliance
      */
     public function getPriorityChildren(int $posyanduId): array
     {
@@ -21,25 +21,21 @@ class PriorityChildService
         $summary = [
             'total_priority' => 0,
             'by_reason' => [
-                'bad_nutritional_status' => 0,
-                'weight_stagnation' => 0,
+                'pmt_compliant' => 0,
                 'long_absence' => 0,
             ],
         ];
 
         foreach ($children as $child) {
-            $reasons = $this->checkPriorityCriteria($child);
-            
-            if (!empty($reasons)) {
+            // Calculate PMT compliance for current month
+            $pmtCompliance = $this->calculatePMTCompliance($child);
+            $isEligible = $pmtCompliance >= 80;
+
+            // Only include children who are eligible (≥80% PMT compliance)
+            if ($isEligible) {
                 $latestWeighing = $child->weighingLogs()
                     ->orderBy('measured_at', 'desc')
                     ->first();
-
-                $daysSinceLastWeighing = null;
-                if ($latestWeighing) {
-                    $daysSinceLastWeighing = Carbon::parse($latestWeighing->measured_at)
-                        ->diffInDays(Carbon::now());
-                }
 
                 $priorityChildren[] = [
                     'id' => $child->id,
@@ -58,14 +54,12 @@ class PriorityChildService
                         'head_circumference_cm' => $latestWeighing->head_circumference_cm,
                         'nutritional_status' => $latestWeighing->nutritional_status,
                     ] : null,
-                    'priority_reasons' => $reasons,
-                    'days_since_last_weighing' => $daysSinceLastWeighing,
+                    'pmt_compliance_percentage' => $pmtCompliance,
+                    'is_eligible_priority' => $isEligible,
                 ];
 
                 $summary['total_priority']++;
-                foreach ($reasons as $reason) {
-                    $summary['by_reason'][$reason['type']]++;
-                }
+                $summary['by_reason']['pmt_compliant']++;
             }
         }
 
@@ -76,119 +70,52 @@ class PriorityChildService
     }
 
     /**
-     * Check all priority criteria for a child
+     * Calculate PMT compliance percentage for current month
+     * Returns percentage (0-100) of PMT consumption days
+     * Public method for use in other controllers
      */
-    private function checkPriorityCriteria(Child $child): array
+    public function calculatePMTCompliancePublic(Child $child): float
     {
-        $reasons = [];
-
-        // Check nutritional status
-        if ($this->checkNutritionalStatus($child)) {
-            $reasons[] = [
-                'type' => 'bad_nutritional_status',
-                'label' => 'Status Gizi Buruk',
-                'severity' => 'high',
-            ];
-        }
-
-        // Check weight stagnation
-        if ($this->checkWeightStagnation($child)) {
-            $reasons[] = [
-                'type' => 'weight_stagnation',
-                'label' => 'Berat Badan Stagnan',
-                'severity' => 'medium',
-            ];
-        }
-
-        // Check long absence
-        $absenceWeeks = $this->checkAbsence($child);
-        if ($absenceWeeks > 0) {
-            $reasons[] = [
-                'type' => 'long_absence',
-                'label' => "Tidak Ditimbang {$absenceWeeks} Minggu",
-                'severity' => 'medium',
-            ];
-        }
-
-        return $reasons;
+        return $this->calculatePMTCompliance($child);
     }
 
     /**
-     * Check if child has bad nutritional status
+     * Calculate PMT compliance percentage for PREVIOUS MONTH (complete month)
+     * Returns percentage (0-100) of PMT consumption days
+     * Only counts complete months to ensure fair evaluation
      */
-    private function checkNutritionalStatus(Child $child): bool
+    private function calculatePMTCompliance(Child $child): float
     {
-        $latestWeighing = $child->weighingLogs()
-            ->orderBy('measured_at', 'desc')
-            ->first();
+        // Get PREVIOUS month (complete month)
+        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
+        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
+        
+        // Get total days in previous month
+        $daysInLastMonth = $startOfLastMonth->daysInMonth;
 
-        if (!$latestWeighing) {
-            return false;
-        }
-
-        // Any status except 'normal' is considered bad
-        return $latestWeighing->nutritional_status !== 'normal';
-    }
-
-    /**
-     * Check if child's weight has stagnated
-     */
-    private function checkWeightStagnation(Child $child): bool
-    {
-        $recentWeighings = $child->weighingLogs()
-            ->orderBy('measured_at', 'desc')
-            ->limit(3)
+        // Get PMT logs for PREVIOUS month
+        // Only count 'consumed' status (not 'partial' or 'refused')
+        $pmtLogs = $child->pmtLogs()
+            ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+            ->where('status', 'consumed')
             ->get();
 
-        // Need at least 3 weighing records to check stagnation
-        if ($recentWeighings->count() < 3) {
-            return false;
-        }
+        // Count unique consumption days
+        $consumptionDays = $pmtLogs->pluck('date')
+            ->map(function ($date) {
+                return Carbon::parse($date)->format('Y-m-d');
+            })
+            ->unique()
+            ->count();
 
-        // Check if weight has not increased for last 2 visits
-        // Tolerance: ±0.1 kg for measurement variance
-        $weights = $recentWeighings->pluck('weight_kg')->toArray();
-        
-        // Compare most recent with second most recent
-        $noIncrease1 = ($weights[0] - $weights[1]) <= 0.1;
-        
-        // Compare second most recent with third most recent
-        $noIncrease2 = ($weights[1] - $weights[2]) <= 0.1;
-
-        return $noIncrease1 && $noIncrease2;
-    }
-
-    /**
-     * Check if child has been absent from weighing for too long
-     * Returns number of weeks if absent, 0 if not
-     */
-    private function checkAbsence(Child $child, int $weeksThreshold = 4): int
-    {
-        $latestWeighing = $child->weighingLogs()
-            ->orderBy('measured_at', 'desc')
-            ->first();
-
-        if (!$latestWeighing) {
-            // No weighing data at all - check child's age
-            $ageInDays = Carbon::parse($child->birth_date)->diffInDays(Carbon::now());
-            $ageInWeeks = floor($ageInDays / 7);
-            
-            // If child is older than threshold, flag as absent
-            if ($ageInWeeks > $weeksThreshold) {
-                return (int) $ageInWeeks;
-            }
+        // Calculate percentage
+        if ($daysInLastMonth == 0) {
             return 0;
         }
 
-        $daysSinceLastWeighing = Carbon::parse($latestWeighing->measured_at)
-            ->diffInDays(Carbon::now());
+        $percentage = ($consumptionDays / $daysInLastMonth) * 100;
         
-        $weeksSinceLastWeighing = floor($daysSinceLastWeighing / 7);
-
-        if ($weeksSinceLastWeighing >= $weeksThreshold) {
-            return (int) $weeksSinceLastWeighing;
-        }
-
-        return 0;
+        return round($percentage, 1);
     }
 }
+

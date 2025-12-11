@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Services\PointsService;
+use App\Services\PriorityChildService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ParentPointsController extends Controller
 {
     public function __construct(
-        private PointsService $pointsService
+        private PointsService $pointsService,
+        private PriorityChildService $priorityService
     ) {
     }
 
@@ -27,8 +29,10 @@ class ParentPointsController extends Controller
             ], 403);
         }
 
-        // Load user with badges
-        $user->load('badges');
+        // Load user with badges and children
+        $user->load(['badges', 'children' => function ($query) {
+            $query->where('is_active', true)->with('pmtLogs');
+        }]);
 
         // Get badge definitions
         $badgeDefinitions = $this->pointsService->getBadgeDefinitions();
@@ -58,14 +62,30 @@ class ParentPointsController extends Controller
             ];
         })->sortByDesc('earned_at')->values();
 
+        // Calculate PMT compliance for each child
+        $childrenWithCompliance = $user->children->map(function ($child) {
+            $pmtCompliance = $this->priorityService->calculatePMTCompliancePublic($child);
+            
+            return [
+                'id' => $child->id,
+                'full_name' => $child->full_name,
+                'gender' => $child->gender,
+                'age_in_months' => $child->age_in_months,
+                'pmt_compliance_percentage' => $pmtCompliance,
+                'is_eligible_priority' => $pmtCompliance >= 80,
+            ];
+        });
+
         return response()->json([
             'data' => [
                 'total_points' => $user->points ?? 0,
                 'total_activities' => $this->pointsService->getTotalActivities($user),
                 'badges' => $earnedBadges,
                 'badge_definitions' => $badgeDefinitionsWithStatus,
+                'children' => $childrenWithCompliance,
             ],
         ], 200);
     }
 }
+
 

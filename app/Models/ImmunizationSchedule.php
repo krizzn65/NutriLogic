@@ -12,6 +12,7 @@ class ImmunizationSchedule extends Model
 
     protected $fillable = [
         'child_id',
+        'posyandu_id',
         'title',
         'type',
         'scheduled_for',
@@ -32,5 +33,10 @@ class ImmunizationSchedule extends Model
     public function child(): BelongsTo
     {
         return $this->belongsTo(Child::class);
+    }
+
+    public function posyandu(): BelongsTo
+    {
+        return $this->belongsTo(Posyandu::class);
     }
 }

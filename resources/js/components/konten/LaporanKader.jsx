@@ -25,7 +25,7 @@ export default function LaporanKader() {
     const [historyData, setHistoryData] = useState([]);
     const [pagination, setPagination] = useState({
         current_page: 1,
-        per_page: 20,
+        per_page: 10,
         total: 0,
         last_page: 1,
     });
@@ -283,7 +283,7 @@ export default function LaporanKader() {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
 
                     {/* Toolbar Section */}
-                    <div className="p-4 lg:p-6 border-b border-gray-100 bg-white z-20 relative">
+                    <div className="p-4 lg:p-6 border-b border-gray-100 bg-white z-10 relative">
                         <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
 
                             {/* Left: Primary Filters */}

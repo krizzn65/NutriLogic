@@ -11,7 +11,7 @@ import DataAnakKader from "./konten/DataAnakKader";
 import TambahAnakKaderForm from "./konten/TambahAnakKaderForm";
 import EditAnakKaderForm from "./konten/EditAnakKaderForm";
 import DetailAnakKader from "./konten/DetailAnakKader";
-import PenimbanganMassal from "./konten/PenimbanganMassal";
+import KegiatanPosyandu from "./konten/PenimbanganMassal";
 import AnakPrioritas from "./konten/AnakPrioritas";
 import JadwalPosyandu from "./konten/JadwalPosyandu";
 import TambahJadwalForm from "./konten/TambahJadwalForm";
@@ -42,7 +42,7 @@ function KaderContent() {
             <Route path="data-anak/tambah" element={<TambahAnakKaderForm />} />
             <Route path="data-anak/edit/:id" element={<EditAnakKaderForm />} />
             <Route path="data-anak/:id" element={<DetailAnakKader />} />
-            <Route path="penimbangan" element={<PenimbanganMassal />} />
+            <Route path="kegiatan" element={<KegiatanPosyandu />} />
             <Route path="anak-prioritas" element={<AnakPrioritas />} />
             <Route path="jadwal" element={<JadwalPosyandu />} />
             <Route path="jadwal/tambah" element={<TambahJadwalForm />} />

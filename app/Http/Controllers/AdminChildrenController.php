@@ -98,33 +98,35 @@ class AdminChildrenController extends Controller
     }
 
     /**
-     * Get child detail with weighing history (read-only)
+     * Get child detail with complete history (read-only)
      */
     public function show(Request $request, $id): JsonResponse
     {
-        $child = Child::with(['parent', 'posyandu'])->find($id);
+        $child = Child::with([
+            'parent', 
+            'posyandu',
+            'weighingLogs' => function ($query) {
+                $query->orderBy('measured_at', 'desc')->limit(10);
+            },
+            'vitaminDistributions' => function ($query) {
+                $query->orderBy('distribution_date', 'desc')->limit(10);
+            },
+            'immunizationRecords' => function ($query) {
+                $query->orderBy('immunization_date', 'desc')->limit(10);
+            },
+            'mealLogs' => function ($query) {
+                $query->orderBy('eaten_at', 'desc')->limit(10);
+            },
+            'pmtLogs' => function ($query) {
+                $query->orderBy('date', 'desc')->limit(10);
+            },
+        ])->find($id);
 
         if (!$child) {
             return response()->json([
                 'message' => 'Anak tidak ditemukan.',
             ], 404);
         }
-
-        // Get weighing history (latest 10)
-        $weighingHistory = WeighingLog::where('child_id', $child->id)
-            ->orderBy('measured_at', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($weighing) {
-                return [
-                    'id' => $weighing->id,
-                    'weight' => $weighing->weight_kg,
-                    'height' => $weighing->height_cm,
-                    'nutritional_status' => $weighing->nutritional_status,
-                    'weighing_date' => $weighing->measured_at,
-                    'notes' => $weighing->notes,
-                ];
-            });
 
         // Calculate age
         $ageInMonths = $child->birth_date 
@@ -151,7 +153,11 @@ class AdminChildrenController extends Controller
                     'village' => $child->posyandu->village,
                     'city' => $child->posyandu->city,
                 ] : null,
-                'weighing_history' => $weighingHistory,
+                'weighing_logs' => $child->weighingLogs,
+                'vitamin_distributions' => $child->vitaminDistributions,
+                'immunization_records' => $child->immunizationRecords,
+                'meal_logs' => $child->mealLogs,
+                'pmt_logs' => $child->pmtLogs,
             ],
         ], 200);
     }

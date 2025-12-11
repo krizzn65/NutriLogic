@@ -21,7 +21,7 @@ class CleanTestDataSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * 
+     *
      * Creates clean test data for:
      * - 1 Admin
      * - 1 Kader
@@ -32,9 +32,9 @@ class CleanTestDataSeeder extends Seeder
     {
         // Clear existing data (in correct order to avoid FK constraints)
         $this->command->info('Clearing existing data...');
-        
+
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        
+
         ConsultationMessage::truncate();
         Consultation::truncate();
         UserBadge::truncate();
@@ -46,15 +46,15 @@ class CleanTestDataSeeder extends Seeder
         Article::truncate();
         User::truncate();
         Posyandu::truncate();
-        
+
         // Clear activity logs and settings if exists
         DB::table('activity_logs')->truncate();
         DB::table('personal_access_tokens')->truncate();
-        
+
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $this->command->info('Creating Posyandu...');
-        
+
         // ========================
         // 1. CREATE POSYANDU
         // ========================
@@ -74,7 +74,7 @@ class CleanTestDataSeeder extends Seeder
         // ========================
         // 2. CREATE USERS
         // ========================
-        
+
         // Admin
         $admin = User::create([
             'name' => 'Admin NutriLogic',
@@ -137,7 +137,7 @@ class CleanTestDataSeeder extends Seeder
         // ========================
         // 3. CREATE CHILDREN
         // ========================
-        
+
         // Children for Parent 1 (Ratna)
         $child1 = Child::create([
             'parent_id' => $parent1->id,
@@ -229,16 +229,16 @@ class CleanTestDataSeeder extends Seeder
             $ageMonths = Carbon::parse($child->birth_date)->diffInMonths(Carbon::now());
             $baseWeight = $child->birth_weight_kg;
             $baseHeight = $child->birth_height_cm;
-            
+
             // Create 3 weighing logs per child (monthly)
             for ($i = 2; $i >= 0; $i--) {
                 $monthsAgo = $i;
                 $measuredAt = Carbon::now()->subMonths($monthsAgo);
-                
+
                 // Simulate growth
                 $weight = $baseWeight + (($ageMonths - $i) * 0.3);  // ~300g per month
                 $height = $baseHeight + (($ageMonths - $i) * 1.5);  // ~1.5cm per month
-                
+
                 WeighingLog::create([
                     'child_id' => $child->id,
                     'measured_at' => $measuredAt,
@@ -272,7 +272,7 @@ class CleanTestDataSeeder extends Seeder
             // Create 5-7 meal logs per child in last 7 days
             for ($i = 0; $i < rand(5, 7); $i++) {
                 $timeOfDay = ['pagi', 'siang', 'malam', 'snack'][rand(0, 3)];
-                
+
                 MealLog::create([
                     'child_id' => $child->id,
                     'eaten_at' => Carbon::now()->subDays(rand(0, 6)),
@@ -286,33 +286,57 @@ class CleanTestDataSeeder extends Seeder
             }
         }
 
-        $this->command->info('Creating Immunization Schedules...');
+        $this->command->info('Creating Posyandu Schedules...');
 
         // ========================
-        // 6. CREATE IMMUNIZATION SCHEDULES
+        // 6. CREATE POSYANDU SCHEDULES (General schedules for all children)
         // ========================
-        $immunizations = [
-            ['title' => 'Imunisasi BCG', 'type' => 'imunisasi'],
-            ['title' => 'Imunisasi Polio 1', 'type' => 'imunisasi'],
-            ['title' => 'Imunisasi DPT-HB-Hib 1', 'type' => 'imunisasi'],
-            ['title' => 'Vitamin A', 'type' => 'vitamin'],
-            ['title' => 'Posyandu Rutin', 'type' => 'posyandu'],
+        $schedules = [
+            [
+                'title' => 'Posyandu Rutin - Penimbangan & Imunisasi',
+                'scheduled_for' => Carbon::now()->addDays(7)->setTime(8, 0),
+                'location' => 'Posyandu Mawar Sehat',
+                'notes' => 'Harap membawa buku KIA',
+            ],
+            [
+                'title' => 'Pemberian Vitamin A',
+                'scheduled_for' => Carbon::now()->addDays(14)->setTime(9, 0),
+                'location' => 'Posyandu Mawar Sehat',
+                'notes' => 'Untuk anak usia 6-59 bulan',
+            ],
+            [
+                'title' => 'Imunisasi Campak & Rubella',
+                'scheduled_for' => Carbon::now()->addDays(21)->setTime(8, 30),
+                'location' => 'Posyandu Mawar Sehat',
+                'notes' => 'Bawa kartu imunisasi',
+            ],
+            [
+                'title' => 'Penyuluhan Gizi Seimbang',
+                'scheduled_for' => Carbon::now()->addDays(28)->setTime(10, 0),
+                'location' => 'Balai Desa Sukamaju',
+                'notes' => 'Untuk semua orang tua',
+            ],
+            [
+                'title' => 'Posyandu Rutin - Pemeriksaan Kesehatan',
+                'scheduled_for' => Carbon::now()->subDays(7)->setTime(8, 0),
+                'location' => 'Posyandu Mawar Sehat',
+                'notes' => 'Sudah dilaksanakan',
+            ],
         ];
 
-        foreach ($allChildren as $child) {
-            foreach ($immunizations as $index => $imm) {
-                $scheduledFor = Carbon::now()->subMonths(rand(0, 3))->addDays(rand(-10, 30));
-                $isCompleted = rand(0, 1);
-                
-                ImmunizationSchedule::create([
-                    'child_id' => $child->id,
-                    'title' => $imm['title'],
-                    'type' => $imm['type'],
-                    'scheduled_for' => $scheduledFor,
-                    'completed_at' => $isCompleted ? $scheduledFor : null,
-                    'notes' => $isCompleted ? 'Sudah dilaksanakan' : 'Menunggu jadwal',
-                ]);
-            }
+        foreach ($schedules as $index => $schedule) {
+            $isCompleted = $index === 4; // Last one is completed
+
+            ImmunizationSchedule::create([
+                'child_id' => null, // General schedule for all children
+                'posyandu_id' => $posyandu->id,
+                'title' => $schedule['title'],
+                'type' => 'posyandu',
+                'scheduled_for' => $schedule['scheduled_for'],
+                'location' => $schedule['location'],
+                'completed_at' => $isCompleted ? $schedule['scheduled_for'] : null,
+                'notes' => $schedule['notes'],
+            ]);
         }
 
         $this->command->info('Creating PMT Logs...');
@@ -320,19 +344,110 @@ class CleanTestDataSeeder extends Seeder
         // ========================
         // 7. CREATE PMT LOGS
         // ========================
-        foreach ($allChildren as $child) {
-            // Create PMT logs for last 10 days (not all days)
-            $daysWithPmt = collect(range(0, 9))->random(6);  // 6 out of 10 days
-            
-            foreach ($daysWithPmt as $daysAgo) {
+        $this->command->info('Creating PMT Logs...');
+        
+        // Get PREVIOUS month (complete month) - November 2025
+        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
+        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
+        $daysInLastMonth = $startOfLastMonth->daysInMonth;
+        
+        $this->command->info("Creating PMT logs for: " . $startOfLastMonth->format('F Y'));
+        $this->command->info("Total days in month: {$daysInLastMonth}");
+        
+        // Child 1 (Ahmad Rizki) - 100% PMT Compliance (ELIGIBLE)
+        // Consumed PMT EVERY SINGLE DAY of previous month
+        for ($i = 0; $i < $daysInLastMonth; $i++) {
+            PmtLog::create([
+                'child_id' => $child1->id,
+                'date' => $startOfLastMonth->copy()->addDays($i)->format('Y-m-d'),
+                'status' => 'consumed',
+                'notes' => 'Habis semua, anak suka',
+            ]);
+        }
+        
+        // Child 2 (Siti Aisyah) - ~90% PMT Compliance (ELIGIBLE)
+        // Consumed 27 out of 30 days (90%)
+        $missedDays = [5, 12, 20]; // Missed 3 days
+        for ($i = 0; $i < $daysInLastMonth; $i++) {
+            if (!in_array($i, $missedDays)) {
                 PmtLog::create([
-                    'child_id' => $child->id,
-                    'date' => Carbon::now()->subDays($daysAgo)->format('Y-m-d'),
-                    'status' => ['consumed', 'partial', 'refused'][rand(0, 2)],
-                    'notes' => 'PMT dari Posyandu',
+                    'child_id' => $child2->id,
+                    'date' => $startOfLastMonth->copy()->addDays($i)->format('Y-m-d'),
+                    'status' => 'consumed',
+                    'notes' => 'Makan dengan lahap',
                 ]);
             }
         }
+        
+        // Child 3 (Muhammad Fauzan) - ~83% PMT Compliance (ELIGIBLE)
+        // Consumed 25 out of 30 days (83%)
+        $missedDays = [3, 8, 15, 22, 28]; // Missed 5 days
+        for ($i = 0; $i < $daysInLastMonth; $i++) {
+            if (!in_array($i, $missedDays)) {
+                PmtLog::create([
+                    'child_id' => $child3->id,
+                    'date' => $startOfLastMonth->copy()->addDays($i)->format('Y-m-d'),
+                    'status' => 'consumed',
+                    'notes' => 'Porsi habis',
+                ]);
+            }
+        }
+        
+        // Child 4 (Putri Amelia) - ~70% PMT Compliance (NOT ELIGIBLE)
+        // Consumed 21 out of 30 days, some partial/refused
+        for ($i = 0; $i < $daysInLastMonth; $i++) {
+            $status = 'consumed';
+            $notes = 'Habis';
+            
+            // Pattern: consumed most days, but some refused/partial
+            if (in_array($i, [2, 6, 11, 16, 21, 26])) {
+                $status = 'refused';
+                $notes = 'Tidak mau makan';
+            } elseif (in_array($i, [4, 14, 24])) {
+                $status = 'partial';
+                $notes = 'Setengah porsi';
+            }
+            
+            PmtLog::create([
+                'child_id' => $child4->id,
+                'date' => $startOfLastMonth->copy()->addDays($i)->format('Y-m-d'),
+                'status' => $status,
+                'notes' => $notes,
+            ]);
+        }
+        
+        // Child 5 (Budi Santoso) - ~50% PMT Compliance (NOT ELIGIBLE)
+        // Only consumed 15 out of 30 days (every other day)
+        for ($i = 0; $i < $daysInLastMonth; $i++) {
+            if ($i % 2 === 0) {  // Only even days
+                PmtLog::create([
+                    'child_id' => $child5->id,
+                    'date' => $startOfLastMonth->copy()->addDays($i)->format('Y-m-d'),
+                    'status' => 'consumed',
+                    'notes' => 'Makan sedikit',
+                ]);
+            }
+        }
+        
+        // Child 6 (Citra Lestari) - ~60% PMT Compliance (NOT ELIGIBLE)
+        // Consumed 18 out of 30 days, irregular pattern
+        $consumedDays = [0, 1, 2, 5, 7, 9, 10, 13, 15, 17, 19, 21, 23, 24, 26, 27, 28, 29]; // 18 days
+        for ($i = 0; $i < $daysInLastMonth; $i++) {
+            PmtLog::create([
+                'child_id' => $child6->id,
+                'date' => $startOfLastMonth->copy()->addDays($i)->format('Y-m-d'),
+                'status' => in_array($i, $consumedDays) ? 'consumed' : 'refused',
+                'notes' => in_array($i, $consumedDays) ? 'Habis porsi' : 'Menangis, tidak mau',
+            ]);
+        }
+        
+        $this->command->info('PMT Logs created for PREVIOUS MONTH (' . $startOfLastMonth->format('F Y') . '):');
+        $this->command->info("  - Child 1 (Ahmad): {$daysInLastMonth}/{$daysInLastMonth} days = 100% ✓ ELIGIBLE");
+        $this->command->info("  - Child 2 (Siti): " . ($daysInLastMonth - 3) . "/{$daysInLastMonth} days = ~90% ✓ ELIGIBLE");
+        $this->command->info("  - Child 3 (Fauzan): " . ($daysInLastMonth - 5) . "/{$daysInLastMonth} days = ~83% ✓ ELIGIBLE");
+        $this->command->info("  - Child 4 (Putri): 21/{$daysInLastMonth} days = ~70% ✗ NOT ELIGIBLE");
+        $this->command->info("  - Child 5 (Budi): 15/{$daysInLastMonth} days = ~50% ✗ NOT ELIGIBLE");
+        $this->command->info("  - Child 6 (Citra): 18/{$daysInLastMonth} days = ~60% ✗ NOT ELIGIBLE");
 
         $this->command->info('Creating Consultations...');
 
@@ -469,7 +584,7 @@ class CleanTestDataSeeder extends Seeder
         $this->command->info('  - 6 Children (3 per parent)');
         $this->command->info('  - 18 Weighing Logs (3 per child)');
         $this->command->info('  - ~36 Meal Logs (5-7 per child)');
-        $this->command->info('  - 30 Immunization Schedules (5 per child)');
+        $this->command->info('  - 5 Posyandu Schedules (general for all children)');
         $this->command->info('  - ~36 PMT Logs (6 per child)');
         $this->command->info('  - 2 Consultations with messages');
         $this->command->info('  - 3 Articles');

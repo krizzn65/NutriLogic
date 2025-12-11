@@ -43,7 +43,26 @@ class ChildController extends Controller
     public function show(Request $request, int $id): JsonResponse
     {
         $user = $request->user();
-        $child = Child::with(['parent', 'posyandu', 'weighingLogs', 'mealLogs', 'immunizationSchedules'])
+        $child = Child::with([
+            'parent', 
+            'posyandu', 
+            'weighingLogs' => function ($query) {
+                $query->orderBy('measured_at', 'desc');
+            },
+            'mealLogs' => function ($query) {
+                $query->orderBy('eaten_at', 'desc');
+            },
+            'immunizationSchedules',
+            'vitaminDistributions' => function ($query) {
+                $query->orderBy('distribution_date', 'desc');
+            },
+            'immunizationRecords' => function ($query) {
+                $query->orderBy('immunization_date', 'desc');
+            },
+            'pmtLogs' => function ($query) {
+                $query->orderBy('date', 'desc');
+            },
+        ])
             ->findOrFail($id);
 
         // Authorization check

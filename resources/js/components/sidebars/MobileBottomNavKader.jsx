@@ -16,7 +16,7 @@ const MobileBottomNavKader = () => {
     const items = [
         { id: 0, icon: "lucide:home", label: "Home", href: "/dashboard" },
         { id: 1, icon: "lucide:users", label: "Anak", href: "/dashboard/data-anak" },
-        { id: 2, icon: "lucide:scale", label: "Timbang", href: "/dashboard/penimbangan" },
+        { id: 2, icon: "lucide:scale", label: "Kegiatan", href: "/dashboard/kegiatan" },
         { id: 3, icon: "lucide:alert-triangle", label: "Prioritas", href: "/dashboard/anak-prioritas" },
         { id: 4, icon: "lucide:calendar", label: "Jadwal", href: "/dashboard/jadwal" },
         { id: 5, icon: "lucide:message-square", label: "Chat", href: "/dashboard/konsultasi" },
