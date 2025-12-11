@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\BroadcastLog;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\N8nBroadcastService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class KaderBroadcastController extends Controller
 {
+    public function __construct(
+        private N8nBroadcastService $broadcastService
+    ) {}
     /**
      * Get broadcast history for kader's posyandu
      */
@@ -88,24 +92,22 @@ class KaderBroadcastController extends Controller
             ]);
         }
 
+        // Trigger WhatsApp broadcast via n8n
+        $waResult = $this->broadcastService->sendBroadcast($broadcast, $parents);
+
+        $message = 'Broadcast berhasil dikirim ke ' . $parents->count() . ' orang tua.';
+        if ($waResult['success'] && $waResult['sent_count'] > 0) {
+            $message .= ' WhatsApp terkirim ke ' . $waResult['sent_count'] . ' nomor.';
+        }
+
         return response()->json([
             'data' => $broadcast->load('sender'),
-            'message' => 'Broadcast berhasil dikirim ke ' . $parents->count() . ' orang tua.',
+            'message' => $message,
+            'whatsapp' => $waResult,
         ], 201);
     }
 
-    /**
-     * Future: Trigger n8n webhook for message delivery
-     * 
-     * private function triggerN8nWebhook($broadcast)
-     * {
-     *     $webhookUrl = env('N8N_BROADCAST_WEBHOOK_URL');
-     *     if (!$webhookUrl) return;
-     *     
-     *     // Send to n8n with broadcast data
-     *     // n8n will handle WhatsApp/Telegram delivery
-     * }
-     */
+
     /**
      * Delete a broadcast message
      */

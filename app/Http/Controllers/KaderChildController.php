@@ -93,7 +93,20 @@ class KaderChildController extends Controller
     {
         $user = $request->user();
         
-        $child = Child::with(['parent', 'posyandu', 'weighingLogs', 'mealLogs', 'pmtLogs', 'immunizationSchedules'])
+        $child = Child::with([
+            'parent', 
+            'posyandu', 
+            'weighingLogs', 
+            'mealLogs', 
+            'pmtLogs', 
+            'vitaminDistributions' => function ($query) {
+                $query->orderBy('distribution_date', 'desc');
+            },
+            'immunizationRecords' => function ($query) {
+                $query->orderBy('immunization_date', 'desc');
+            },
+            'immunizationSchedules'
+        ])
             ->findOrFail($id);
 
         // Authorization: child must be in kader's posyandu

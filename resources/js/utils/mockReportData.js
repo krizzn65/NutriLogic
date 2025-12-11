@@ -76,11 +76,7 @@ export const mockReportData = {
 
 // Alternative: Test directly in component
 export const testExportInComponent = () => {
-    console.log('Testing Excel Export with mock data...');
-    
-    // You can paste this in browser console when on SystemReports page
+    // Untuk testing export Excel dengan mock data
     const { exportSystemReportsToExcel } = require('../../utils/excelExport');
     exportSystemReportsToExcel(mockReportData, 'Test Posyandu');
-    
-    console.log('✅ Export triggered! Check your downloads folder.');
 };

@@ -139,8 +139,9 @@ class AuthController extends Controller
             ], 429);
         }
 
-        // Find user by phone OR name (case insensitive for name)
-        $user = User::where('phone', $identifier)
+        // Find user by email, phone OR name (case insensitive for name)
+        $user = User::where('email', $identifier)
+            ->orWhere('phone', $identifier)
             ->orWhere('name', $identifier)
             ->first();
 
@@ -165,7 +166,7 @@ class AuthController extends Controller
                 );
             }
             
-            $message = 'No. Telepon/Nama atau password salah.';
+            $message = 'Email/No. Telepon atau password salah.';
             if ($remainingAttempts > 0 && $remainingAttempts <= 2) {
                 $message .= " Sisa percobaan: {$remainingAttempts}x.";
             }

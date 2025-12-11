@@ -937,10 +937,10 @@ export default function AuthSwitch() {
                 )}
               </AnimatePresence>
               <div className="input-field">
-                <i><Icon icon="mdi:account-circle" /></i>
+                <i><Icon icon="mdi:email-outline" /></i>
                 <input
                   type="text"
-                  placeholder="No. Telepon / Nama Lengkap"
+                  placeholder="Email atau No. Telepon"
                   autoComplete="off"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value.trim())}

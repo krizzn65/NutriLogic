@@ -187,9 +187,7 @@ export default function ActivityLogs() {
             const result = await exportActivityLogsToExcel(validLogs, filters);
 
             if (result && result.success) {
-                console.log(`✓ Export berhasil: ${result.filename}`);
-
-                // Show success notification briefly
+                // Tampilkan notifikasi sukses
                 setTimeout(() => {
                     setIsExporting(false);
                 }, 1000);

@@ -96,12 +96,7 @@ export default function TambahAnakKaderForm() {
         try {
             setParentsLoading(true);
             const response = await api.get('/kader/parents');
-            console.log('Parents API Response:', response.data);
-
             const parentsData = response.data.data || [];
-            console.log('Parents Data:', parentsData);
-            console.log('Parents Count:', parentsData.length);
-
             setParents(parentsData);
 
             if (parentsData.length === 0) {

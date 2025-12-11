@@ -534,6 +534,7 @@ export default function ChildrenMonitoring() {
 // Child Detail Modal
 function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
     const controls = useDragControls();
+    const [activeTab, setActiveTab] = useState('weighing');
 
     // Helper for date formatting
     const formatDate = (dateString) => {
@@ -543,6 +544,33 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
             month: 'long',
             year: 'numeric'
         });
+    };
+
+    const tabs = [
+        { id: 'weighing', label: 'Penimbangan', icon: '⚖️' },
+        { id: 'vitamin', label: 'Vitamin', icon: '💊' },
+        { id: 'immunization', label: 'Imunisasi', icon: '💉' },
+        { id: 'meal', label: 'Makanan', icon: '🍽️' },
+        { id: 'pmt', label: 'PMT', icon: '🥛' },
+    ];
+
+    // Get PMT status color
+    const getPmtStatusColor = (status) => {
+        const colors = {
+            consumed: 'bg-green-100 text-green-700',
+            partial: 'bg-yellow-100 text-yellow-700',
+            refused: 'bg-red-100 text-red-700',
+        };
+        return colors[status] || 'bg-gray-100 text-gray-700';
+    };
+
+    const getPmtStatusLabel = (status) => {
+        const labels = {
+            consumed: 'Habis',
+            partial: 'Sebagian',
+            refused: 'Tidak Mau',
+        };
+        return labels[status] || status || '-';
     };
 
     return (
@@ -570,7 +598,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full md:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+                className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full md:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
             >
                 {/* Drag Handle */}
                 <div
@@ -667,47 +695,228 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                         </section>
                     )}
 
-                    {/* Weighing History */}
+                    {/* Tab Navigation */}
                     <section className="border-t border-gray-100 pt-6">
-                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Riwayat Penimbangan (10 Terakhir)</h3>
+                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Riwayat Anak</h3>
+
+                        <div className="flex gap-1 overflow-x-auto pb-2 mb-4">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    <span>{tab.icon}</span>
+                                    <span>{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Tab Content */}
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                            {child.weighing_history && child.weighing_history.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead className="bg-gray-50/50 border-b border-gray-100">
-                                            <tr>
-                                                <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
-                                                <th className="text-center py-3 px-4 font-medium text-gray-500">Berat (kg)</th>
-                                                <th className="text-center py-3 px-4 font-medium text-gray-500">Tinggi (cm)</th>
-                                                <th className="text-center py-3 px-4 font-medium text-gray-500">Status Gizi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {child.weighing_history.map((weighing) => (
-                                                <tr key={weighing.id} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="py-3 px-4 text-gray-900 font-medium">
-                                                        {formatDate(weighing.weighing_date)}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-center text-gray-700">{weighing.weight}</td>
-                                                    <td className="py-3 px-4 text-center text-gray-700">{weighing.height}</td>
-                                                    <td className="py-3 px-4 text-center">
-                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(weighing.nutritional_status)}`}>
-                                                            {getStatusLabel(weighing.nutritional_status)}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="p-8 text-center">
-                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-                                        <Weight className="w-6 h-6 text-gray-400" />
-                                    </div>
-                                    <p className="text-gray-500 font-medium">Belum ada riwayat penimbangan</p>
-                                    <p className="text-gray-400 text-sm mt-1">Data penimbangan akan muncul di sini setelah ditambahkan.</p>
-                                </div>
+
+                            {/* Weighing Tab */}
+                            {activeTab === 'weighing' && (
+                                <>
+                                    {child.weighing_logs && child.weighing_logs.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Berat (kg)</th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Tinggi (cm)</th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Status Gizi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {child.weighing_logs.slice(0, 10).map((weighing) => (
+                                                        <tr key={weighing.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                {formatDate(weighing.measured_at)}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-center text-gray-700">{weighing.weight_kg}</td>
+                                                            <td className="py-3 px-4 text-center text-gray-700">{weighing.height_cm}</td>
+                                                            <td className="py-3 px-4 text-center">
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(weighing.nutritional_status)}`}>
+                                                                    {getStatusLabel(weighing.nutritional_status)}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+                                                <Weight className="w-6 h-6 text-gray-400" />
+                                            </div>
+                                            <p className="text-gray-500 font-medium">Belum ada riwayat penimbangan</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Vitamin Tab */}
+                            {activeTab === 'vitamin' && (
+                                <>
+                                    {child.vitamin_distributions && child.vitamin_distributions.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Jenis Vitamin</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {child.vitamin_distributions.slice(0, 10).map((vitamin) => (
+                                                        <tr key={vitamin.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                {formatDate(vitamin.distribution_date)}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-700">
+                                                                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                                                                    {vitamin.vitamin_type}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-600">{vitamin.notes || '-'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <div className="text-4xl mb-3">💊</div>
+                                            <p className="text-gray-500 font-medium">Belum ada riwayat vitamin</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Immunization Tab */}
+                            {activeTab === 'immunization' && (
+                                <>
+                                    {child.immunization_records && child.immunization_records.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Jenis Imunisasi</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {child.immunization_records.slice(0, 10).map((record) => (
+                                                        <tr key={record.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                {formatDate(record.immunization_date)}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-700">
+                                                                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                                                                    {record.vaccine_type}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-600">{record.notes || '-'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <div className="text-4xl mb-3">💉</div>
+                                            <p className="text-gray-500 font-medium">Belum ada riwayat imunisasi</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Meal Tab */}
+                            {activeTab === 'meal' && (
+                                <>
+                                    {child.meal_logs && child.meal_logs.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Waktu Makan</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Menu</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {child.meal_logs.slice(0, 10).map((meal) => (
+                                                        <tr key={meal.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                {formatDate(meal.eaten_at)}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-700">
+                                                                <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium capitalize">
+                                                                    {meal.time_of_day}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-700">{meal.description || '-'}</td>
+                                                            <td className="py-3 px-4 text-gray-600">{meal.notes || '-'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <div className="text-4xl mb-3">🍽️</div>
+                                            <p className="text-gray-500 font-medium">Belum ada riwayat jurnal makan</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* PMT Tab */}
+                            {activeTab === 'pmt' && (
+                                <>
+                                    {child.pmt_logs && child.pmt_logs.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Status Konsumsi</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {child.pmt_logs.slice(0, 10).map((pmt) => (
+                                                        <tr key={pmt.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                {formatDate(pmt.date)}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-center">
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getPmtStatusColor(pmt.status)}`}>
+                                                                    {getPmtStatusLabel(pmt.status)}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-600">{pmt.notes || '-'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <div className="text-4xl mb-3">🥛</div>
+                                            <p className="text-gray-500 font-medium">Belum ada riwayat PMT</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </section>
@@ -726,3 +935,4 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
         </div>
     );
 }
+

@@ -29,23 +29,20 @@ export default function JadwalPosyandu() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [schedules, setSchedules] = useState([]);
-    const [children, setChildren] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState({
-        type: "",
         status: "",
-        child_id: "",
     });
 
     // Dropdown states
-    const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-    const [isChildDropdownOpen, setIsChildDropdownOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const typeDropdownRef = useRef(null);
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     const statusDropdownRef = useRef(null);
-    const childDropdownRef = useRef(null);
     const navigate = useNavigate();
 
     // Data caching
@@ -53,17 +50,10 @@ export default function JadwalPosyandu() {
 
     useEffect(() => {
         fetchSchedules();
-        fetchChildren();
 
         const handleClickOutside = (event) => {
-            if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) {
-                setIsTypeDropdownOpen(false);
-            }
             if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
                 setIsStatusDropdownOpen(false);
-            }
-            if (childDropdownRef.current && !childDropdownRef.current.contains(event.target)) {
-                setIsChildDropdownOpen(false);
             }
         };
 
@@ -99,24 +89,6 @@ export default function JadwalPosyandu() {
         }
     };
 
-    const fetchChildren = async (forceRefresh = false) => {
-        // Check cache first (skip if forceRefresh)
-        if (!forceRefresh) {
-            const cachedChildren = getCachedData('kader_children_active');
-            if (cachedChildren) {
-                setChildren(cachedChildren);
-                return;
-            }
-        }
-
-        try {
-            const response = await api.get('/kader/children?is_active=1');
-            setChildren(response.data.data);
-            setCachedData('kader_children_active', response.data.data);
-        } catch (err) {
-            console.error('Failed to fetch children:', err);
-        }
-    };
 
 
     const handleMarkComplete = async (id, e) => {
@@ -201,23 +173,29 @@ export default function JadwalPosyandu() {
 
     const filteredSchedules = schedules.filter(schedule => {
         const matchesSearch =
-            schedule.child?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            schedule.title?.toLowerCase().includes(searchQuery.toLowerCase());
+            schedule.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            schedule.location?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesType = filters.type ? schedule.type === filters.type : true;
         const matchesStatus = filters.status ? schedule.status === filters.status : true;
-        const matchesChild = filters.child_id ? schedule.child?.id === parseInt(filters.child_id) : true;
 
-        return matchesSearch && matchesType && matchesStatus && matchesChild;
+        return matchesSearch && matchesStatus;
     });
 
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedSchedules = filteredSchedules.slice(startIndex, endIndex);
 
-    const typeOptions = [
-        { value: "", label: "Semua Jenis" },
-        { value: "imunisasi", label: "Imunisasi" },
-        { value: "vitamin", label: "Vitamin" },
-        { value: "posyandu", label: "Posyandu" },
-    ];
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters.status]);
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const statusOptions = [
         { value: "", label: "Semua Status" },
@@ -238,7 +216,7 @@ export default function JadwalPosyandu() {
         >
 
             {/* Filters & Search */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 grid grid-cols-2 lg:flex lg:flex-row gap-3 md:gap-4 z-20 relative">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 grid grid-cols-2 lg:flex lg:flex-row gap-3 md:gap-4 z-10 relative">
                 {/* Search */}
                 <div className="relative col-span-2 lg:flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -246,51 +224,13 @@ export default function JadwalPosyandu() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Cari nama anak atau kegiatan..."
+                        placeholder="Cari judul kegiatan atau lokasi..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all sm:text-sm"
                     />
                 </div>
 
-                {/* Type Filter */}
-                <div className="relative w-full lg:w-48" ref={typeDropdownRef}>
-                    <button
-                        onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                    >
-                        <span className="truncate">
-                            {typeOptions.find(opt => opt.value === filters.type)?.label || "Semua Jenis"}
-                        </span>
-                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    <AnimatePresence>
-                        {isTypeDropdownOpen && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 8 }}
-                                transition={{ duration: 0.2 }}
-                                className="absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
-                            >
-                                {typeOptions.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        onClick={() => {
-                                            setFilters(prev => ({ ...prev, type: option.value }));
-                                            setIsTypeDropdownOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-gray-50 transition-colors ${filters.type === option.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
-                                            }`}
-                                    >
-                                        <span>{option.label}</span>
-                                        {filters.type === option.value && <Check className="w-4 h-4" />}
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
 
                 {/* Status Filter */}
                 <div className="relative w-full lg:w-48" ref={statusDropdownRef}>
@@ -331,57 +271,7 @@ export default function JadwalPosyandu() {
                     </AnimatePresence>
                 </div>
 
-                {/* Child Filter */}
-                <div className="relative col-span-1 lg:w-44" ref={childDropdownRef}>
-                    <button
-                        onClick={() => setIsChildDropdownOpen(!isChildDropdownOpen)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                    >
-                        <span className="truncate">
-                            {filters.child_id
-                                ? children.find(c => c.id === parseInt(filters.child_id))?.full_name || "Semua Anak"
-                                : "Semua Anak"}
-                        </span>
-                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isChildDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    <AnimatePresence>
-                        {isChildDropdownOpen && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 8 }}
-                                transition={{ duration: 0.2 }}
-                                className="absolute right-0 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 max-h-64 overflow-y-auto"
-                            >
-                                <button
-                                    onClick={() => {
-                                        setFilters(prev => ({ ...prev, child_id: "" }));
-                                        setIsChildDropdownOpen(false);
-                                    }}
-                                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-gray-50 transition-colors ${filters.child_id === "" ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
-                                        }`}
-                                >
-                                    <span>Semua Anak</span>
-                                    {filters.child_id === "" && <Check className="w-4 h-4" />}
-                                </button>
-                                {children.map((child) => (
-                                    <button
-                                        key={child.id}
-                                        onClick={() => {
-                                            setFilters(prev => ({ ...prev, child_id: child.id.toString() }));
-                                            setIsChildDropdownOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-gray-50 transition-colors ${filters.child_id === child.id.toString() ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
-                                            }`}
-                                    >
-                                        <span className="truncate">{child.full_name}</span>
-                                        {filters.child_id === child.id.toString() && <Check className="w-4 h-4" />}
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+
 
                 {/* Add Schedule Button */}
                 <button
@@ -410,7 +300,7 @@ export default function JadwalPosyandu() {
                 <>
                     {/* Mobile View (Cards) */}
                     <div className="md:hidden flex flex-col gap-4">
-                        {filteredSchedules.map((schedule) => {
+                        {paginatedSchedules.map((schedule) => {
                             const statusConfig = getStatusConfig(schedule.status);
                             const StatusIcon = statusConfig.icon;
                             const scheduleDate = new Date(schedule.scheduled_for);
@@ -419,21 +309,39 @@ export default function JadwalPosyandu() {
                                 <div key={schedule.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-4">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-100 shrink-0">
-                                                <img
-                                                    src={schedule.child?.gender === 'L' ? kepalaBayi : kepalaBayiCewe}
-                                                    alt={schedule.child?.full_name || 'Anak'}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900">
-                                                    {schedule.child?.full_name || 'Tidak ada nama'}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    {schedule.child?.parent?.name || '-'}
-                                                </p>
-                                            </div>
+                                            {schedule.child ? (
+                                                <>
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-100 shrink-0">
+                                                        <img
+                                                            src={schedule.child.gender === 'L' ? kepalaBayi : kepalaBayiCewe}
+                                                            alt={schedule.child.full_name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-900">
+                                                            {schedule.child.full_name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {schedule.child.parent?.name || '-'}
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 shrink-0 flex items-center justify-center">
+                                                        <Calendar className="w-5 h-5 text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-900">
+                                                            Semua Anak
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            Jadwal Umum Posyandu
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}>
                                             <StatusIcon className="w-3 h-3" />
@@ -504,7 +412,7 @@ export default function JadwalPosyandu() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {filteredSchedules.map((schedule, index) => {
+                                    {paginatedSchedules.map((schedule, index) => {
                                         const statusConfig = getStatusConfig(schedule.status);
                                         const StatusIcon = statusConfig.icon;
                                         const scheduleDate = new Date(schedule.scheduled_for);
@@ -516,21 +424,39 @@ export default function JadwalPosyandu() {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-100 shrink-0">
-                                                            <img
-                                                                src={schedule.child?.gender === 'L' ? kepalaBayi : kepalaBayiCewe}
-                                                                alt={schedule.child?.full_name || 'Anak'}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">
-                                                                {schedule.child?.full_name || 'Tidak ada nama'}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                {schedule.child?.parent?.name || '-'}
-                                                            </p>
-                                                        </div>
+                                                        {schedule.child ? (
+                                                            <>
+                                                                <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-100 shrink-0">
+                                                                    <img
+                                                                        src={schedule.child.gender === 'L' ? kepalaBayi : kepalaBayiCewe}
+                                                                        alt={schedule.child.full_name}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-gray-900">
+                                                                        {schedule.child.full_name}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {schedule.child.parent?.name || '-'}
+                                                                    </p>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 shrink-0 flex items-center justify-center">
+                                                                    <Calendar className="w-4 h-4 text-blue-600" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-gray-900">
+                                                                        Semua Anak
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-500">
+                                                                        Jadwal Umum
+                                                                    </p>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -595,12 +521,79 @@ export default function JadwalPosyandu() {
                 </>
             )}
 
+            {/* Pagination */}
+            {filteredSchedules.length > 0 && totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-6">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                    >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                        {[...Array(totalPages)].map((_, index) => {
+                            const pageNum = index + 1;
+                            const isCurrentPage = pageNum === currentPage;
+
+                            // Show first page, last page, current page, and pages around current
+                            const showPage =
+                                pageNum === 1 ||
+                                pageNum === totalPages ||
+                                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1);
+
+                            if (!showPage) {
+                                // Show ellipsis
+                                if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                                    return (
+                                        <span key={pageNum} className="px-2 text-gray-400">
+                                            ...
+                                        </span>
+                                    );
+                                }
+                                return null;
+                            }
+
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => handlePageChange(pageNum)}
+                                    className={`min-w-[40px] h-10 rounded-xl font-medium transition-all ${isCurrentPage
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                                        }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                    >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div className="ml-4 text-sm text-gray-600 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                        Halaman {currentPage} dari {totalPages} • Total: {filteredSchedules.length} jadwal
+                    </div>
+                </div>
+            )}
+
             {/* Add Schedule Modal */}
             <AddScheduleModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={() => {
-                    fetchSchedules();
+                    fetchSchedules(true); // Force refresh to bypass cache
                     setIsAddModalOpen(false);
                 }}
             />

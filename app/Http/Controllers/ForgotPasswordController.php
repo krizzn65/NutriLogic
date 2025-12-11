@@ -7,7 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordResetMail;
 
 class ForgotPasswordController extends Controller
 {
@@ -18,53 +19,50 @@ class ForgotPasswordController extends Controller
     public function sendResetLink(Request $request): JsonResponse
     {
         $request->validate([
-            'phone' => ['required', 'string', 'max:20'],
+            'email' => ['required', 'email', 'max:255'],
         ]);
 
-        // Find user by phone
-        $user = User::where('phone', $request->phone)->first();
+        // Find user by email
+        $user = User::where('email', $request->email)->first();
 
-        // Always return success to prevent phone enumeration
-        // But only send SMS/WA if user exists
+        // Always return success to prevent email enumeration
+        // But only send email if user exists
         if ($user) {
-            // Delete old tokens for this phone
+            // Delete old tokens for this email
             DB::table('password_reset_tokens')
-                ->where('phone', $request->phone)
+                ->where('email', $request->email)
                 ->delete();
 
-            // Generate secure random 6-digit token (easier for SMS/WA)
+            // Generate secure random 6-digit token
             $token = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Store token (expires in 1 hour)
             DB::table('password_reset_tokens')->insert([
-                'phone' => $request->phone,
+                'email' => $request->email,
                 'token' => Hash::make($token),
                 'created_at' => now(),
             ]);
 
-            // TODO: Send SMS/WhatsApp with reset token
-            // For now, we'll return the token in response (REMOVE IN PRODUCTION)
-            // In production, integrate with SMS gateway (Twilio, Vonage, etc) or WhatsApp API
-            // Example message: "Kode reset password NutriLogic Anda: {$token}. Berlaku 1 jam."
-            
+            // Send email with reset code
+            try {
+                Mail::to($user->email)->send(new PasswordResetMail($user, $token));
+            } catch (\Exception $e) {
+                // Log error but don't expose to user
+                \Log::error('Failed to send password reset email: ' . $e->getMessage());
+            }
+
             // Log activity
             AdminActivityLogController::log(
                 'password_reset_request',
-                "Permintaan reset password untuk: {$user->phone}",
+                "Permintaan reset password untuk: {$user->email}",
                 'User',
                 $user->id
             );
-
-            // TEMPORARY: Return token in response (REMOVE IN PRODUCTION)
-            return response()->json([
-                'message' => 'Kode reset password telah dikirim ke nomor telepon Anda.',
-                'debug_token' => $token, // REMOVE THIS IN PRODUCTION
-            ], 200);
         }
 
-        // Generic response to prevent phone enumeration
+        // Generic response to prevent email enumeration
         return response()->json([
-            'message' => 'Kode reset password telah dikirim ke nomor telepon Anda jika terdaftar.',
+            'message' => 'Jika email terdaftar, kode reset password telah dikirim.',
         ], 200);
     }
 
@@ -74,7 +72,7 @@ class ForgotPasswordController extends Controller
     public function resetPassword(Request $request): JsonResponse
     {
         $request->validate([
-            'phone' => ['required', 'string', 'max:20'],
+            'email' => ['required', 'email', 'max:255'],
             'token' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
             'password' => [
                 'required',
@@ -93,7 +91,7 @@ class ForgotPasswordController extends Controller
 
         // Find reset token record
         $resetRecord = DB::table('password_reset_tokens')
-            ->where('phone', $request->phone)
+            ->where('email', $request->email)
             ->first();
 
         // Validate token exists and not expired (1 hour)
@@ -111,7 +109,7 @@ class ForgotPasswordController extends Controller
         }
 
         // Find user
-        $user = User::where('phone', $request->phone)->first();
+        $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
@@ -128,13 +126,13 @@ class ForgotPasswordController extends Controller
 
         // Delete used reset token
         DB::table('password_reset_tokens')
-            ->where('phone', $request->phone)
+            ->where('email', $request->email)
             ->delete();
 
         // Log activity
         AdminActivityLogController::log(
             'password_reset_completed',
-            "Password berhasil direset untuk: {$user->phone}",
+            "Password berhasil direset untuk: {$user->email}",
             'User',
             $user->id
         );
@@ -153,3 +151,4 @@ class ForgotPasswordController extends Controller
         ], 200);
     }
 }
+

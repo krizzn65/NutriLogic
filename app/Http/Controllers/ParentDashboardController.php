@@ -278,6 +278,12 @@ class ParentDashboardController extends Controller
             'mealLogs' => function ($query) {
                 $query->orderBy('eaten_at', 'desc')->limit(10);
             },
+            'vitaminDistributions' => function ($query) {
+                $query->orderBy('distribution_date', 'desc');
+            },
+            'immunizationRecords' => function ($query) {
+                $query->orderBy('immunization_date', 'desc');
+            },
             'immunizationSchedules' => function ($query) {
                 $query->orderBy('scheduled_for', 'asc');
             },
@@ -329,6 +335,27 @@ class ParentDashboardController extends Controller
             ];
         });
 
+        // Format vitamin distributions
+        $vitaminDistributions = $child->vitaminDistributions->map(function ($vitamin) {
+            return [
+                'id' => $vitamin->id,
+                'vitamin_type' => $vitamin->vitamin_type,
+                'distribution_date' => $vitamin->distribution_date->format('Y-m-d'),
+                'dosage' => $vitamin->dosage,
+                'notes' => $vitamin->notes,
+            ];
+        });
+
+        // Format immunization records
+        $immunizationRecords = $child->immunizationRecords->map(function ($record) {
+            return [
+                'id' => $record->id,
+                'vaccine_type' => $record->vaccine_type,
+                'immunization_date' => $record->immunization_date->format('Y-m-d'),
+                'notes' => $record->notes,
+            ];
+        });
+
         // Format immunization schedules
         $immunizationSchedules = $child->immunizationSchedules->map(function ($schedule) {
             return [
@@ -361,6 +388,8 @@ class ParentDashboardController extends Controller
                 ] : null,
                 'weighing_logs' => $weighingLogs,
                 'meal_logs' => $mealLogs,
+                'vitamin_distributions' => $vitaminDistributions,
+                'immunization_records' => $immunizationRecords,
                 'immunization_schedules' => $immunizationSchedules,
             ],
         ], 200);

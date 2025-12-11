@@ -7,6 +7,9 @@ import PageUtama from './PageUtama';
 import ForgotPassword from './auth/ForgotPassword';
 import { NotFoundPage } from './ui/404-page-not-found';
 import { ServerErrorPage } from './ui/500-server-error';
+import OfflineIndicator from './ui/OfflineIndicator';
+import InstallPrompt from './ui/InstallPrompt';
+import PWAUpdatePrompt from './ui/PWAUpdatePrompt';
 
 function App() {
     const location = useLocation();
@@ -21,6 +24,11 @@ function App() {
                 <Route path="*" element={<NotFoundPage />} />
                 <Route path="/500" element={<ServerErrorPage />} />
             </Routes>
+            
+            {/* PWA Components */}
+            <OfflineIndicator />
+            <InstallPrompt />
+            <PWAUpdatePrompt />
         </div>
 
     );

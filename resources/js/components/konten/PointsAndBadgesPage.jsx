@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import PointsBadgesSkeleton from "../loading/PointsBadgesSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../ui/PageHeader";
+import { Icon } from "@iconify/react";
 
 export default function PointsAndBadgesPage() {
   const [loading, setLoading] = useState(true);
@@ -10,6 +11,7 @@ export default function PointsAndBadgesPage() {
   const [pointsData, setPointsData] = useState(null);
   const { getCachedData, setCachedData } = useDataCache();
   const [filter, setFilter] = useState('all');
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
 
   useEffect(() => {
     fetchPoints();
@@ -36,7 +38,6 @@ export default function PointsAndBadgesPage() {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data poin dan badge';
       setError(errorMessage);
-      console.error('Error fetching points:', err);
     } finally {
       setLoading(false);
     }
@@ -259,7 +260,7 @@ export default function PointsAndBadgesPage() {
                     <div className="mt-auto pt-4 w-full">
                       {badge.is_earned ? (
                         <div className="w-full py-1.5 bg-green-50 text-green-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1">
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                          <Icon icon="lucide:check" className="w-3 h-3" />
                           DIMILIKI
                         </div>
                       ) : (
@@ -274,8 +275,237 @@ export default function PointsAndBadgesPage() {
               ))}
             </div>
           </div>
+
+          {/* Rewards / Hadiah Section */}
+          <div>
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-slate-800">Hadiah Eksklusif</h2>
+              <p className="text-slate-500 mt-1">Benefit spesial untuk anak yang aktif dan konsisten</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Priority Queue Reward */}
+              <div
+                onClick={() => setShowPriorityModal(true)}
+                className="group relative bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-3xl p-8 shadow-2xl hover:shadow-purple-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden cursor-pointer"
+              >
+                {/* Decorative Elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+
+                {/* Content */}
+                <div className="relative z-10">
+                  {/* Icon */}
+                  <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl mb-6 shadow-lg ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-500">
+                    🎟️
+                  </div>
+
+                  {/* Badge */}
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-400/20 backdrop-blur-sm border border-yellow-300/30 mb-4">
+                    <span className="text-xs font-bold text-yellow-200 uppercase tracking-wider">Premium</span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-2xl font-bold text-white mb-3">
+                    Antrian Prioritas
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-purple-100 text-sm leading-relaxed mb-6">
+                    Dapatkan akses antrian prioritas di kegiatan posyandu untuk anak yang rutin mengonsumsi PMT setiap bulan
+                  </p>
+
+                  {/* Requirements */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-green-400/20 flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <svg className="w-3 h-3 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-purple-100">
+                        <span className="font-semibold text-white">80% kehadiran</span> konsumsi PMT dalam sebulan
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-green-400/20 flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <svg className="w-3 h-3 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-purple-100">
+                        <span className="font-semibold text-white">Konsisten</span> selama minimal 1 bulan
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="pt-6 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-purple-200 uppercase tracking-wider">Status</span>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
+                        <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                        <span className="text-sm font-bold text-white">Aktif</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shine Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 group-hover:translate-x-full transition-transform duration-1000"></div>
+              </div>
+
+              {/* Placeholder for future rewards */}
+              <div className="group relative bg-white rounded-3xl p-8 shadow-lg border-2 border-dashed border-slate-200 hover:border-slate-300 transition-all duration-300 flex flex-col items-center justify-center text-center opacity-60">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-4xl mb-4">
+                  🎁
+                </div>
+                <h3 className="text-lg font-bold text-slate-400 mb-2">Hadiah Segera Hadir</h3>
+                <p className="text-sm text-slate-400">Benefit eksklusif lainnya akan tersedia</p>
+              </div>
+
+              <div className="group relative bg-white rounded-3xl p-8 shadow-lg border-2 border-dashed border-slate-200 hover:border-slate-300 transition-all duration-300 flex flex-col items-center justify-center text-center opacity-60">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-4xl mb-4">
+                  ✨
+                </div>
+                <h3 className="text-lg font-bold text-slate-400 mb-2">Hadiah Segera Hadir</h3>
+                <p className="text-sm text-slate-400">Benefit eksklusif lainnya akan tersedia</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Priority Queue Modal */}
+      {showPriorityModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowPriorityModal(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 md:p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl">
+                    🎟️
+                  </div>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-bold text-white">Antrian Prioritas</h3>
+                    <p className="text-purple-100 text-sm mt-1">Status Kelayakan Anak</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPriorityModal(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 md:p-8 overflow-y-auto max-h-[calc(80vh-140px)]">
+              {/* Info Box */}
+              <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-purple-900 mb-1">Syarat Kelayakan</h4>
+                    <p className="text-sm text-purple-700 leading-relaxed">
+                      Anak memenuhi syarat jika konsumsi PMT mencapai <span className="font-bold">≥80%</span> dalam bulan ini
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Children List */}
+              <div className="space-y-3">
+                {pointsData?.children?.map((child, index) => {
+                  // Use real data from backend
+                  const pmtConsumption = child.pmt_compliance_percentage || 0;
+                  const isEligible = child.is_eligible_priority || false;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`rounded-2xl p-4 border-2 transition-all ${isEligible
+                        ? 'bg-green-50 border-green-200 hover:border-green-300'
+                        : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 flex-1">
+                          {/* Avatar */}
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${isEligible ? 'bg-green-100' : 'bg-gray-200'
+                            }`}>
+                            {child.gender === 'L' ? '👦' : '👧'}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900">{child.full_name}</h4>
+                            <p className="text-sm text-gray-500">
+                              Konsumsi PMT: <span className="font-semibold">{pmtConsumption}%</span> bulan ini
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${isEligible
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-200 text-gray-600'
+                          }`}>
+                          {isEligible ? (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                              MEMENUHI
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              BELUM
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="mt-3">
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ${isEligible ? 'bg-green-500' : 'bg-gray-400'
+                              }`}
+                            style={{ width: `${pmtConsumption}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Empty State */}
+                {(!pointsData?.children || pointsData.children.length === 0) && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-3xl">👶</span>
+                    </div>
+                    <p className="text-gray-500 font-medium">Belum ada data anak</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

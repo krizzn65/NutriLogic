@@ -48,14 +48,11 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                 is_read: notif.is_read, // Map is_read status
             }));
 
-            console.log('Fetched DB notifications:', dbNotifications.length);
-
             // Always update database notifications
             setNotifications(prev => {
                 // Keep non-database notifications (maintenance, AI notifications)
                 const nonDbNotifs = prev.filter(n => !n.source || n.source !== 'database');
                 const merged = [...nonDbNotifs, ...dbNotifications];
-                console.log('Total notifications after merge:', merged.length);
                 return merged;
             });
         } catch (err) {

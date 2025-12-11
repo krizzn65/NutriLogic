@@ -4,8 +4,8 @@ const TOKEN_KEY = 'nutrilogic_token';
 const USER_KEY = 'nutrilogic_user';
 
 /**
- * Login user with phone/name and password
- * @param {string} identifier - User phone number or full name
+ * Login user with email/phone and password
+ * @param {string} identifier - User email or phone number
  * @param {string} password - User password
  * @returns {Promise<{user: object, token: string}>}
  */

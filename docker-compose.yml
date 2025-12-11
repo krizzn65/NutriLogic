@@ -1,92 +1,152 @@
 version: '3.8'
 
 services:
-  # Application service
+  # ===================
+  # NGINX (Web Server)
+  # ===================
+  nginx:
+    image: nginx:alpine
+    container_name: nutrilogic-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/sites:/etc/nginx/sites-enabled:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./storage/app/public:/var/www/html/storage/app/public:ro
+    depends_on:
+      - app
+      - n8n
+    networks:
+      - nutrilogic-network
+
+  # ===================
+  # PHP-FPM (Laravel)
+  # ===================
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/php/Dockerfile
     container_name: nutrilogic-app
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
-      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
-    networks:
-      - nutrilogic-network
-    depends_on:
-      - db
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     environment:
       - APP_ENV=production
-      - APP_DEBUG=false
-      - DB_HOST=db
-      - DB_DATABASE=nutrilogic
-      - DB_USERNAME=nutrilogic_user
-      - DB_PASSWORD=nutrilogic_password
-    ports:
-      - "8000:80"
-
-  # Database service
-  db:
-    image: mysql:8.0
-    container_name: nutrilogic-db
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: nutrilogic
-      MYSQL_USER: nutrilogic_user
-      MYSQL_PASSWORD: nutrilogic_password
-      MYSQL_ROOT_PASSWORD: root_password
-    volumes:
-      - db-data:/var/lib/mysql
-    networks:
-      - nutrilogic-network
-    ports:
-      - "3307:3306"
-
-  # phpMyAdmin service (optional, for development)
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: nutrilogic-phpmyadmin
-    restart: unless-stopped
-    environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
-      MYSQL_ROOT_PASSWORD: root_password
-    ports:
-      - "8080:80"
-    networks:
-      - nutrilogic-network
     depends_on:
-      - db
+      - mysql
+      - redis
+    networks:
+      - nutrilogic-network
 
-  # n8n workflow automation service
+  # ===================
+  # MySQL Database
+  # ===================
+  mysql:
+    image: mysql:8.0
+    container_name: nutrilogic-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    ports:
+      - "3306:3306"
+    networks:
+      - nutrilogic-network
+
+  # ===================
+  # Redis (Cache/Queue)
+  # ===================
+  redis:
+    image: redis:alpine
+    container_name: nutrilogic-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - nutrilogic-network
+
+  # ===================
+  # Queue Worker
+  # ===================
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: nutrilogic-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+      - redis
+    networks:
+      - nutrilogic-network
+
+  # ===================
+  # Scheduler (Cron)
+  # ===================
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: nutrilogic-scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+    networks:
+      - nutrilogic-network
+
+  # ===================
+  # n8n (Automation)
+  # ===================
   n8n:
     image: n8nio/n8n:latest
     container_name: nutrilogic-n8n
     restart: unless-stopped
     environment:
+      - N8N_HOST=n8n.yourdomain.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://n8n.yourdomain.com/
+      - GENERIC_TIMEZONE=Asia/Jakarta
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=nutrilogic_n8n
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5678/
-      - GENERIC_TIMEZONE=Asia/Jakarta
-      - TZ=Asia/Jakarta
-    ports:
-      - "5678:5678"
+      - N8N_BASIC_AUTH_PASSWORD=YOUR_N8N_PASSWORD
+      - N8N_ENCRYPTION_KEY=YOUR_ENCRYPTION_KEY
     volumes:
-      - n8n-data:/home/node/.n8n
+      - n8n_data:/home/node/.n8n
     networks:
       - nutrilogic-network
 
+# ===================
+# VOLUMES
+# ===================
+volumes:
+  mysql_data:
+  redis_data:
+  n8n_data:
+
+# ===================
+# NETWORKS
+# ===================
 networks:
   nutrilogic-network:
     driver: bridge
-
-volumes:
-  db-data:
-    driver: local
-  n8n-data:
-    driver: local

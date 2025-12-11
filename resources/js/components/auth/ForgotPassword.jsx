@@ -7,8 +7,8 @@ import { Icon } from '@iconify/react';
 import api from '../../lib/api';
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState(1); // 1: phone input, 2: token+password input
-  const [phone, setPhone] = useState('');
+  const [step, setStep] = useState(1); // 1: email input, 2: token+password input
+  const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -17,8 +17,13 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [debugToken, setDebugToken] = useState(''); // TEMPORARY: for testing
   const navigate = useNavigate();
+
+  // Email validation
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   // Password validation
   const validatePassword = (pwd) => {
@@ -29,17 +34,22 @@ export default function ForgotPassword() {
     return null;
   };
 
-  // Step 1: Request reset token via SMS/WA
+  // Step 1: Request reset token via Email
   const handleRequestReset = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!validateEmail(email)) {
+      setError('Format email tidak valid.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await api.post('/forgot-password', { phone });
+      const response = await api.post('/forgot-password', { email });
       setSuccess(response.data.message);
-      setDebugToken(response.data.debug_token || ''); // TEMPORARY
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal mengirim kode reset password.');
@@ -75,7 +85,7 @@ export default function ForgotPassword() {
 
     try {
       await api.post('/reset-password', {
-        phone,
+        email,
         token,
         password,
         password_confirmation: confirmPassword,
@@ -146,8 +156,8 @@ export default function ForgotPassword() {
         </h2>
         <p style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center', marginBottom: '30px' }}>
           {step === 1
-            ? 'Masukkan nomor telepon Anda untuk menerima kode reset via SMS/WA'
-            : 'Masukkan kode 6 digit dan password baru Anda'}
+            ? 'Masukkan email Anda untuk menerima kode reset password'
+            : 'Masukkan kode 6 digit dari email dan password baru Anda'}
         </p>
 
         <AnimatePresence mode="wait">
@@ -202,7 +212,7 @@ export default function ForgotPassword() {
           <form onSubmit={handleRequestReset}>
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px', display: 'block' }}>
-                Nomor Telepon
+                Email
               </label>
               <div style={{
                 display: 'flex',
@@ -212,12 +222,12 @@ export default function ForgotPassword() {
                 padding: '12px 16px',
                 gap: '10px',
               }}>
-                <Icon icon="fluent:phone-16-filled" style={{ fontSize: '1.2rem', color: '#666' }} />
+                <Icon icon="mdi:email" style={{ fontSize: '1.2rem', color: '#666' }} />
                 <input
-                  type="tel"
-                  placeholder="08xxxxxxxxxx"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  type="email"
+                  placeholder="contoh@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
                   style={{
@@ -253,25 +263,21 @@ export default function ForgotPassword() {
           </form>
         ) : (
           <form onSubmit={handleResetPassword}>
-            {debugToken && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{
-                  padding: '12px',
-                  background: '#fff3cd',
-                  border: '1px solid #ffc107',
-                  borderRadius: '8px',
-                  marginBottom: '15px',
-                  fontSize: '0.8rem',
-                  color: '#856404',
-                }}
-              >
-                <strong>DEBUG TOKEN:</strong> {debugToken}
-                <br />
-                <small>(Copy token ini untuk testing. Hapus di production!)</small>
-              </motion.div>
-            )}
+            {/* Info email target */}
+            <div style={{
+              padding: '12px',
+              background: '#e0f2fe',
+              borderRadius: '8px',
+              marginBottom: '15px',
+              fontSize: '0.85rem',
+              color: '#0369a1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}>
+              <Icon icon="mdi:email-check" style={{ fontSize: '1rem' }} />
+              Kode dikirim ke: <strong>{email}</strong>
+            </div>
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px', display: 'block' }}>
@@ -410,9 +416,28 @@ export default function ForgotPassword() {
             >
               {loading ? 'Mereset...' : 'Reset Password'}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginTop: '10px',
+                background: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+              }}
+            >
+              Kirim ulang kode
+            </button>
           </form>
         )}
       </motion.div>
     </motion.div>
   );
 }
+

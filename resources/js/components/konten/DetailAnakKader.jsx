@@ -15,6 +15,13 @@ export default function DetailAnakKader() {
     const [error, setError] = useState(null);
     const [childData, setChildData] = useState(null);
 
+    // Tab navigation state
+    const [activeTab, setActiveTab] = useState('weighing'); // weighing, vitamin, immunization, meals, pmt
+
+    // Show more states (kept for backward compatibility if needed)
+    const [showAllVitamin, setShowAllVitamin] = useState(false);
+    const [showAllImmunization, setShowAllImmunization] = useState(false);
+
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
 
@@ -231,8 +238,35 @@ export default function DetailAnakKader() {
                             </div>
                         )}
 
+                        {/* Tab Navigation for History Data */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1">
+                            <div className="grid grid-cols-2 md:flex gap-1 md:gap-2 p-1 bg-gray-100/80 rounded-xl w-full md:w-fit overflow-x-auto no-scrollbar">
+                                {[
+                                    { id: 'weighing', label: 'Penimbangan', icon: '⚖️' },
+                                    { id: 'vitamin', label: 'Vitamin', icon: '💊' },
+                                    { id: 'immunization', label: 'Imunisasi', icon: '💉' },
+                                    { id: 'meals', label: 'Makanan', icon: '🍽️' },
+                                    { id: 'pmt', label: 'PMT', icon: '📦' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`
+                                            px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-2
+                                            ${activeTab === tab.id
+                                                ? 'bg-white text-blue-600 shadow-sm'
+                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}
+                                        `}
+                                    >
+                                        <span>{tab.icon}</span>
+                                        <span className="truncate">{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Weighing History */}
-                        {childData.weighing_logs && childData.weighing_logs.length > 0 && (
+                        {activeTab === 'weighing' && childData.weighing_logs && childData.weighing_logs.length > 0 && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,8 +347,217 @@ export default function DetailAnakKader() {
                             </div>
                         )}
 
+                        {/* Vitamin Distribution History */}
+                        {activeTab === 'vitamin' && childData.vitamin_distributions && childData.vitamin_distributions.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                    </svg>
+                                    Riwayat Pemberian Vitamin
+                                </h3>
+
+                                {/* Mobile View (Cards) */}
+                                <div className="md:hidden flex flex-col gap-3">
+                                    {childData.vitamin_distributions.slice(0, showAllVitamin ? undefined : 5).map((vitamin) => (
+                                        <div key={vitamin.id} className="bg-green-50 rounded-lg p-4 border border-green-100">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {new Date(vitamin.distribution_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </p>
+                                                    <p className="text-xs text-gray-600 mt-1">
+                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? '🔵 Vitamin A Biru (100.000 IU)' :
+                                                            vitamin.vitamin_type === 'vitamin_a_red' ? '🔴 Vitamin A Merah (200.000 IU)' :
+                                                                '📦 Lainnya'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {vitamin.dosage && (
+                                                <div className="bg-white p-2 rounded border border-green-100 mb-2">
+                                                    <p className="text-[10px] text-gray-500 uppercase mb-1">Dosis</p>
+                                                    <p className="font-medium text-gray-900 text-sm">{vitamin.dosage}</p>
+                                                </div>
+                                            )}
+                                            {vitamin.notes && (
+                                                <div className="bg-white p-2 rounded border border-green-100">
+                                                    <p className="text-[10px] text-gray-500 uppercase mb-1">Catatan</p>
+                                                    <p className="text-gray-700 text-xs">{vitamin.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Desktop View (Table) */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jenis Vitamin</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Dosis</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Catatan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                            {childData.vitamin_distributions.slice(0, showAllVitamin ? undefined : 5).map((vitamin) => (
+                                                <tr key={vitamin.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                        {new Date(vitamin.distribution_date).toLocaleDateString('id-ID')}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? '🔵 Vitamin A Biru (100.000 IU)' :
+                                                            vitamin.vitamin_type === 'vitamin_a_red' ? '🔴 Vitamin A Merah (200.000 IU)' :
+                                                                '📦 Lainnya'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600">{vitamin.dosage || '-'}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600">{vitamin.notes || '-'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Show More Button */}
+                                {childData.vitamin_distributions.length > 5 && (
+                                    <div className="mt-4 text-center">
+                                        <button
+                                            onClick={() => setShowAllVitamin(!showAllVitamin)}
+                                            className="px-4 py-2 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors inline-flex items-center gap-2"
+                                        >
+                                            {showAllVitamin ? (
+                                                <>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                    </svg>
+                                                    Tampilkan Lebih Sedikit
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                    Lihat Semua ({childData.vitamin_distributions.length} riwayat)
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Immunization Records History */}
+                        {activeTab === 'immunization' && childData.immunization_records && childData.immunization_records.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    Riwayat Imunisasi
+                                </h3>
+
+                                {/* Mobile View (Cards) */}
+                                <div className="md:hidden flex flex-col gap-3">
+                                    {childData.immunization_records.slice(0, showAllImmunization ? undefined : 5).map((record) => (
+                                        <div key={record.id} className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {new Date(record.immunization_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </p>
+                                                    <p className="text-xs text-gray-600 mt-1 font-medium">
+                                                        {record.vaccine_type === 'bcg' ? '💉 BCG - Tuberkulosis' :
+                                                            record.vaccine_type.startsWith('hepatitis_b') ? `💉 Hepatitis B ${record.vaccine_type.split('_').pop()}` :
+                                                                record.vaccine_type.startsWith('polio') ? `💉 Polio ${record.vaccine_type.split('_').pop()}` :
+                                                                    record.vaccine_type.startsWith('dpt') ? `💉 DPT-HiB-HepB ${record.vaccine_type.split('_').pop()}` :
+                                                                        record.vaccine_type.startsWith('ipv') ? `💉 IPV ${record.vaccine_type.split('_').pop()} (Polio Suntik)` :
+                                                                            record.vaccine_type.startsWith('campak') ? `💉 Campak-Rubella ${record.vaccine_type.split('_').pop()}` :
+                                                                                '💉 Vaksin Lainnya'}
+                                                    </p>
+                                                </div>
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                                    ✓ Selesai
+                                                </span>
+                                            </div>
+                                            {record.notes && (
+                                                <div className="bg-white p-2 rounded border border-purple-100">
+                                                    <p className="text-[10px] text-gray-500 uppercase mb-1">Catatan</p>
+                                                    <p className="text-gray-700 text-xs">{record.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Desktop View (Table) */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jenis Vaksin</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Catatan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                            {childData.immunization_records.slice(0, showAllImmunization ? undefined : 5).map((record) => (
+                                                <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                        {new Date(record.immunization_date).toLocaleDateString('id-ID')}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        {record.vaccine_type === 'bcg' ? '💉 BCG - Tuberkulosis' :
+                                                            record.vaccine_type.startsWith('hepatitis_b') ? `💉 Hepatitis B ${record.vaccine_type.split('_').pop()}` :
+                                                                record.vaccine_type.startsWith('polio') ? `💉 Polio ${record.vaccine_type.split('_').pop()}` :
+                                                                    record.vaccine_type.startsWith('dpt') ? `💉 DPT-HiB-HepB ${record.vaccine_type.split('_').pop()}` :
+                                                                        record.vaccine_type.startsWith('ipv') ? `💉 IPV ${record.vaccine_type.split('_').pop()} (Polio Suntik)` :
+                                                                            record.vaccine_type.startsWith('campak') ? `💉 Campak-Rubella ${record.vaccine_type.split('_').pop()}` :
+                                                                                '💉 Vaksin Lainnya'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                                            ✓ Selesai
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-600">{record.notes || '-'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Show More Button */}
+                                {childData.immunization_records.length > 5 && (
+                                    <div className="mt-4 text-center">
+                                        <button
+                                            onClick={() => setShowAllImmunization(!showAllImmunization)}
+                                            className="px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors inline-flex items-center gap-2"
+                                        >
+                                            {showAllImmunization ? (
+                                                <>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                    </svg>
+                                                    Tampilkan Lebih Sedikit
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                    Lihat Semua ({childData.immunization_records.length} riwayat)
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Meal Journal / Jurnal Makan */}
-                        {childData.meal_logs && childData.meal_logs.length > 0 && (
+                        {activeTab === 'meals' && childData.meal_logs && childData.meal_logs.length > 0 && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,7 +674,7 @@ export default function DetailAnakKader() {
                         )}
 
                         {/* PMT Tracking */}
-                        {childData.pmt_logs && childData.pmt_logs.length > 0 && (
+                        {activeTab === 'pmt' && childData.pmt_logs && childData.pmt_logs.length > 0 && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

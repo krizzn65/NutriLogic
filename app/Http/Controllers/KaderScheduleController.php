@@ -28,8 +28,15 @@ class KaderScheduleController extends Controller
             ->where('is_active', true)
             ->pluck('id');
 
+        // Query schedules: either child-specific OR general posyandu schedules
         $query = ImmunizationSchedule::with(['child.parent'])
-            ->whereIn('child_id', $childIds);
+            ->where(function($q) use ($childIds, $user) {
+                $q->whereIn('child_id', $childIds)
+                  ->orWhere(function($q2) use ($user) {
+                      $q2->whereNull('child_id')
+                         ->where('posyandu_id', $user->posyandu_id);
+                  });
+            });
 
         // Filter by type
         if ($request->has('type') && $request->type) {
@@ -95,22 +102,16 @@ class KaderScheduleController extends Controller
         }
 
         $validated = $request->validate([
-            'child_id' => ['required', 'integer', 'exists:children,id'],
             'title' => ['required', 'string', 'max:150'],
-            'type' => ['required', 'string', 'in:imunisasi,vitamin,posyandu'],
+            'type' => ['required', 'string', 'in:posyandu'],
             'scheduled_for' => ['required', 'date'],
             'scheduled_time' => ['nullable', 'date_format:H:i'],
             'location' => ['nullable', 'string', 'max:200'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Validate child belongs to kader's posyandu
-        $child = Child::findOrFail($validated['child_id']);
-        if ($child->posyandu_id !== $user->posyandu_id) {
-            return response()->json([
-                'message' => 'Anak tidak terdaftar di posyandu Anda.',
-            ], 403);
-        }
+        // All schedules are general posyandu schedules (no child_id)
+        $validated['child_id'] = null;
 
         // Combine date and time into datetime
         $scheduledDateTime = $validated['scheduled_for'];
@@ -119,7 +120,8 @@ class KaderScheduleController extends Controller
         }
 
         $schedule = ImmunizationSchedule::create([
-            'child_id' => $validated['child_id'],
+            'child_id' => null,
+            'posyandu_id' => $user->posyandu_id,
             'title' => $validated['title'],
             'type' => $validated['type'],
             'scheduled_for' => $scheduledDateTime,
@@ -141,11 +143,18 @@ class KaderScheduleController extends Controller
         $user = $request->user();
         $schedule = ImmunizationSchedule::with('child')->findOrFail($id);
 
-        // Authorization: schedule's child must be in kader's posyandu
-        if ($user->posyandu_id && $schedule->child->posyandu_id !== $user->posyandu_id) {
-            return response()->json([
-                'message' => 'Unauthorized access.',
-            ], 403);
+        // Authorization: schedule's child must be in kader's posyandu OR it's a general posyandu schedule
+        if ($user->posyandu_id) {
+            if ($schedule->child_id && $schedule->child->posyandu_id !== $user->posyandu_id) {
+                return response()->json([
+                    'message' => 'Unauthorized access.',
+                ], 403);
+            }
+            if (!$schedule->child_id && $schedule->posyandu_id !== $user->posyandu_id) {
+                return response()->json([
+                    'message' => 'Unauthorized access.',
+                ], 403);
+            }
         }
 
         $validated = $request->validate([
@@ -176,10 +185,17 @@ class KaderScheduleController extends Controller
         $schedule = ImmunizationSchedule::with('child')->findOrFail($id);
 
         // Authorization
-        if ($user->posyandu_id && $schedule->child->posyandu_id !== $user->posyandu_id) {
-            return response()->json([
-                'message' => 'Unauthorized access.',
-            ], 403);
+        if ($user->posyandu_id) {
+            if ($schedule->child_id && $schedule->child->posyandu_id !== $user->posyandu_id) {
+                return response()->json([
+                    'message' => 'Unauthorized access.',
+                ], 403);
+            }
+            if (!$schedule->child_id && $schedule->posyandu_id !== $user->posyandu_id) {
+                return response()->json([
+                    'message' => 'Unauthorized access.',
+                ], 403);
+            }
         }
 
         $schedule->delete();

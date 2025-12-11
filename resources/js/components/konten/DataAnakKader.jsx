@@ -96,16 +96,13 @@ export default function DataAnakKader() {
             if (filterStatus) params.status = filterStatus;
             if (filterActive) params.is_active = filterActive;
 
-            console.log('Fetching children with params:', params);
             const response = await api.get('/kader/children', { params });
-            console.log('Response:', response.data);
 
             setChildren(response.data.data || []);
 
             // Ensure pagination is always set from response
             if (response.data.meta) {
                 setPagination(response.data.meta);
-                console.log('Pagination updated:', response.data.meta);
             } else {
                 // Fallback: update pagination based on data length
                 setPagination(prev => ({
@@ -136,8 +133,7 @@ export default function DataAnakKader() {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        console.log('Search initiated with term:', searchTerm);
-        setPagination(prev => ({ ...prev, current_page: 1 })); // Reset to page 1
+        setPagination(prev => ({ ...prev, current_page: 1 })); // Reset ke halaman 1
         fetchChildren(1); // Always fetch from page 1 when searching
     };
 
