@@ -93,8 +93,18 @@ export default function PenimbanganMassal() {
     };
 
     const handleInputChange = (childId, field, value) => {
-        // Real-time validation for weight and height
-        const child = children.find(c => c.id === childId);
+        // Just update the value without validation during typing
+        setWeighingData(prev => ({
+            ...prev,
+            [childId]: {
+                ...prev[childId],
+                [field]: value
+            }
+        }));
+    };
+
+    const handleInputBlur = (childId, field, value) => {
+        // Validate only when user leaves the field
         let validatedValue = value;
 
         if (field === 'weight_kg' && value) {
@@ -115,6 +125,13 @@ export default function PenimbanganMassal() {
             if (muac > 25) validatedValue = '25';
         }
 
+        if (field === 'head_circumference_cm' && value) {
+            const head = parseFloat(value);
+            if (head < 0) validatedValue = '0';
+            if (head > 60) validatedValue = '60';
+        }
+
+        // Update with validated value
         setWeighingData(prev => ({
             ...prev,
             [childId]: {
@@ -171,7 +188,7 @@ export default function PenimbanganMassal() {
         try {
             const response = await api.post('/kader/weighings/bulk', { weighings });
             setResults(response.data);
-            
+
             // Set warnings if any
             if (response.data.warnings) {
                 setWarnings(response.data.warnings);
@@ -518,6 +535,7 @@ export default function PenimbanganMassal() {
                                                     max="30"
                                                     value={weighingData[child.id]?.weight_kg || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'weight_kg', e.target.value)}
+                                                    onBlur={(e) => handleInputBlur(child.id, 'weight_kg', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                     placeholder="1-30"
                                                 />
@@ -532,6 +550,7 @@ export default function PenimbanganMassal() {
                                                     max="130"
                                                     value={weighingData[child.id]?.height_cm || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'height_cm', e.target.value)}
+                                                    onBlur={(e) => handleInputBlur(child.id, 'height_cm', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                     placeholder="40-130"
                                                 />
@@ -546,6 +565,7 @@ export default function PenimbanganMassal() {
                                                     max="25"
                                                     value={weighingData[child.id]?.muac_cm || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'muac_cm', e.target.value)}
+                                                    onBlur={(e) => handleInputBlur(child.id, 'muac_cm', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                     placeholder="8-25"
                                                 />
@@ -560,6 +580,7 @@ export default function PenimbanganMassal() {
                                                     max="60"
                                                     value={weighingData[child.id]?.head_circumference_cm || ''}
                                                     onChange={(e) => handleInputChange(child.id, 'head_circumference_cm', e.target.value)}
+                                                    onBlur={(e) => handleInputBlur(child.id, 'head_circumference_cm', e.target.value)}
                                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                     placeholder="0.0"
                                                 />
@@ -645,6 +666,7 @@ export default function PenimbanganMassal() {
                                                         max="100"
                                                         value={weighingData[child.id]?.weight_kg || ''}
                                                         onChange={(e) => handleInputChange(child.id, 'weight_kg', e.target.value)}
+                                                        onBlur={(e) => handleInputBlur(child.id, 'weight_kg', e.target.value)}
                                                         className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                         placeholder="0.00"
                                                     />
@@ -657,6 +679,7 @@ export default function PenimbanganMassal() {
                                                         max="200"
                                                         value={weighingData[child.id]?.height_cm || ''}
                                                         onChange={(e) => handleInputChange(child.id, 'height_cm', e.target.value)}
+                                                        onBlur={(e) => handleInputBlur(child.id, 'height_cm', e.target.value)}
                                                         className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                         placeholder="0.0"
                                                     />
@@ -669,6 +692,7 @@ export default function PenimbanganMassal() {
                                                         max="50"
                                                         value={weighingData[child.id]?.muac_cm || ''}
                                                         onChange={(e) => handleInputChange(child.id, 'muac_cm', e.target.value)}
+                                                        onBlur={(e) => handleInputBlur(child.id, 'muac_cm', e.target.value)}
                                                         className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                         placeholder="0.0"
                                                     />
@@ -681,6 +705,7 @@ export default function PenimbanganMassal() {
                                                         max="60"
                                                         value={weighingData[child.id]?.head_circumference_cm || ''}
                                                         onChange={(e) => handleInputChange(child.id, 'head_circumference_cm', e.target.value)}
+                                                        onBlur={(e) => handleInputBlur(child.id, 'head_circumference_cm', e.target.value)}
                                                         className="w-full px-3 py-2 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400"
                                                         placeholder="0.0"
                                                     />

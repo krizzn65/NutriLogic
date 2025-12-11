@@ -204,7 +204,7 @@ export default function AnakPrioritas() {
             )}
 
             {/* Filters & Search */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-center z-20 relative">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
                 <div className="relative w-full md:w-96">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-gray-400" />
