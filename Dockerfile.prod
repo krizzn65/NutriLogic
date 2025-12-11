@@ -1,25 +1,6 @@
-# Build stage for Node.js
-FROM node:20-alpine AS node-builder
+# Production Dockerfile - Skip Node build (requires pre-built assets)
+# Usage: Build frontend locally first with `npm run build`
 
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-COPY vite.config.js ./
-COPY postcss.config.js ./
-COPY tailwind.config.js ./
-
-# Install dependencies with reduced memory
-RUN npm install --maxsockets 1
-
-# Copy source files
-COPY resources ./resources
-COPY public ./public
-
-# Build assets with increased memory limit
-RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
-
-# PHP Application stage
 FROM php:8.2-fpm-alpine
 
 # Install system dependencies
@@ -53,11 +34,8 @@ COPY composer.json composer.lock ./
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Copy application files
+# Copy application files (including pre-built public/build)
 COPY . .
-
-# Copy built assets from node-builder
-COPY --from=node-builder /app/public/build ./public/build
 
 # Create required directories for supervisor
 RUN mkdir -p /var/log/supervisor /var/run
