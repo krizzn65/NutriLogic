@@ -38,6 +38,10 @@ export default function JadwalPosyandu() {
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     const statusDropdownRef = useRef(null);
     const navigate = useNavigate();
 
@@ -180,8 +184,21 @@ export default function JadwalPosyandu() {
         return matchesSearch && matchesStatus;
     });
 
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedSchedules = filteredSchedules.slice(startIndex, endIndex);
 
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters.status]);
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const statusOptions = [
         { value: "", label: "Semua Status" },
@@ -286,7 +303,7 @@ export default function JadwalPosyandu() {
                 <>
                     {/* Mobile View (Cards) */}
                     <div className="md:hidden flex flex-col gap-4">
-                        {filteredSchedules.map((schedule) => {
+                        {paginatedSchedules.map((schedule) => {
                             const statusConfig = getStatusConfig(schedule.status);
                             const StatusIcon = statusConfig.icon;
                             const scheduleDate = new Date(schedule.scheduled_for);
@@ -398,7 +415,7 @@ export default function JadwalPosyandu() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {filteredSchedules.map((schedule, index) => {
+                                    {paginatedSchedules.map((schedule, index) => {
                                         const statusConfig = getStatusConfig(schedule.status);
                                         const StatusIcon = statusConfig.icon;
                                         const scheduleDate = new Date(schedule.scheduled_for);
@@ -505,6 +522,73 @@ export default function JadwalPosyandu() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Pagination */}
+            {filteredSchedules.length > 0 && totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-6">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                    >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                        {[...Array(totalPages)].map((_, index) => {
+                            const pageNum = index + 1;
+                            const isCurrentPage = pageNum === currentPage;
+
+                            // Show first page, last page, current page, and pages around current
+                            const showPage =
+                                pageNum === 1 ||
+                                pageNum === totalPages ||
+                                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1);
+
+                            if (!showPage) {
+                                // Show ellipsis
+                                if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                                    return (
+                                        <span key={pageNum} className="px-2 text-gray-400">
+                                            ...
+                                        </span>
+                                    );
+                                }
+                                return null;
+                            }
+
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => handlePageChange(pageNum)}
+                                    className={`min-w-[40px] h-10 rounded-xl font-medium transition-all ${isCurrentPage
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'
+                                        }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm disabled:hover:bg-white"
+                    >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div className="ml-4 text-sm text-gray-600 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                        Halaman {currentPage} dari {totalPages} • Total: {filteredSchedules.length} jadwal
+                    </div>
+                </div>
             )}
 
             {/* Add Schedule Modal */}

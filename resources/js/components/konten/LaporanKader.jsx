@@ -43,6 +43,7 @@ export default function LaporanKader() {
     const [loadingExport, setLoadingExport] = useState(false);
     const [tableMode, setTableMode] = useState("comfortable"); // "compact" or "comfortable"
     const [sortConfig, setSortConfig] = useState({ field: null, direction: 'asc' });
+    const [expandedNoteId, setExpandedNoteId] = useState(null);
 
     // Data caching
     const { getCachedData, setCachedData } = useDataCache();
@@ -553,9 +554,40 @@ export default function LaporanKader() {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {item.data.notes ? (
-                                                            <div className="flex items-start gap-1.5 max-w-[200px]">
-                                                                <Icon icon="lucide:sticky-note" className="w-3.5 h-3.5 text-yellow-500 mt-0.5 shrink-0" />
-                                                                <p className="text-sm text-gray-600 truncate">{item.data.notes}</p>
+                                                            <div className="relative">
+                                                                <button
+                                                                    onClick={() => setExpandedNoteId(expandedNoteId === item.id ? null : item.id)}
+                                                                    className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors group cursor-pointer text-left"
+                                                                    title="Klik untuk melihat catatan lengkap"
+                                                                >
+                                                                    <Icon icon="lucide:sticky-note" className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                                                                    <span className={`text-sm ${expandedNoteId === item.id ? '' : 'truncate max-w-[150px]'}`}>
+                                                                        {item.data.notes}
+                                                                    </span>
+                                                                    {item.data.notes.length > 30 && expandedNoteId !== item.id && (
+                                                                        <span className="text-blue-500 text-[10px] whitespace-nowrap group-hover:underline">lihat</span>
+                                                                    )}
+                                                                </button>
+                                                                {/* Expanded Note Popup */}
+                                                                {expandedNoteId === item.id && item.data.notes.length > 30 && (
+                                                                    <div className="absolute z-50 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-4 max-w-xs min-w-[200px]">
+                                                                        <div className="flex justify-between items-start mb-2">
+                                                                            <span className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                                                                <Icon icon="lucide:sticky-note" className="w-3 h-3 text-yellow-500" />
+                                                                                Catatan
+                                                                            </span>
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); setExpandedNoteId(null); }}
+                                                                                className="text-gray-400 hover:text-gray-600 text-sm"
+                                                                            >
+                                                                                <Icon icon="lucide:x" className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                        <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                                                            {item.data.notes}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         ) : <span className="text-gray-300">-</span>}
                                                     </td>
@@ -604,9 +636,39 @@ export default function LaporanKader() {
                                                 </div>
                                             </div>
                                             {item.data.notes && (
-                                                <div className="text-xs text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-100 flex gap-2">
-                                                    <Icon icon="lucide:sticky-note" className="w-3.5 h-3.5 text-yellow-600 shrink-0" />
-                                                    {item.data.notes}
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setExpandedNoteId(expandedNoteId === item.id ? null : item.id)}
+                                                        className="w-full text-xs text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-100 flex gap-2 cursor-pointer hover:bg-yellow-100 transition-colors group text-left"
+                                                    >
+                                                        <Icon icon="lucide:sticky-note" className="w-3.5 h-3.5 text-yellow-600 shrink-0" />
+                                                        <span className={expandedNoteId === item.id ? '' : 'line-clamp-2'}>
+                                                            {item.data.notes}
+                                                        </span>
+                                                        {item.data.notes.length > 30 && expandedNoteId !== item.id && (
+                                                            <span className="text-blue-500 text-[10px] whitespace-nowrap group-hover:underline ml-auto">lihat</span>
+                                                        )}
+                                                    </button>
+                                                    {/* Expanded Note Popup */}
+                                                    {expandedNoteId === item.id && item.data.notes.length > 30 && (
+                                                        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-4">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <span className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                                                    <Icon icon="lucide:sticky-note" className="w-3 h-3 text-yellow-500" />
+                                                                    Catatan
+                                                                </span>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setExpandedNoteId(null); }}
+                                                                    className="text-gray-400 hover:text-gray-600 text-sm"
+                                                                >
+                                                                    <Icon icon="lucide:x" className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                                                {item.data.notes}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
