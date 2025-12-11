@@ -387,8 +387,6 @@ export const exportSystemReportsToExcel = (reportData, posyanduName = 'Semua Pos
 
     // Write file
     XLSX.writeFile(wb, filename);
-
-    console.log(`✅ Excel file exported successfully: ${filename}`);
 };
 
 /**
@@ -551,7 +549,6 @@ export const exportKaderChildrenToExcel = (children, posyanduName = 'Posyandu') 
     const filename = `Data_Anak_${posyanduName.replace(/[^a-z0-9]/gi, '_')}_${timestamp}.xlsx`;
     
     XLSX.writeFile(wb, filename);
-    console.log(`✅ Children data exported: ${filename}`);
 };
 
 /**
@@ -779,6 +776,5 @@ export const exportKaderWeighingsToExcel = (weighings, posyanduName = 'Posyandu'
     const filename = `Riwayat_Penimbangan_${posyanduName.replace(/[^a-z0-9]/gi, '_')}_${timestamp}.xlsx`;
     
     XLSX.writeFile(wb, filename);
-    console.log(`✅ Weighing data exported: ${filename}`);
 };
 

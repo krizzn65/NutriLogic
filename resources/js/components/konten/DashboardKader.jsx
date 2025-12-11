@@ -414,8 +414,8 @@ export default function DashboardKaderContent() {
             </div>
           </div>
 
-          <div className="flex-1 w-full min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="flex-1 w-full min-h-0 min-h-[200px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
               <BarChart
                 data={chartData}
                 margin={{ top: 20, right: 30, left: 0, bottom: 5 }}

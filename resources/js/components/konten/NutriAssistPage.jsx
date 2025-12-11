@@ -157,10 +157,6 @@ export default function NutriAssistPage() {
         newRecommendations = newRecommendations[0].data;
       }
 
-      // Debug: Log the response structure
-      console.log('Nutri-Assist Response:', newRecommendations);
-      console.log('Recommendations array:', newRecommendations?.recommendations);
-
       // Normalize the recommendations structure
       if (newRecommendations?.recommendations) {
         newRecommendations.recommendations = newRecommendations.recommendations.map((rec, index) => {

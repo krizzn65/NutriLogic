@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import PointsBadgesSkeleton from "../loading/PointsBadgesSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../ui/PageHeader";
+import { Icon } from "@iconify/react";
 
 export default function PointsAndBadgesPage() {
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,6 @@ export default function PointsAndBadgesPage() {
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal memuat data poin dan badge';
       setError(errorMessage);
-      console.error('Error fetching points:', err);
     } finally {
       setLoading(false);
     }
@@ -260,7 +260,7 @@ export default function PointsAndBadgesPage() {
                     <div className="mt-auto pt-4 w-full">
                       {badge.is_earned ? (
                         <div className="w-full py-1.5 bg-green-50 text-green-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1">
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                          <Icon icon="lucide:check" className="w-3 h-3" />
                           DIMILIKI
                         </div>
                       ) : (

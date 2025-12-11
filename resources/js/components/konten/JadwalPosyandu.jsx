@@ -55,9 +55,6 @@ export default function JadwalPosyandu() {
             if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
                 setIsStatusDropdownOpen(false);
             }
-            if (childDropdownRef.current && !childDropdownRef.current.contains(event.target)) {
-                setIsChildDropdownOpen(false);
-            }
         };
 
         document.addEventListener("mousedown", handleClickOutside);

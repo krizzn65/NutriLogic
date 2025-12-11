@@ -178,8 +178,7 @@ export default function DashboardAdmin() {
     useEffect(() => {
         const heartbeat = setInterval(async () => {
             try {
-                await api.get('/me'); // Lightweight request to keep session active
-                console.log('Session heartbeat sent');
+                await api.get('/me'); // Menjaga sesi tetap aktif
             } catch (err) {
                 console.error('Session heartbeat failed', err);
             }
@@ -752,7 +751,7 @@ export default function DashboardAdmin() {
                                 </div>
                             </div>
                             <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-8 flex-1 overflow-hidden">
-                                <div className="w-full md:w-1/2 h-56 md:h-64 relative">
+                                <div className="w-full md:w-1/2 h-56 md:h-64 relative min-h-[200px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
@@ -1035,7 +1034,7 @@ export default function DashboardAdmin() {
                                             </div>
                                             <h2 className="text-base font-bold text-gray-800">Tren Penimbangan</h2>
                                         </div>
-                                        <div className="h-56">
+                                        <div className="h-56 min-h-[200px]">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart
                                                     data={stats?.monthly_trend || []}
@@ -1091,7 +1090,7 @@ export default function DashboardAdmin() {
                                             </div>
                                             <h2 className="text-base font-bold text-gray-800">Statistik Bulanan</h2>
                                         </div>
-                                        <div className="h-56">
+                                        <div className="h-56 min-h-[200px]">
                                             {!stats?.growth_by_posyandu || stats.growth_by_posyandu.length === 0 ? (
                                                 <div className="h-full flex items-center justify-center text-gray-400 text-sm">
                                                     Tidak ada data tersedia

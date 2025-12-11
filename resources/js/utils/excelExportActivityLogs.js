@@ -82,15 +82,6 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
         logsSheetData.push(headers);
         currentRow++;
         
-        // Debug: Log the header position
-        console.log('📊 Excel Structure:', {
-            titleRow: 0,
-            filterRow: filterInfo.length > 0 ? 1 : 'none',
-            headerRow: headerRowIndex,
-            firstDataRow: currentRow,
-            totalRows: logsSheetData.length
-        });
-
         // Data rows
         logsData.forEach((log, index) => {
             try {
@@ -148,14 +139,6 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
         // Apply styling
         const range = XLSX.utils.decode_range(ws['!ref']);
         
-        // Debug: Verify header cell
-        const headerCellRef = XLSX.utils.encode_cell({ r: headerRowIndex, c: 0 });
-        console.log('✓ Header cell check:', {
-            cellRef: headerCellRef,
-            value: ws[headerCellRef]?.v,
-            expectedValue: 'No'
-        });
-
         // Title styling (Row 1 = index 0)
         if (ws['A1']) {
             ws['A1'].s = {
@@ -196,7 +179,6 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
                 headerStyleCount++;
             }
         }
-        console.log(`✓ Header styling applied to ${headerStyleCount} cells at row ${headerRowIndex}`);
 
         // Data rows styling with action color coding
         let dataRowStyleCount = 0;
@@ -243,7 +225,6 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
                 }
             }
         }
-        console.log(`✓ Data row styling applied to ${dataRowStyleCount} cells (${range.e.r - headerRowIndex} rows)`);
 
         // Set column widths
         ws['!cols'] = [
@@ -269,8 +250,6 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
         ws['!rows'] = [];
         ws['!rows'][0] = { hpt: 25 }; // Title row
         ws['!rows'][headerRowIndex] = { hpt: 40 }; // Header row
-        
-        console.log(`✓ Row heights set - Title: row 0, Header: row ${headerRowIndex}`);
 
         // Add worksheet to workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Log Aktivitas');
@@ -394,7 +373,6 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
         // Write file with error handling
         try {
             XLSX.writeFile(wb, filename);
-            console.log(`✓ File Excel berhasil dibuat: ${filename}`);
         } catch (writeError) {
             console.error('Error writing Excel file:', writeError);
             throw new Error('Gagal menyimpan file Excel. Pastikan tidak ada file dengan nama yang sama yang sedang terbuka.');
