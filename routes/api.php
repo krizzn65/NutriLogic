@@ -190,6 +190,22 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/bulk', [App\Http\Controllers\KaderWeighingController::class, 'bulkStore']);
         });
 
+        // Vitamin Distribution Management
+        Route::prefix('vitamins')->group(function () {
+            Route::get('/children', [App\Http\Controllers\KaderVitaminController::class, 'getChildren']);
+            Route::post('/bulk', [App\Http\Controllers\KaderVitaminController::class, 'storeBulk']);
+            Route::get('/', [App\Http\Controllers\KaderVitaminController::class, 'index']);
+            Route::delete('/{id}', [App\Http\Controllers\KaderVitaminController::class, 'destroy']);
+        });
+
+        // Immunization Management
+        Route::prefix('immunizations')->group(function () {
+            Route::get('/children', [App\Http\Controllers\KaderImmunizationController::class, 'getChildren']);
+            Route::post('/bulk', [App\Http\Controllers\KaderImmunizationController::class, 'storeBulk']);
+            Route::get('/', [App\Http\Controllers\KaderImmunizationController::class, 'index']);
+            Route::delete('/{id}', [App\Http\Controllers\KaderImmunizationController::class, 'destroy']);
+        });
+
         // Schedule Management
         Route::prefix('schedules')->group(function () {
             Route::get('/', [App\Http\Controllers\KaderScheduleController::class, 'index']);

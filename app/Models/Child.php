@@ -73,4 +73,24 @@ class Child extends Model
     {
         return $this->hasMany(ImmunizationSchedule::class);
     }
+
+    public function vitaminDistributions(): HasMany
+    {
+        return $this->hasMany(VitaminDistribution::class)->orderBy('distribution_date', 'desc');
+    }
+
+    public function latestVitamin()
+    {
+        return $this->hasOne(VitaminDistribution::class)->latestOfMany('distribution_date');
+    }
+
+    public function immunizationRecords(): HasMany
+    {
+        return $this->hasMany(ImmunizationRecord::class)->orderBy('immunization_date', 'desc');
+    }
+
+    public function latestImmunization()
+    {
+        return $this->hasOne(ImmunizationRecord::class)->latestOfMany('immunization_date');
+    }
 }

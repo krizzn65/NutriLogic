@@ -19,7 +19,8 @@ import {
     Info,
     User,
     Pencil,
-    Trash2
+    Trash2,
+    Pill
 } from "lucide-react";
 import AddChildModal from "./AddChildModal";
 import { assets } from '../../assets/assets';
@@ -31,14 +32,15 @@ export default function DataAnakDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [childData, setChildData] = useState(null);
-    const [activeTab, setActiveTab] = useState('history'); // history, meals, immunization
+    const [activeTab, setActiveTab] = useState('history'); // history, meals, vitamin, immunization_records, details
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     // Pagination states
     const ITEMS_PER_PAGE = 5;
     const [historyPage, setHistoryPage] = useState(1);
     const [mealsPage, setMealsPage] = useState(1);
-    const [immunizationPage, setImmunizationPage] = useState(1);
+    const [vitaminPage, setVitaminPage] = useState(1);
+    const [immunizationRecordsPage, setImmunizationRecordsPage] = useState(1);
 
     // Expanded notes state
     const [expandedNoteId, setExpandedNoteId] = useState(null);
@@ -211,7 +213,8 @@ export default function DataAnakDetail() {
     // Guard arrays with fallback
     const weighingLogs = childData.weighing_logs || [];
     const mealLogs = childData.meal_logs || [];
-    const immunizationSchedules = childData.immunization_schedules || [];
+    const vitaminDistributions = childData.vitamin_distributions || [];
+    const immunizationRecords = childData.immunization_records || [];
 
     // Determine health status based on nutritional status
     const latestStatus = childData.latest_nutritional_status;
@@ -314,11 +317,12 @@ export default function DataAnakDetail() {
                 {/* Content Tabs */}
                 <div className="flex flex-col gap-4 md:gap-6">
                     {/* Tab Navigation */}
-                    <div className="grid grid-cols-4 md:flex gap-1 md:gap-2 p-1 bg-gray-100/80 rounded-xl w-full md:w-fit overflow-x-auto no-scrollbar">
+                    <div className="grid grid-cols-2 md:flex gap-1 md:gap-2 p-1 bg-gray-100/80 rounded-xl w-full md:w-fit overflow-x-auto no-scrollbar">
                         {[
-                            { id: 'history', label: 'Riwayat', icon: Activity },
+                            { id: 'history', label: 'Penimbangan', icon: Activity },
+                            { id: 'vitamin', label: 'Vitamin', icon: Pill },
+                            { id: 'immunization_records', label: 'Imunisasi', icon: Syringe },
                             { id: 'meals', label: 'Makanan', icon: Utensils },
-                            { id: 'immunization', label: 'Imunisasi', icon: Syringe },
                             { id: 'details', label: 'Info', icon: Info },
                         ].map((tab) => (
                             <button
@@ -432,7 +436,7 @@ export default function DataAnakDetail() {
                         {activeTab === 'history' && (
                             <div className="p-5 md:p-6">
                                 <div className="flex justify-between items-center mb-4 md:mb-6">
-                                    <h3 className="text-lg font-bold text-gray-900">Riwayat Pertumbuhan</h3>
+                                    <h3 className="text-lg font-bold text-gray-900">Riwayat Penimbangan</h3>
                                 </div>
 
                                 {weighingLogs.length === 0 ? (
@@ -713,51 +717,61 @@ export default function DataAnakDetail() {
                             </div>
                         )}
 
-                        {activeTab === 'immunization' && (
+                        {/* Vitamin Tab */}
+                        {activeTab === 'vitamin' && (
                             <div className="p-5 md:p-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6">Jadwal Imunisasi</h3>
-                                {immunizationSchedules.length === 0 ? (
-                                    <EmptyState message="Belum ada jadwal imunisasi" />
+                                <h3 className="text-lg font-bold text-gray-900 mb-6">Riwayat Pemberian Vitamin</h3>
+                                {vitaminDistributions.length === 0 ? (
+                                    <EmptyState message="Belum ada riwayat pemberian vitamin" />
                                 ) : (() => {
-                                    const immunizationData = paginate(childData.immunization_schedules, immunizationPage);
+                                    const vitaminData = paginate(vitaminDistributions, vitaminPage);
                                     return (
                                         <>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {immunizationData.data.map((schedule) => (
+                                                {vitaminData.data.map((vitamin) => (
                                                     <div
-                                                        key={schedule.id}
-                                                        className={`p-4 rounded-2xl border transition-all ${schedule.completed_at
-                                                            ? 'bg-green-50/50 border-green-100'
-                                                            : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-sm'
-                                                            }`}
+                                                        key={vitamin.id}
+                                                        className="p-4 rounded-2xl border bg-green-50/30 border-green-100 hover:border-green-200 hover:shadow-sm transition-all"
                                                     >
                                                         <div className="flex justify-between items-start mb-3">
                                                             <div className="flex items-center gap-2">
-                                                                <div className={`p-2 rounded-full ${schedule.completed_at ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                                    <Syringe className="w-4 h-4" />
+                                                                <div className="p-2 rounded-full bg-green-100 text-green-600">
+                                                                    <Pill className="w-4 h-4" />
                                                                 </div>
                                                                 <div>
-                                                                    <h4 className="font-bold text-gray-900">{schedule.title}</h4>
-                                                                    <p className="text-xs text-gray-500">{schedule.type}</p>
+                                                                    <h4 className="font-bold text-gray-900">
+                                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? '🔵 Vitamin A Biru' :
+                                                                            vitamin.vitamin_type === 'vitamin_a_red' ? '🔴 Vitamin A Merah' :
+                                                                                '📦 Lainnya'}
+                                                                    </h4>
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? '100.000 IU' :
+                                                                            vitamin.vitamin_type === 'vitamin_a_red' ? '200.000 IU' : ''}
+                                                                    </p>
                                                                 </div>
                                                             </div>
-                                                            {schedule.completed_at ? (
-                                                                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                                            ) : (
-                                                                <Clock className="w-5 h-5 text-gray-300" />
-                                                            )}
                                                         </div>
 
-                                                        <div className="flex items-center gap-2 text-sm">
+                                                        <div className="flex items-center gap-2 text-sm mb-2">
                                                             <Calendar className="w-4 h-4 text-gray-400" />
-                                                            <span className={schedule.completed_at ? 'text-green-700 font-medium' : 'text-gray-600'}>
-                                                                {new Date(schedule.scheduled_for).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                            <span className="text-gray-600">
+                                                                {new Date(vitamin.distribution_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                             </span>
                                                         </div>
 
-                                                        {schedule.completed_at && (
-                                                            <div className="mt-2 text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-lg w-fit">
-                                                                Selesai: {new Date(schedule.completed_at).toLocaleDateString('id-ID')}
+                                                        {vitamin.dosage && (
+                                                            <div className="mt-2 text-xs text-green-700 bg-green-100/50 px-2 py-1 rounded-lg w-fit">
+                                                                Dosis: {vitamin.dosage}
+                                                            </div>
+                                                        )}
+
+                                                        {vitamin.notes && (
+                                                            <div className="mt-2 pt-2 border-t border-green-200/50">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                                    <FileText className="w-3 h-3 text-yellow-500" />
+                                                                    Catatan
+                                                                </p>
+                                                                <p className="text-sm text-gray-700">{vitamin.notes}</p>
                                                             </div>
                                                         )}
                                                     </div>
@@ -766,17 +780,90 @@ export default function DataAnakDetail() {
 
                                             {/* Pagination */}
                                             <PaginationUI
-                                                currentPage={immunizationPage}
-                                                totalPages={immunizationData.totalPages}
-                                                total={immunizationData.total}
-                                                onPageChange={setImmunizationPage}
-                                                label="jadwal imunisasi"
+                                                currentPage={vitaminPage}
+                                                totalPages={vitaminData.totalPages}
+                                                total={vitaminData.total}
+                                                onPageChange={setVitaminPage}
+                                                label="pemberian vitamin"
                                             />
                                         </>
                                     );
                                 })()}
                             </div>
                         )}
+
+                        {/* Immunization Records Tab */}
+                        {activeTab === 'immunization_records' && (
+                            <div className="p-5 md:p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-6">Riwayat Imunisasi</h3>
+                                {immunizationRecords.length === 0 ? (
+                                    <EmptyState message="Belum ada riwayat imunisasi" />
+                                ) : (() => {
+                                    const immunizationData = paginate(immunizationRecords, immunizationRecordsPage);
+                                    return (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {immunizationData.data.map((record) => (
+                                                    <div
+                                                        key={record.id}
+                                                        className="p-4 rounded-2xl border bg-purple-50/30 border-purple-100 hover:border-purple-200 hover:shadow-sm transition-all"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="p-2 rounded-full bg-purple-100 text-purple-600">
+                                                                    <Syringe className="w-4 h-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-bold text-gray-900">
+                                                                        {record.vaccine_type.replace(/_/g, ' ').toUpperCase()}
+                                                                    </h4>
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {record.vaccine_type === 'bcg' ? 'BCG - Tuberkulosis' :
+                                                                            record.vaccine_type.startsWith('hepatitis_b') ? 'Hepatitis B' :
+                                                                                record.vaccine_type.startsWith('polio') ? 'Polio' :
+                                                                                    record.vaccine_type.startsWith('dpt') ? 'DPT-HiB-HepB' :
+                                                                                        record.vaccine_type.startsWith('ipv') ? 'IPV - Polio Suntik' :
+                                                                                            record.vaccine_type.startsWith('campak') ? 'Campak-Rubella' : 'Vaksin'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <CheckCircle2 className="w-5 h-5 text-purple-500" />
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <Calendar className="w-4 h-4 text-gray-400" />
+                                                            <span className="text-gray-600">
+                                                                {new Date(record.immunization_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                            </span>
+                                                        </div>
+
+                                                        {record.notes && (
+                                                            <div className="mt-2 pt-2 border-t border-purple-200/50">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                                    <FileText className="w-3 h-3 text-yellow-500" />
+                                                                    Catatan
+                                                                </p>
+                                                                <p className="text-sm text-gray-700">{record.notes}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Pagination */}
+                                            <PaginationUI
+                                                currentPage={immunizationRecordsPage}
+                                                totalPages={immunizationData.totalPages}
+                                                total={immunizationData.total}
+                                                onPageChange={setImmunizationRecordsPage}
+                                                label="riwayat imunisasi"
+                                            />
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        )}
+
                     </div>
                 </div>
             </div>
