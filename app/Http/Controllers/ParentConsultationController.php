@@ -178,6 +178,15 @@ class ParentConsultationController extends Controller
             ]);
         }
 
+        // Log activity
+        $childInfo = $consultation->child ? " tentang anak: {$consultation->child->full_name}" : '';
+        AdminActivityLogController::log(
+            'create',
+            "Orang tua {$user->name} memulai konsultasi baru: {$validated['title']}{$childInfo}",
+            'Consultation',
+            $consultation->id
+        );
+
         return response()->json([
             'data' => $consultation,
             'message' => 'Consultation created successfully.',
@@ -384,7 +393,16 @@ class ParentConsultationController extends Controller
             ], 403);
         }
 
+        $title = $consultation->title;
         $consultation->delete();
+
+        // Log activity
+        AdminActivityLogController::log(
+            'delete',
+            "Orang tua {$user->name} menghapus konsultasi: {$title}",
+            'Consultation',
+            $id
+        );
 
         return response()->json([
             'message' => 'Consultation deleted successfully.',

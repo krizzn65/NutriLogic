@@ -237,12 +237,11 @@ export default function ActivityLogs() {
     const modelOptions = [
         { value: '', label: 'Semua Model' },
         { value: 'User', label: 'User' },
-        { value: 'Child', label: 'Child' },
-        { value: 'Article', label: 'Article' },
+        { value: 'Child', label: 'Anak' },
         { value: 'Posyandu', label: 'Posyandu' },
-        { value: 'WeighingLog', label: 'Weighing Log' },
-        { value: 'MealLog', label: 'Meal Log' },
-        { value: 'Consultation', label: 'Consultation' },
+        { value: 'WeighingLog', label: 'Penimbangan' },
+        { value: 'MealLog', label: 'Jurnal Makan' },
+        { value: 'Consultation', label: 'Konsultasi' },
     ];
 
     const userOptions = [
@@ -305,8 +304,8 @@ export default function ActivityLogs() {
                         </div>
                     </div>
 
-                    <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mt-4 md:mt-0 ${isFilterOpen ? 'block' : 'hidden md:grid'}`}>
-                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'action' ? 'z-50' : 'z-10'}`}>
+                    <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mt-4 md:mt-0 ${isFilterOpen ? 'grid' : 'hidden md:grid'}`}>
+                        <div className="relative col-span-2 md:col-span-1">
                             <CustomDropdown
                                 label="Aksi"
                                 value={filters.action}
@@ -317,7 +316,7 @@ export default function ActivityLogs() {
                             />
                         </div>
 
-                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'model' ? 'z-50' : 'z-10'}`}>
+                        <div className="relative col-span-2 md:col-span-1">
                             <CustomDropdown
                                 label="Model"
                                 value={filters.model}
@@ -328,7 +327,7 @@ export default function ActivityLogs() {
                             />
                         </div>
 
-                        <div className={`relative col-span-2 md:col-span-1 ${openDropdown === 'user' ? 'z-50' : 'z-10'}`}>
+                        <div className="relative col-span-2 md:col-span-1">
                             <CustomDropdown
                                 label="User"
                                 value={filters.user_id}
@@ -339,17 +338,17 @@ export default function ActivityLogs() {
                             />
                         </div>
 
-                        <div className="relative z-10">
+                        <div className="relative">
                             <CustomDatePicker
-                                label="Dari"
+                                label="Dari Tanggal"
                                 value={filters.date_from}
                                 onChange={(value) => setFilters({ ...filters, date_from: value })}
                             />
                         </div>
 
-                        <div className="relative z-10">
+                        <div className="relative">
                             <CustomDatePicker
-                                label="Sampai"
+                                label="Sampai Tanggal"
                                 value={filters.date_to}
                                 onChange={(value) => setFilters({ ...filters, date_to: value })}
                             />
@@ -536,22 +535,6 @@ export default function ActivityLogs() {
                     onPageChange={(page) => fetchLogs({ forceRefresh: true, page })}
                     label="log aktivitas"
                 />
-
-                {/* Info */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                        <Activity className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div className="text-sm text-blue-800">
-                            <strong>Catatan:</strong> Log aktivitas sistem dengan pagination (max 50 per halaman).
-                            Gunakan filter untuk mempersempit pencarian. Auto-refresh dapat diaktifkan untuk pemantauan real-time setiap 30 detik.
-                            {pagination.total > 0 && (
-                                <div className="mt-2 text-blue-700">
-                                    Total <strong>{pagination.total}</strong> log aktivitas tersedia.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
@@ -613,11 +596,28 @@ function PaginationUI({ currentPage, totalPages, total, onPageChange, label }) {
 }
 
 function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
+    const buttonRef = useRef(null);
     const dropdownRef = useRef(null);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
+    // Calculate dropdown position when opened
+    useEffect(() => {
+        if (isOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: rect.width
+            });
+        }
+    }, [isOpen]);
+
+    // Handle click outside to close
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (isOpen &&
+                buttonRef.current && !buttonRef.current.contains(event.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 onToggle(false);
             }
         };
@@ -628,11 +628,13 @@ function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
     const selectedOption = options.find(opt => String(opt.value) === String(value));
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
                 {label}
             </label>
             <button
+                ref={buttonRef}
+                type="button"
                 onClick={() => onToggle(!isOpen)}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-left flex items-center justify-between hover:bg-gray-50 transition-colors text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
@@ -642,14 +644,25 @@ function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            <AnimatePresence>
-                {isOpen && (
+            {isOpen && createPortal(
+                <>
+                    <div
+                        className="fixed inset-0 z-[9998] bg-transparent"
+                        onClick={() => onToggle(false)}
+                    />
                     <motion.div
-                        initial={{ opacity: 0, y: 5 }}
+                        ref={dropdownRef}
+                        initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
+                        exit={{ opacity: 0, y: -5 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden"
+                        style={{
+                            position: 'fixed',
+                            top: dropdownPos.top,
+                            left: dropdownPos.left,
+                            width: dropdownPos.width,
+                        }}
+                        className="z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden"
                     >
                         <div className="max-h-60 overflow-y-auto p-1">
                             {options.map((option) => (
@@ -669,8 +682,9 @@ function CustomDropdown({ label, value, options, onChange, isOpen, onToggle }) {
                             ))}
                         </div>
                     </motion.div>
-                )}
-            </AnimatePresence>
+                </>,
+                document.body
+            )}
         </div>
     );
 }
@@ -814,7 +828,7 @@ function CustomDatePicker({ label, value, onChange }) {
                                 }}
                                 className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
                             >
-                                Clear
+                                Hapus
                             </button>
                             <button
                                 type="button"
@@ -827,7 +841,7 @@ function CustomDatePicker({ label, value, onChange }) {
                                 }}
                                 className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
                             >
-                                Today
+                                Hari Ini
                             </button>
                         </div>
                     </motion.div>

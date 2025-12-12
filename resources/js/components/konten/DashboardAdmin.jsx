@@ -648,509 +648,355 @@ export default function DashboardAdmin() {
             </header>
 
             {/* Main Content - Scrollable */}
-            <main className="flex-1 overflow-y-auto p-3 md:p-6 flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-                <div className="flex flex-col gap-3 md:gap-4 w-full min-h-full">
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto">
 
-                    {/* Stats Grid - Mobile 2x2 */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                    {/* 1. Hero Section */}
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 md:p-10 text-white shadow-xl shadow-blue-200 relative overflow-hidden">
+                        {/* Decorative elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+
+                        <div className="relative z-10">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Halo, Administrator! 👋</h2>
+                            <p className="text-blue-100 text-lg max-w-2xl leading-relaxed">
+                                Selamat datang kembali di panel kontrol utama. Berikut adalah ringkasan kinerja posyandu dan status kesehatan anak secara real-time.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 2. Key Metrics - Cleaner Minimalist Look */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         {statCards.map((card, index) => (
                             <motion.div
                                 key={index}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05, duration: 0.2 }}
-                                whileHover={{ y: -4, scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
+                                whileHover={{ y: -4 }}
                                 onClick={() => navigate(card.link)}
-                                className={`relative overflow-hidden rounded-2xl p-3 md:p-5 bg-linear-to-br ${card.gradient} ${card.shadow} shadow-lg cursor-pointer group`}
+                                className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:shadow-blue-500/5 transition-all cursor-pointer group"
                             >
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <p className="text-[10px] md:text-xs font-medium text-white/80 uppercase tracking-wider mb-1 md:mb-2">{card.title}</p>
-                                        <h3 className="text-xl md:text-3xl font-bold text-white tracking-tight">
-                                            {card.value}
-                                        </h3>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-2xl ${card.iconColor.replace('text-', 'bg-').replace('100', '50')} ${card.iconColor.replace('text-', 'text-').replace('100', '600')} group-hover:scale-110 transition-transform duration-300`}>
+                                        <card.icon className="w-6 h-6" />
                                     </div>
-                                    <motion.div
-                                        className={`p-1.5 md:p-3 rounded-lg md:rounded-xl bg-white/20 backdrop-blur-sm ${card.iconColor} hidden md:block`}
-                                        whileHover={{ rotate: 15, scale: 1.05 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        <card.icon className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                                    </motion.div>
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                        Active
+                                    </span>
                                 </div>
-
-                                <div className="relative z-10 mt-2 md:mt-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-1 text-[10px] md:text-xs text-white/70 font-medium">
-                                        <span>Aktif</span>
-                                    </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ArrowUpRight className="w-3 h-3 md:w-4 md:h-4 text-white/70" />
-                                    </div>
+                                <div>
+                                    <h3 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-1">
+                                        {card.value}
+                                    </h3>
+                                    <p className="text-sm font-medium text-gray-500">{card.title}</p>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
 
-                    {/* Content Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-none lg:flex-1 lg:min-h-0">
+                    {/* 3. Content Grid split 2/3 (Charts) and 1/3 (Risks) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
-                        {/* Status Distribution - Bento Box Style */}
-                        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col h-auto lg:h-full">
-                            <div className="p-4 border-b border-gray-50 flex justify-between items-center">
-                                <div>
-                                    <h2 className="text-base font-bold text-gray-800">Distribusi Status Gizi</h2>
-                                    <p className="text-[10px] text-gray-500 mt-0.5">Gambaran umum kesehatan anak</p>
-                                </div>
-                                <div className="relative" ref={posyanduRef}>
-                                    <button
-                                        onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-xs font-medium text-gray-600 transition-colors"
-                                    >
-                                        <span className="max-w-[100px] truncate">
-                                            {selectedPosyandu === 'all'
-                                                ? 'Semua Posyandu'
-                                                : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
-                                        </span>
-                                        <ChevronDown className={`w-3 h-3 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
-                                    </button>
+                        {/* LEFT COLUMN: Charts (2/3 width) */}
+                        <div className="lg:col-span-2 flex flex-col gap-6 md:gap-8 min-w-0">
 
-                                    {isPosyanduDropdownOpen && (
-                                        <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
-                                            <div className="max-h-64 overflow-y-auto p-1">
-                                                <div
-                                                    onClick={() => {
-                                                        setSelectedPosyandu('all');
-                                                        setIsPosyanduDropdownOpen(false);
-                                                    }}
-                                                    className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
-                                                >
-                                                    <span className={`text-xs ${selectedPosyandu === 'all' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
-                                                        Semua Posyandu
-                                                    </span>
-                                                    {selectedPosyandu === 'all' && <Check className="w-3 h-3 text-blue-600" />}
-                                                </div>
-                                                {posyandus.map((posyandu) => (
+                            {/* Status Distribution - Large Card */}
+                            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col p-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-900">Distribusi Status Gizi</h2>
+                                        <p className="text-sm text-gray-500 mt-1">Gambaran status gizi anak di seluruh posyandu</p>
+                                    </div>
+
+                                    {/* Posyandu Filter Dropdown */}
+                                    <div className="relative" ref={posyanduRef}>
+                                        <button
+                                            onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm font-medium text-gray-700 transition-colors border border-gray-200"
+                                        >
+                                            <span className="max-w-[150px] truncate">
+                                                {selectedPosyandu === 'all'
+                                                    ? 'Semua Posyandu'
+                                                    : posyandus.find(p => p.id === parseInt(selectedPosyandu))?.name || 'Pilih Posyandu'}
+                                            </span>
+                                            <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isPosyanduDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {isPosyanduDropdownOpen && (
+                                            <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
+                                                <div className="max-h-64 overflow-y-auto p-1 custom-scrollbar">
                                                     <div
-                                                        key={posyandu.id}
                                                         onClick={() => {
-                                                            setSelectedPosyandu(posyandu.id);
+                                                            setSelectedPosyandu('all');
                                                             setIsPosyanduDropdownOpen(false);
                                                         }}
-                                                        className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                        className="px-3 py-2.5 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                                     >
-                                                        <span className={`text-xs ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
-                                                            {posyandu.name}
+                                                        <span className={`text-sm ${selectedPosyandu === 'all' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
+                                                            Semua Posyandu
                                                         </span>
-                                                        {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-3 h-3 text-blue-600" />}
+                                                        {selectedPosyandu === 'all' && <Check className="w-4 h-4 text-blue-600" />}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-8 flex-1 overflow-hidden">
-                                <div className="w-full md:w-1/2 h-56 md:h-64 relative min-h-[200px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={stats?.status_distribution ? Object.entries(stats.status_distribution).map(([name, value]) => ({ name: getStatusLabel(name), value, rawName: name })) : []}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={70}
-                                                outerRadius={100}
-                                                paddingAngle={3}
-                                                dataKey="value"
-                                                activeIndex={activeIndex}
-                                                activeShape={{
-                                                    outerRadius: 108, // OPTIMIZED: Reduced from 110
-                                                    strokeWidth: 2,
-                                                    stroke: '#fff',
-                                                }}
-                                                onMouseEnter={(_, index) => {
-                                                    setActiveIndex(index);
-                                                    setIsChartHovered(true);
-                                                }}
-                                                onMouseLeave={() => {
-                                                    setActiveIndex(null);
-                                                    setIsChartHovered(false);
-                                                }}
-                                                animationBegin={0}
-                                                animationDuration={400} // OPTIMIZED: Reduced from 800ms
-                                                animationEasing="ease-out"
-                                                isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
-                                            >
-                                                {stats?.status_distribution && Object.entries(stats.status_distribution).map(([name, value], index) => {
-                                                    const colorMap = {
-                                                        'normal': '#10b981',
-                                                        'kurang': '#FDC700',
-                                                        'sangat_kurang': '#F43F5E',
-                                                        'pendek': '#FFE06D',
-                                                        'sangat_pendek': '#FE7189',
-                                                        'kurus': '#D9C990',
-                                                        'sangat_kurus': '#FB9FAF',
-                                                        'lebih': '#FFF8D2',
-                                                        'gemuk': '#FFCCD5',
-                                                    };
-                                                    return (
-                                                        <Cell
-                                                            key={`cell-${index}`}
-                                                            fill={colorMap[name] || '#94a3b8'}
-                                                            strokeWidth={0}
-                                                            opacity={hoveredLegend === null || hoveredLegend === name ? 1 : 0.3}
-                                                            style={{
-                                                                cursor: 'pointer',
-                                                                transition: 'opacity 0.3s ease'
+                                                    {posyandus.map((posyandu) => (
+                                                        <div
+                                                            key={posyandu.id}
+                                                            onClick={() => {
+                                                                setSelectedPosyandu(posyandu.id);
+                                                                setIsPosyanduDropdownOpen(false);
                                                             }}
-                                                        />
-                                                    );
-                                                })}
-                                            </Pie>
-                                            <Tooltip
-                                                contentStyle={{
-                                                    borderRadius: '12px',
-                                                    border: 'none',
-                                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                                                    padding: '12px 16px',
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.98)'
-                                                }}
-                                                itemStyle={{
-                                                    color: '#1e293b',
-                                                    fontWeight: '600',
-                                                    fontSize: '14px'
-                                                }}
-                                                labelStyle={{
-                                                    color: '#64748b',
-                                                    fontWeight: '500',
-                                                    marginBottom: '4px'
-                                                }}
-                                            />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    {/* Center Text with Animation */}
-                                    {/* Center Text with Animation - Hidden on Hover */}
-                                    {/* Center Text with Animation - Hidden on Hover */}
-                                    <AnimatePresence mode="wait">
-                                        {!isChartHovered && (
-                                            <motion.div
-                                                key={hoveredLegend || 'total'}
-                                                className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-                                                initial={{ opacity: 0, scale: 0.8 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                exit={{ opacity: 0, scale: 0.8 }}
-                                                transition={{ duration: 0.2 }}
-                                            >
-                                                <span className="text-4xl font-bold text-gray-800">
-                                                    {hoveredLegend && stats?.status_distribution
-                                                        ? stats.status_distribution[hoveredLegend]
-                                                        : (stats?.status_distribution ? Object.values(stats.status_distribution).reduce((a, b) => a + b, 0) : 0)
-                                                    }
-                                                </span>
-                                                <span className="text-sm text-gray-500 font-medium mt-1">
-                                                    {hoveredLegend ? getStatusLabel(hoveredLegend) : 'Total Anak'}
-                                                </span>
-                                            </motion.div>
+                                                            className="px-3 py-2.5 rounded-lg hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                        >
+                                                            <span className={`text-sm ${parseInt(selectedPosyandu) === posyandu.id ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
+                                                                {posyandu.name}
+                                                            </span>
+                                                            {parseInt(selectedPosyandu) === posyandu.id && <Check className="w-4 h-4 text-blue-600" />}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
-                                    </AnimatePresence>
+                                    </div>
                                 </div>
 
-                                {/* Custom Legend with Hover Effects */}
-                                <div className="w-full md:w-1/2 grid grid-cols-2 gap-x-4 gap-y-2">
-                                    {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count], index) => {
-                                        const colorMap = {
-                                            'normal': 'bg-emerald-500',
-                                            'kurang': 'bg-[#FDC700]',
-                                            'sangat_kurang': 'bg-[#F43F5E]',
-                                            'pendek': 'bg-[#FFE06D]',
-                                            'sangat_pendek': 'bg-[#FE7189]',
-                                            'kurus': 'bg-[#D9C990]',
-                                            'sangat_kurus': 'bg-[#FB9FAF]',
-                                            'lebih': 'bg-[#FFF8D2]',
-                                            'gemuk': 'bg-[#FFCCD5]',
-                                        };
-                                        return (
-                                            <motion.div
-                                                key={status}
-                                                initial={{ opacity: 0, x: -10 }} // OPTIMIZED: Reduced movement
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: index * 0.03, duration: 0.2 }} // OPTIMIZED: Reduced delay and duration
-                                                whileHover={{ scale: 1.03, x: 2 }} // OPTIMIZED: Reduced scale and movement
-                                                whileTap={{ scale: 0.98 }}
-                                                onMouseEnter={() => {
-                                                    setHoveredLegend(status);
-                                                    setActiveIndex(index);
-                                                }}
-                                                onMouseLeave={() => {
-                                                    setHoveredLegend(null);
-                                                    setActiveIndex(null);
-                                                }}
-                                                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-3 h-3 rounded-full ${colorMap[status] || 'bg-gray-400'} transition-transform ${hoveredLegend === status ? 'scale-110' : ''}`} />
-                                                    <span className="text-sm text-gray-600 font-medium">{getStatusLabel(status)}</span>
-                                                </div>
-                                                <span className={`text-sm font-bold text-gray-900 transition-transform ${hoveredLegend === status ? 'scale-105' : ''}`}>
-                                                    {count}
-                                                </span>
-                                            </motion.div>
-                                        );
-                                    })}
+                                <div className="flex flex-col lg:flex-row items-center gap-8">
+                                    <div className="w-full lg:w-1/2 h-64 relative">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={stats?.status_distribution ? Object.entries(stats.status_distribution).map(([name, value]) => ({ name: getStatusLabel(name), value, rawName: name })) : []}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={80}
+                                                    outerRadius={110}
+                                                    paddingAngle={3}
+                                                    dataKey="value"
+                                                    activeIndex={activeIndex}
+                                                    activeShape={{
+                                                        outerRadius: 118,
+                                                        strokeWidth: 4,
+                                                        stroke: '#fff',
+                                                    }}
+                                                    onMouseEnter={(_, index) => {
+                                                        setActiveIndex(index);
+                                                        setIsChartHovered(true);
+                                                    }}
+                                                    onMouseLeave={() => {
+                                                        setActiveIndex(null);
+                                                        setIsChartHovered(false);
+                                                    }}
+                                                    animationBegin={0}
+                                                    animationDuration={800}
+                                                    animationEasing="ease-out"
+                                                    isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
+                                                >
+                                                    {stats?.status_distribution && Object.entries(stats.status_distribution).map(([name, value], index) => {
+                                                        const colorMap = {
+                                                            'normal': '#10b981',
+                                                            'kurang': '#FDC700',
+                                                            'sangat_kurang': '#F43F5E',
+                                                            'pendek': '#FFE06D',
+                                                            'sangat_pendek': '#FE7189',
+                                                            'kurus': '#D9C990',
+                                                            'sangat_kurus': '#FB9FAF',
+                                                            'lebih': '#60A5FA',
+                                                            'gemuk': '#818CF8',
+                                                        };
+                                                        return (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={colorMap[name] || '#94a3b8'}
+                                                                strokeWidth={0}
+                                                                opacity={hoveredLegend === null || hoveredLegend === name ? 1 : 0.3}
+                                                                style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                                                            />
+                                                        );
+                                                    })}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '12px 16px' }}
+                                                    itemStyle={{ color: '#1e293b', fontWeight: '600', fontSize: '14px' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+
+                                        {/* Center Label */}
+                                        <AnimatePresence mode="wait">
+                                            {!isChartHovered && (
+                                                <motion.div
+                                                    key={hoveredLegend || 'total'}
+                                                    className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                >
+                                                    <span className="text-4xl font-bold text-gray-800 tracking-tight">
+                                                        {hoveredLegend && stats?.status_distribution
+                                                            ? stats.status_distribution[hoveredLegend]
+                                                            : (stats?.status_distribution ? Object.values(stats.status_distribution).reduce((a, b) => a + b, 0) : 0)
+                                                        }
+                                                    </span>
+                                                    <span className="text-sm text-gray-500 font-medium mt-1 uppercase tracking-wide">
+                                                        {hoveredLegend ? getStatusLabel(hoveredLegend) : 'Total Anak'}
+                                                    </span>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
+                                    {/* Legend Grid */}
+                                    <div className="w-full lg:w-1/2 grid grid-cols-2 gap-3">
+                                        {stats?.status_distribution && Object.entries(stats.status_distribution).map(([status, count], index) => {
+                                            const colorMap = {
+                                                'normal': 'bg-emerald-500',
+                                                'kurang': 'bg-[#FDC700]',
+                                                'sangat_kurang': 'bg-[#F43F5E]',
+                                                'pendek': 'bg-[#FFE06D]',
+                                                'sangat_pendek': 'bg-[#FE7189]',
+                                                'kurus': 'bg-[#D9C990]',
+                                                'sangat_kurus': 'bg-[#FB9FAF]',
+                                                'lebih': 'bg-blue-400',
+                                                'gemuk': 'bg-indigo-400',
+                                            };
+                                            return (
+                                                <motion.div
+                                                    key={status}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    onMouseEnter={() => { setHoveredLegend(status); setActiveIndex(index); }}
+                                                    onMouseLeave={() => { setHoveredLegend(null); setActiveIndex(null); }}
+                                                    className={`custom-legend-item flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all cursor-pointer ${hoveredLegend === status ? 'bg-gray-50 ring-1 ring-gray-100' : ''}`}
+                                                >
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className={`w-3 h-3 rounded-full ${colorMap[status] || 'bg-gray-400'}`} />
+                                                        <span className="text-sm font-medium text-gray-600">{getStatusLabel(status)}</span>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-gray-900">{count}</span>
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Secondary Charts Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+
+                                {/* Trend Chart */}
+                                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex flex-col h-full">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                                            <TrendingUp className="w-5 h-5" />
+                                        </div>
+                                        <h3 className="font-bold text-gray-800">Tren Penimbangan</h3>
+                                    </div>
+                                    <div className="flex-1 min-h-[200px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={stats?.monthly_trend || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorWeighings" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                                                <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }} />
+                                                <Area type="monotone" dataKey="weighings_count" name="Penimbangan" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorWeighings)" animationDuration={1000} />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Monthly Stats Chart */}
+                                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex flex-col h-full">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                                            <Calendar className="w-5 h-5" />
+                                        </div>
+                                        <h3 className="font-bold text-gray-800">Statistik Bulanan</h3>
+                                    </div>
+                                    <div className="flex-1 min-h-[200px]">
+                                        {!stats?.growth_by_posyandu || stats.growth_by_posyandu.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                                                <Calendar className="w-8 h-8 mb-2 opacity-20" />
+                                                <p className="text-sm">Belum ada data bulanan</p>
+                                            </div>
+                                        ) : (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={stats.growth_by_posyandu} margin={{ top: 10, right: 0, left: -20, bottom: 0 }} barGap={6}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} dy={10} />
+                                                    <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }} cursor={{ fill: '#f8fafc' }} />
+                                                    <Bar dataKey="children_count" name="Anak Ditimbang" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={1000} />
+                                                    <Bar dataKey="weighings_count" name="Total Penimbangan" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={1000} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Risk Analysis - Compact Table */}
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col h-auto lg:h-full overflow-hidden">
-                            <div className="p-4 border-b border-gray-50 bg-orange-50/30">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                                    <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wide">Area Perhatian</h2>
+                        {/* RIGHT COLUMN: Risk Table (1/3 width) */}
+                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
+                            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-0 overflow-hidden flex flex-col h-full max-h-[800px]">
+                                <div className="p-6 border-b border-gray-50 bg-gradient-to-r from-orange-50 to-red-50/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-xl shadow-sm text-orange-600">
+                                            <AlertTriangle className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 leading-none">Area Perhatian</h3>
+                                            <p className="text-xs text-orange-600/80 font-medium mt-1">Posyandu dengan risiko tinggi</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="text-[10px] text-gray-500">Posyandu dengan risiko tertinggi</p>
-                            </div>
 
-                            <div className="flex-1">
-                                {stats?.top_risk_posyandu && stats.top_risk_posyandu.length > 0 ? (
-                                    <>
-                                        {/* Desktop Table View */}
-                                        <table className="w-full text-left border-collapse hidden md:table">
-                                            <thead className="bg-gray-50/50 sticky top-0 z-10">
-                                                <tr>
-                                                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Posyandu</th>
-                                                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Risiko</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-50">
-                                                {stats.top_risk_posyandu.map((posyandu, index) => (
-                                                    <motion.tr
-                                                        key={posyandu.id}
-                                                        initial={{ opacity: 0, x: -10 }}
-                                                        animate={{ opacity: 1, x: 0 }}
-                                                        transition={{ delay: index * 0.05, duration: 0.2 }}
-                                                        whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', x: 2 }}
-                                                        className="group cursor-pointer"
-                                                    >
-                                                        <td className="py-2.5 px-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
-                                                                    {index + 1}
-                                                                </div>
-                                                                <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
-                                                                    {posyandu.name}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-right">
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700 group-hover:bg-orange-200 transition-colors duration-200">
-                                                                {posyandu.risk_count}
-                                                            </span>
-                                                        </td>
-                                                    </motion.tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-
-                                        {/* Mobile Card List View */}
-                                        <div className="md:hidden space-y-2 p-2">
+                                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                                    {stats?.top_risk_posyandu && stats.top_risk_posyandu.length > 0 ? (
+                                        <div className="space-y-2">
                                             {stats.top_risk_posyandu.map((posyandu, index) => (
-                                                <div key={posyandu.id} className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl border border-gray-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-white text-blue-600 shadow-sm flex items-center justify-center text-xs font-bold border border-gray-100">
-                                                            {index + 1}
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-gray-800">{posyandu.name}</p>
-                                                            <p className="text-[10px] text-gray-500">Kecamatan Lowokwaru</p>
-                                                        </div>
+                                                <div
+                                                    key={posyandu.id}
+                                                    className="p-3 bg-white hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all group flex items-start gap-3 cursor-pointer"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 font-bold flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                        {index + 1}
                                                     </div>
-                                                    <span className="flex flex-col items-end">
-                                                        <span className="text-xs font-bold text-orange-600">{posyandu.risk_count}</span>
-                                                        <span className="text-[9px] text-gray-400">Kasus</span>
-                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">{posyandu.name}</h4>
+                                                        <p className="text-[10px] text-gray-500 truncate">Perlu pemantauan intensif</p>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-lg font-bold text-orange-600 leading-none">{posyandu.risk_count}</span>
+                                                        <span className="text-[9px] text-gray-400 font-medium mt-0.5">KASUS</span>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                                        <Shield className="w-6 h-6 mb-2 opacity-20" />
-                                        <p className="text-xs">Tidak ada data risiko</p>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="p-2 border-t border-gray-50 bg-gray-50/30 text-center mt-auto">
-                                <motion.button
-                                    onClick={() => navigate('/dashboard/laporan')}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="text-[10px] font-medium text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
-                                >
-                                    Lihat Semua Laporan
-                                </motion.button>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {/* New Charts Section */}
-                    <div className="flex flex-col gap-4">
-                        {/* Mobile Tabs for Charts */}
-                        <div className="flex p-1 bg-gray-100 rounded-xl lg:hidden">
-                            <button
-                                onClick={() => setActiveChartTab('trend')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeChartTab === 'trend'
-                                    ? 'bg-white text-blue-600 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Tren Penimbangan
-                            </button>
-                            <button
-                                onClick={() => setActiveChartTab('stats')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeChartTab === 'stats'
-                                    ? 'bg-white text-purple-600 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Statistik Bulanan
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {!showCharts ? (
-                                <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 animate-pulse h-64" />
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 animate-pulse h-64" />
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400">
+                                            <Shield className="w-12 h-12 mb-3 opacity-20 text-green-500" />
+                                            <h4 className="font-bold text-gray-600">Aman Terkendali</h4>
+                                            <p className="text-xs mt-1">Tidak ada posyandu dengan risiko tinggi saat ini.</p>
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <>
-                                    {/* Monthly Trend - Area Chart */}
-                                    <div className={`${activeChartTab === 'trend' ? 'block' : 'hidden'} lg:block bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4`}>
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
-                                                <TrendingUp className="w-4 h-4" />
-                                            </div>
-                                            <h2 className="text-base font-bold text-gray-800">Tren Penimbangan</h2>
-                                        </div>
-                                        <div className="h-56 min-h-[200px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart
-                                                    data={stats?.monthly_trend || []}
-                                                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                                                >
-                                                    <defs>
-                                                        <linearGradient id="colorWeighings" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                        </linearGradient>
-                                                    </defs>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                                    <XAxis
-                                                        dataKey="month"
-                                                        tick={{ fontSize: 10, fill: '#64748b' }}
-                                                        tickLine={false}
-                                                        axisLine={{ stroke: '#e2e8f0' }}
-                                                    />
-                                                    <YAxis
-                                                        tick={{ fontSize: 10, fill: '#64748b' }}
-                                                        tickLine={false}
-                                                        axisLine={false}
-                                                    />
-                                                    <Tooltip
-                                                        contentStyle={{
-                                                            borderRadius: '12px',
-                                                            border: 'none',
-                                                            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                                                            backgroundColor: 'white'
-                                                        }}
-                                                        labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                                                    />
-                                                    <Area
-                                                        isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
-                                                        type="monotone"
-                                                        dataKey="weighings_count"
-                                                        name="Penimbangan"
-                                                        stroke="#3b82f6"
-                                                        strokeWidth={3}
-                                                        fillOpacity={1}
-                                                        fill="url(#colorWeighings)"
-                                                    />
-                                                </AreaChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
 
-                                    {/* Monthly Statistics - Bar Chart */}
-                                    <div className={`${activeChartTab === 'stats' ? 'block' : 'hidden'} lg:block bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4`}>
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
-                                                <Calendar className="w-4 h-4" />
-                                            </div>
-                                            <h2 className="text-base font-bold text-gray-800">Statistik Bulanan</h2>
-                                        </div>
-                                        <div className="h-56 min-h-[200px]">
-                                            {!stats?.growth_by_posyandu || stats.growth_by_posyandu.length === 0 ? (
-                                                <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                                                    Tidak ada data tersedia
-                                                </div>
-                                            ) : (
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart
-                                                        data={stats.growth_by_posyandu}
-                                                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                                                        barGap={4}
-                                                    >
-                                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                                                        <XAxis
-                                                            dataKey="month"
-                                                            tick={{ fontSize: 10, fill: '#64748b' }}
-                                                            tickLine={false}
-                                                            axisLine={{ stroke: '#e2e8f0' }}
-                                                            angle={-45}
-                                                            textAnchor="end"
-                                                            height={50}
-                                                        />
-                                                        <YAxis
-                                                            tick={{ fontSize: 10, fill: '#64748b' }}
-                                                            tickLine={false}
-                                                            axisLine={false}
-                                                        />
-                                                        <Tooltip
-                                                            cursor={{ fill: '#f8fafc' }}
-                                                            contentStyle={{
-                                                                borderRadius: '12px',
-                                                                border: 'none',
-                                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                                                                backgroundColor: 'white',
-                                                                padding: '12px'
-                                                            }}
-                                                            labelStyle={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}
-                                                        />
-                                                        <Bar
-                                                            isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
-                                                            dataKey="children_count"
-                                                            name="Anak Ditimbang"
-                                                            fill="#8b5cf6"
-                                                            radius={[4, 4, 0, 0]}
-                                                            maxBarSize={30}
-                                                        />
-                                                        <Bar
-                                                            isAnimationActive={chartAnimationEnabled && !shouldReduceMotion}
-                                                            dataKey="weighings_count"
-                                                            name="Total Penimbangan"
-                                                            fill="#3b82f6"
-                                                            radius={[4, 4, 0, 0]}
-                                                            maxBarSize={30}
-                                                        />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            )}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                <div className="p-4 bg-gray-50/50 border-t border-gray-50 text-center">
+                                    <button
+                                        onClick={() => navigate('/dashboard/laporan')}
+                                        className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline uppercase tracking-wide"
+                                    >
+                                        Lihat Analisis Lengkap
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Additional Widget (e.g., Quick Stats or System Status - Optional) */}
+                            {/* Can be added here if needed */}
                         </div>
                     </div>
                 </div>

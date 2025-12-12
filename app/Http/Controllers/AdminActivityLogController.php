@@ -73,8 +73,9 @@ class AdminActivityLogController extends Controller
 
     /**
      * Create activity log (helper method for other controllers)
+     * @param int|null $userId Pass explicitly when auth()->id() is not available (e.g. during login)
      */
-    public static function log($action, $description, $model = null, $modelId = null, $metadata = [])
+    public static function log($action, $description, $model = null, $modelId = null, $metadata = [], $userId = null)
     {
         // Capture user-agent if not already in metadata
         if (!isset($metadata['user_agent'])) {
@@ -82,7 +83,7 @@ class AdminActivityLogController extends Controller
         }
 
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId ?? auth()->id(),
             'action' => $action,
             'model' => $model,
             'model_id' => $modelId,

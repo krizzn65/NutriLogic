@@ -249,6 +249,15 @@ class KaderConsultationController extends Controller
 
         $consultation->update(['status' => 'closed']);
 
+        // Log activity
+        $parentName = $consultation->parent ? $consultation->parent->name : 'Unknown';
+        AdminActivityLogController::log(
+            'update',
+            "Kader {$user->name} menutup konsultasi dengan {$parentName}: {$consultation->title}",
+            'Consultation',
+            $consultation->id
+        );
+
         return response()->json([
             'data' => $consultation,
             'message' => 'Konsultasi berhasil ditutup.',
@@ -274,7 +283,17 @@ class KaderConsultationController extends Controller
             ], 403);
         }
 
+        $title = $consultation->title;
+        $parentName = $consultation->parent ? $consultation->parent->name : 'Unknown';
         $consultation->delete();
+
+        // Log activity
+        AdminActivityLogController::log(
+            'delete',
+            "Kader {$user->name} menghapus konsultasi dengan {$parentName}: {$title}",
+            'Consultation',
+            $id
+        );
 
         return response()->json([
             'message' => 'Consultation deleted successfully.',

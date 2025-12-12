@@ -152,6 +152,17 @@ class KaderWeighingController extends Controller
 
             DB::commit();
 
+            // Log activity for each saved weighing
+            foreach ($savedWeighings as $weighing) {
+                $child = Child::find($weighing->child_id);
+                AdminActivityLogController::log(
+                    'create',
+                    "Kader {$user->name} menimbang anak: {$child->full_name} (BB: {$weighing->weight_kg}kg, TB: {$weighing->height_cm}cm, Status: {$weighing->nutritional_status})",
+                    'WeighingLog',
+                    $weighing->id
+                );
+            }
+
             $message = count($savedWeighings) . ' data penimbangan berhasil disimpan.';
             if (count($errors) > 0) {
                 $message .= ' ' . count($errors) . ' data dilewati karena error.';

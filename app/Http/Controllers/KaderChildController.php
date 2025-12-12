@@ -196,6 +196,9 @@ class KaderChildController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
+        // Log activity
+        AdminActivityLogController::log('create', "Kader {$user->name} mendaftarkan anak: {$child->full_name}", 'Child', $child->id);
+
         $response = [
             'data' => $child->load(['parent', 'posyandu']),
             'message' => 'Data anak berhasil ditambahkan.',
@@ -251,6 +254,9 @@ class KaderChildController extends Controller
 
         $child->update($validated);
 
+        // Log activity
+        AdminActivityLogController::log('update', "Kader {$user->name} memperbarui data anak: {$child->full_name}", 'Child', $child->id);
+
         return response()->json([
             'data' => $child->load(['parent', 'posyandu']),
             'message' => 'Data anak berhasil diperbarui.',
@@ -273,6 +279,9 @@ class KaderChildController extends Controller
         }
 
         $child->update(['is_active' => false]);
+
+        // Log activity
+        AdminActivityLogController::log('delete', "Kader {$user->name} menonaktifkan anak: {$child->full_name}", 'Child', $child->id);
 
         return response()->json([
             'message' => 'Data anak berhasil dinonaktifkan.',

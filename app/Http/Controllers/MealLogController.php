@@ -112,6 +112,15 @@ class MealLogController extends Controller
             $this->pointsService->addPoints($user, 5, 'meal_log');
         }
 
+        // Log activity
+        $roleLabel = $user->isIbu() ? 'Orang tua' : ($user->isKader() ? 'Kader' : 'Admin');
+        AdminActivityLogController::log(
+            'create',
+            "{$roleLabel} {$user->name} mencatat makan anak: {$child->full_name} ({$validated['description']})",
+            'MealLog',
+            $log->id
+        );
+
         return response()->json([
             'data' => $log->load('child'),
             'message' => 'Meal log created successfully.',
@@ -145,6 +154,15 @@ class MealLogController extends Controller
 
         $log->update($validated);
 
+        // Log activity
+        $roleLabel = $user->isIbu() ? 'Orang tua' : ($user->isKader() ? 'Kader' : 'Admin');
+        AdminActivityLogController::log(
+            'update',
+            "{$roleLabel} {$user->name} memperbarui jurnal makan anak: {$log->child->full_name}",
+            'MealLog',
+            $log->id
+        );
+
         return response()->json([
             'data' => $log->load('child'),
             'message' => 'Meal log updated successfully.',
@@ -166,7 +184,17 @@ class MealLogController extends Controller
             ], 403);
         }
 
+        $childName = $log->child->full_name;
         $log->delete();
+
+        // Log activity
+        $roleLabel = $user->isIbu() ? 'Orang tua' : ($user->isKader() ? 'Kader' : 'Admin');
+        AdminActivityLogController::log(
+            'delete',
+            "{$roleLabel} {$user->name} menghapus jurnal makan anak: {$childName}",
+            'MealLog',
+            $id
+        );
 
         return response()->json([
             'message' => 'Meal log deleted successfully.',

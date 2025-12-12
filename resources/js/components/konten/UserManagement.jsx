@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check, Eye, EyeOff } from "lucide-react";
+import { UserCog, Users, Plus, Edit2, Power, Key, Building2, ChevronDown, Check, Eye, EyeOff, Search, X } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
@@ -23,9 +23,6 @@ export default function UserManagement() {
 
     // Determine initial tab based on current route
     const getInitialTab = () => {
-        if (location.pathname.includes('/orang-tua')) {
-            return 'ibu';
-        }
         return 'kader';
     };
 
@@ -49,6 +46,29 @@ export default function UserManagement() {
         confirmColor: 'blue',
         onConfirm: () => { }
     });
+
+    // Filter state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterPosyandu, setFilterPosyandu] = useState('');
+    const [isPosyanduFilterOpen, setIsPosyanduFilterOpen] = useState(false);
+
+    // Filtered users based on search and posyandu
+    const filteredUsers = useMemo(() => {
+        return users.filter(user => {
+            // Search filter
+            const searchLower = searchTerm.toLowerCase();
+            const matchesSearch = !searchTerm ||
+                user.name?.toLowerCase().includes(searchLower) ||
+                user.email?.toLowerCase().includes(searchLower) ||
+                user.phone?.includes(searchTerm);
+
+            // Posyandu filter
+            const matchesPosyandu = !filterPosyandu ||
+                user.posyandu?.id === parseInt(filterPosyandu);
+
+            return matchesSearch && matchesPosyandu;
+        });
+    }, [users, searchTerm, filterPosyandu]);
 
 
     // Data caching
@@ -103,13 +123,8 @@ export default function UserManagement() {
         fetchPosyandus();
     }, []);
 
-    // Update activeTab when route changes
-    useEffect(() => {
-        const newTab = location.pathname.includes('/orang-tua') ? 'ibu' : 'kader';
-        if (newTab !== activeTab) {
-            setActiveTab(newTab);
-        }
-    }, [location.pathname]);
+    // No longer need to update activeTab based on route for orang-tua
+    // Kader is the only tab now
 
     useEffect(() => {
         const cacheKey = `admin_users_${activeTab}`;
@@ -246,7 +261,7 @@ export default function UserManagement() {
 
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
-            <PageHeader title="Manajemen Pengguna" subtitle="Kelola data kader dan orang tua" />
+            <PageHeader title="Manajemen Kader" subtitle="Kelola data kader posyandu" />
 
             <div className="flex-1 overflow-auto p-6 space-y-6">
 
@@ -259,24 +274,10 @@ export default function UserManagement() {
                 >
                     <div className="flex gap-2">
                         <button
-                            onClick={() => handleTabChange('kader')}
-                            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'kader'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
+                            className="px-4 py-2 font-medium transition-colors flex items-center gap-2 text-blue-600 border-b-2 border-blue-600"
                         >
                             <UserCog className="w-4 h-4" />
                             Kader
-                        </button>
-                        <button
-                            onClick={() => handleTabChange('ibu')}
-                            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${activeTab === 'ibu'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
-                        >
-                            <Users className="w-4 h-4" />
-                            Orang Tua
                         </button>
                     </div>
                     <button
@@ -284,7 +285,7 @@ export default function UserManagement() {
                         className="hidden md:flex px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:scale-95 transition-all items-center gap-2 shadow-sm mb-0.5"
                     >
                         <Plus className="w-4 h-4" />
-                        Tambah {activeTab === 'kader' ? 'Kader' : 'Orang Tua'}
+                        Tambah Kader
                     </button>
                 </motion.div>
 
@@ -301,18 +302,123 @@ export default function UserManagement() {
                     </div>
                 )}
 
+                {/* Search and Filter */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="flex flex-col md:flex-row gap-3"
+                >
+                    {/* Search Input */}
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Cari nama, email, atau telepon..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Posyandu Filter */}
+                    <div className="relative w-full md:w-64">
+                        <button
+                            type="button"
+                            onClick={() => setIsPosyanduFilterOpen(!isPosyanduFilterOpen)}
+                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-gray-400" />
+                                <span className={!filterPosyandu ? "text-gray-400" : "text-gray-900"}>
+                                    {filterPosyandu
+                                        ? posyandus.find(p => p.id === parseInt(filterPosyandu))?.name || "Posyandu"
+                                        : "Semua Posyandu"}
+                                </span>
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduFilterOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {isPosyanduFilterOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setIsPosyanduFilterOpen(false)} />
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                                    >
+                                        <div
+                                            onClick={() => {
+                                                setFilterPosyandu('');
+                                                setIsPosyanduFilterOpen(false);
+                                            }}
+                                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                        >
+                                            <span className={`text-sm ${!filterPosyandu ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                Semua Posyandu
+                                            </span>
+                                            {!filterPosyandu && <Check className="w-4 h-4 text-blue-600" />}
+                                        </div>
+                                        {posyandus.map((posyandu) => (
+                                            <div
+                                                key={posyandu.id}
+                                                onClick={() => {
+                                                    setFilterPosyandu(posyandu.id.toString());
+                                                    setIsPosyanduFilterOpen(false);
+                                                }}
+                                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                            >
+                                                <span className={`text-sm ${parseInt(filterPosyandu) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                    {posyandu.name}
+                                                </span>
+                                                {parseInt(filterPosyandu) === posyandu.id && (
+                                                    <Check className="w-4 h-4 text-blue-600" />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
+
                 {/* Mobile View (Cards) */}
                 <div className="md:hidden flex flex-col gap-4">
-                    {users.length === 0 ? (
+                    {filteredUsers.length === 0 ? (
                         <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Users className="w-8 h-8 text-gray-300" />
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900">Tidak ada data user</h3>
-                            <p className="text-gray-500 text-sm mt-1">Belum ada data yang tersedia.</p>
+                            <h3 className="text-lg font-medium text-gray-900">
+                                {searchTerm || filterPosyandu ? 'Tidak ada hasil' : 'Tidak ada data kader'}
+                            </h3>
+                            <p className="text-gray-500 text-sm mt-1">
+                                {searchTerm || filterPosyandu
+                                    ? 'Coba ubah filter pencarian Anda.'
+                                    : 'Belum ada data yang tersedia.'}
+                            </p>
+                            {(searchTerm || filterPosyandu) && (
+                                <button
+                                    onClick={() => { setSearchTerm(''); setFilterPosyandu(''); }}
+                                    className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                >
+                                    Reset Filter
+                                </button>
+                            )}
                         </div>
                     ) : (
-                        users.map((user, index) => (
+                        filteredUsers.map((user, index) => (
                             <motion.div
                                 key={user.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -338,19 +444,17 @@ export default function UserManagement() {
                                         <span className="w-20 text-gray-400">Telepon</span>
                                         <span className="font-medium text-gray-900">{user.phone}</span>
                                     </div>
-                                    {activeTab === 'kader' && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-20 text-gray-400">Posyandu</span>
-                                            <span className="font-medium text-gray-900 flex items-center gap-1">
-                                                {user.posyandu ? (
-                                                    <>
-                                                        <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                                                        {user.posyandu.name}
-                                                    </>
-                                                ) : '-'}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-20 text-gray-400">Posyandu</span>
+                                        <span className="font-medium text-gray-900 flex items-center gap-1">
+                                            {user.posyandu ? (
+                                                <>
+                                                    <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                                                    {user.posyandu.name}
+                                                </>
+                                            ) : '-'}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
@@ -393,22 +497,32 @@ export default function UserManagement() {
                                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Nama</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Email</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Telepon</th>
-                                    {activeTab === 'kader' && (
-                                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Posyandu</th>
-                                    )}
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Posyandu</th>
                                     <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status</th>
                                     <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {users.length === 0 ? (
+                                {filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={activeTab === 'kader' ? 6 : 5} className="py-8 text-center text-gray-500">
-                                            Tidak ada data user
+                                        <td colSpan={6} className="py-8 text-center">
+                                            <div className="text-gray-500">
+                                                {searchTerm || filterPosyandu
+                                                    ? 'Tidak ada hasil untuk filter ini'
+                                                    : 'Tidak ada data kader'}
+                                            </div>
+                                            {(searchTerm || filterPosyandu) && (
+                                                <button
+                                                    onClick={() => { setSearchTerm(''); setFilterPosyandu(''); }}
+                                                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                >
+                                                    Reset Filter
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user, index) => (
+                                    filteredUsers.map((user, index) => (
                                         <motion.tr
                                             key={user.id}
                                             initial={{ opacity: 0, y: 20 }}
@@ -421,18 +535,16 @@ export default function UserManagement() {
                                             </td>
                                             <td className="py-3 px-4 text-sm text-gray-600">{user.email}</td>
                                             <td className="py-3 px-4 text-sm text-gray-600">{user.phone}</td>
-                                            {activeTab === 'kader' && (
-                                                <td className="py-3 px-4">
-                                                    {user.posyandu ? (
-                                                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                                                            <Building2 className="w-4 h-4 text-gray-500" />
-                                                            {user.posyandu.name}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-sm text-gray-400">-</span>
-                                                    )}
-                                                </td>
-                                            )}
+                                            <td className="py-3 px-4">
+                                                {user.posyandu ? (
+                                                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                                                        <Building2 className="w-4 h-4 text-gray-500" />
+                                                        {user.posyandu.name}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-gray-400">-</span>
+                                                )}
+                                            </td>
                                             <td className="py-3 px-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active
                                                     ? 'bg-green-100 text-green-800'
@@ -612,7 +724,7 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                 </div>
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
-                        {user ? 'Edit User' : `Tambah ${role === 'kader' ? 'Kader' : 'Orang Tua'} Baru`}
+                        {user ? 'Edit Kader' : 'Tambah Kader Baru'}
                     </h2>
                 </div>
 
@@ -662,107 +774,110 @@ function UserModal({ user, role, posyandus, onClose, onSuccess }) {
                         />
                     </div>
 
-                    {/* Fields khusus untuk Orang Tua */}
-                    {formData.role === 'ibu' && (
-                        <>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Alamat
-                                </label>
-                                <textarea
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder="Masukkan alamat lengkap"
-                                    rows={2}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 resize-none"
-                                />
-                            </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Alamat
+                        </label>
+                        <textarea
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            placeholder="Masukkan alamat lengkap (opsional)"
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 resize-none"
+                        />
+                    </div>
 
-                            <div className="flex gap-3">
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        RT
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.rt}
-                                        onChange={(e) => setFormData({ ...formData, rt: e.target.value })}
-                                        placeholder="001"
-                                        maxLength={10}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        RW
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.rw}
-                                        onChange={(e) => setFormData({ ...formData, rw: e.target.value })}
-                                        placeholder="002"
-                                        maxLength={10}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    />
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {/* Posyandu dropdown - tampil untuk kader dan ibu */}
-                    {(formData.role === 'kader' || formData.role === 'ibu') && (
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Posyandu {formData.role === 'kader' && <span className="text-red-500">*</span>}
+                                RT
                             </label>
-                            <div className="relative">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                >
-                                    <span className={!formData.posyandu_id ? "text-gray-500" : "text-gray-900"}>
-                                        {formData.posyandu_id
-                                            ? posyandus.find(p => p.id === parseInt(formData.posyandu_id))?.name || "Posyandu Terpilih"
-                                            : "Pilih Posyandu"}
-                                    </span>
-                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
-                                </button>
-
-                                <AnimatePresence>
-                                    {isPosyanduDropdownOpen && (
-                                        <>
-                                            <div className="fixed inset-0 z-10" onClick={() => setIsPosyanduDropdownOpen(false)} />
-                                            <motion.div
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
-                                            >
-                                                {posyandus.map((posyandu) => (
-                                                    <div
-                                                        key={posyandu.id}
-                                                        onClick={() => {
-                                                            setFormData({ ...formData, posyandu_id: posyandu.id });
-                                                            setIsPosyanduDropdownOpen(false);
-                                                        }}
-                                                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
-                                                    >
-                                                        <span className={`text-sm ${parseInt(formData.posyandu_id) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                            {posyandu.name}
-                                                        </span>
-                                                        {parseInt(formData.posyandu_id) === posyandu.id && (
-                                                            <Check className="w-4 h-4 text-blue-600" />
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </motion.div>
-                                        </>
-                                    )}
-                                </AnimatePresence>
-                            </div>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={formData.rt}
+                                onChange={(e) => {
+                                    const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                    setFormData({ ...formData, rt: numericValue });
+                                }}
+                                placeholder="Contoh: 001"
+                                maxLength={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            />
                         </div>
-                    )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                RW
+                            </label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={formData.rw}
+                                onChange={(e) => {
+                                    const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                    setFormData({ ...formData, rw: numericValue });
+                                }}
+                                placeholder="Contoh: 002"
+                                maxLength={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Posyandu dropdown - wajib untuk kader */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Posyandu <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            >
+                                <span className={!formData.posyandu_id ? "text-gray-500" : "text-gray-900"}>
+                                    {formData.posyandu_id
+                                        ? posyandus.find(p => p.id === parseInt(formData.posyandu_id))?.name || "Posyandu Terpilih"
+                                        : "Pilih Posyandu"}
+                                </span>
+                                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isPosyanduDropdownOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsPosyanduDropdownOpen(false)} />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute z-20 w-full bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto"
+                                        >
+                                            {posyandus.map((posyandu) => (
+                                                <div
+                                                    key={posyandu.id}
+                                                    onClick={() => {
+                                                        setFormData({ ...formData, posyandu_id: posyandu.id });
+                                                        setIsPosyanduDropdownOpen(false);
+                                                    }}
+                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                >
+                                                    <span className={`text-sm ${parseInt(formData.posyandu_id) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                        {posyandu.name}
+                                                    </span>
+                                                    {parseInt(formData.posyandu_id) === posyandu.id && (
+                                                        <Check className="w-4 h-4 text-blue-600" />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
 
                     <div className="flex gap-3 pt-4">
                         <button
