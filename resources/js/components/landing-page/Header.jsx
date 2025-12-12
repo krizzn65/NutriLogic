@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react'
 import Navbar from './Navbar'
 import { assets } from '../../assets/assets'
 import { isAuthenticated } from '../../lib/auth'
+import LoginInformation from './LoginInformation'
 
 const Header = () => {
   const navigate = useNavigate()
@@ -151,29 +152,39 @@ const Header = () => {
         {/* Content Container */}
         <div className='flex-1 flex items-center'>
           <div className='px-6 md:pl-[150px] lg:pl-[230px] md:pr-12 lg:pr-20 xl:pr-32 w-full'>
-            <div className='max-w-5xl'>
-              {/* Main Heading */}
-              <h1 className='font-montserrat text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white animate-fade-in-left'
-                style={{ animationDelay: '200ms' }}>
-                <div>Cegah Stunting, Ciptakan</div>
-                <div>Generasi Emas Dengan</div>
-                <div>NutriLogic.</div>
-              </h1>
+            <div className='max-w-7xl w-full'>
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8 xl:gap-16">
+                {/* Left Column: Text Content */}
+                <div className='max-w-3xl flex-shrink-0'>
+                  {/* Main Heading */}
+                  <h1 className='font-montserrat text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white animate-fade-in-left'
+                    style={{ animationDelay: '200ms' }}>
+                    <div>Cegah Stunting, Ciptakan</div>
+                    <div>Generasi Emas Dengan</div>
+                    <div>NutriLogic.</div>
+                  </h1>
 
-              {/* Subheading */}
-              <p className='font-montserrat mt-4 md:mt-6 text-sm md:text-base lg:text-lg text-white/90 leading-relaxed font-normal max-w-2xl animate-fade-in-left'
-                style={{ animationDelay: '400ms' }}>
-                Platform Terpadu Untuk Gizi Anak, Edukasi Keluarga, Dan Akses Mudah Ke Layanan Kesehatan
-              </p>
+                  {/* Subheading */}
+                  <p className='font-montserrat mt-4 md:mt-6 text-sm md:text-base lg:text-lg text-white/90 leading-relaxed font-normal max-w-2xl animate-fade-in-left'
+                    style={{ animationDelay: '400ms' }}>
+                    Platform Terpadu Untuk Gizi Anak, Edukasi Keluarga, Dan Akses Mudah Ke Layanan Kesehatan
+                  </p>
 
-              {/* CTA Button */}
-              <div className='mt-6 md:mt-8 animate-fade-in-scale' style={{ animationDelay: '600ms' }}>
-                <button
-                  onClick={() => navigate(isAuthenticated() ? '/dashboard' : '/auth')}
-                  className='font-montserrat bg-white text-gray-800 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-semibold text-sm md:text-base shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:bg-[#00BFEF] hover:text-white hover:shadow-[0_0_30px_rgba(0,191,239,0.8)] hover:scale-105 transition-all duration-500 ease-in-out'
-                >
-                  {isAuthenticated() ? 'Buka Dashboard' : 'Cek Status Gizi Sekarang'}
-                </button>
+                  {/* CTA Button */}
+                  <div className='mt-6 md:mt-8 animate-fade-in-scale' style={{ animationDelay: '600ms' }}>
+                    <button
+                      onClick={() => navigate(isAuthenticated() ? '/dashboard' : '/auth')}
+                      className='font-montserrat bg-white text-gray-800 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-semibold text-sm md:text-base shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:bg-[#00BFEF] hover:text-white hover:shadow-[0_0_30px_rgba(0,191,239,0.8)] hover:scale-105 transition-all duration-500 ease-in-out'
+                    >
+                      {isAuthenticated() ? 'Buka Dashboard' : 'Cek Status Gizi Sekarang'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Column: Login Info (Desktop Only) */}
+                <div className="hidden lg:block w-full max-w-sm xl:max-w-md animate-fade-in-scale" style={{ animationDelay: '800ms' }}>
+                  <LoginInformation />
+                </div>
               </div>
             </div>
           </div>
