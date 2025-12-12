@@ -42,6 +42,8 @@ class KaderWeighingController extends Controller
                 'height_cm' => $latestWeighing->height_cm,
                 'muac_cm' => $latestWeighing->muac_cm,
                 'nutritional_status' => $latestWeighing->nutritional_status,
+                'head_circumference_cm' => $latestWeighing->head_circumference_cm,
+                'notes' => $latestWeighing->notes,
             ] : null;
 
             // Check if child has been weighed today

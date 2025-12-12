@@ -16,6 +16,7 @@ class KaderVitaminController extends Controller
     public function getChildren()
     {
         $user = Auth::user();
+        $today = date('Y-m-d');
         
         $children = Child::where('posyandu_id', $user->posyandu_id)
             ->where('is_active', true)
@@ -24,6 +25,21 @@ class KaderVitaminController extends Controller
             }])
             ->orderBy('full_name')
             ->get();
+
+        // Add today's vitamin data for each child
+        $children->each(function ($child) use ($today) {
+            $todayVitamin = VitaminDistribution::where('child_id', $child->id)
+                ->where('distribution_date', $today)
+                ->first();
+
+            $child->today_vitamin = $todayVitamin ? [
+                'id' => $todayVitamin->id,
+                'vitamin_type' => $todayVitamin->vitamin_type,
+                'distribution_date' => $todayVitamin->distribution_date,
+                'dosage' => $todayVitamin->dosage,
+                'notes' => $todayVitamin->notes,
+            ] : null;
+        });
 
         return response()->json([
             'success' => true,
@@ -97,6 +113,34 @@ class KaderVitaminController extends Controller
                 'message' => 'Gagal menyimpan data vitamin: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Update a vitamin distribution record
+     */
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $distribution = VitaminDistribution::findOrFail($id);
+
+        if ($distribution->posyandu_id !== $user->posyandu_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'vitamin_type' => ['required', 'in:vitamin_a_blue,vitamin_a_red,other'],
+            'dosage' => ['nullable', 'string', 'max:50'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $distribution->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data vitamin berhasil diperbarui',
+            'data' => $distribution->fresh()
+        ]);
     }
 
     /**

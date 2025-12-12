@@ -25,6 +25,14 @@ class KaderImmunizationController extends Controller
             ->orderBy('full_name')
             ->get();
 
+        // Add today's immunization record for each child if exists
+        $today = now()->format('Y-m-d');
+        foreach ($children as $child) {
+            $child->today_immunization = ImmunizationRecord::where('child_id', $child->id)
+                ->where('immunization_date', $today)
+                ->first();
+        }
+
         return response()->json([
             'success' => true,
             'data' => $children
@@ -95,6 +103,65 @@ class KaderImmunizationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan data imunisasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update an immunization record
+     */
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'vaccine_type' => ['required', 'in:bcg,hepatitis_b_0,hepatitis_b_1,hepatitis_b_2,hepatitis_b_3,polio_0,polio_1,polio_2,polio_3,polio_4,dpt_hib_hep_b_1,dpt_hib_hep_b_2,dpt_hib_hep_b_3,ipv_1,ipv_2,campak_rubella_1,campak_rubella_2,other'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $user = Auth::user();
+
+        DB::beginTransaction();
+        try {
+            $record = ImmunizationRecord::findOrFail($id);
+
+            // Verify authorization
+            if ($record->posyandu_id !== $user->posyandu_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            // Check for duplicate record if vaccine type is changed
+            // Allow if it's the same record
+            if ($record->vaccine_type !== $validated['vaccine_type']) {
+                $existing = ImmunizationRecord::where('child_id', $record->child_id)
+                    ->where('immunization_date', $record->immunization_date)
+                    ->where('vaccine_type', $validated['vaccine_type'])
+                    ->where('id', '!=', $id)
+                    ->first();
+
+                if ($existing) {
+                    throw new \Exception("Imunisasi jenis {$validated['vaccine_type']} sudah ada untuk anak ini pada tanggal tersebut.");
+                }
+            }
+
+            $record->update([
+                'vaccine_type' => $validated['vaccine_type'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data imunisasi berhasil diperbarui',
+                'data' => $record->load('child')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui data imunisasi: ' . $e->getMessage()
             ], 500);
         }
     }
