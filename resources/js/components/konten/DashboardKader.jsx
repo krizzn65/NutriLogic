@@ -492,7 +492,7 @@ export default function DashboardKaderContent() {
 
           <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
             {allSchedules
-              .filter(s => new Date(s.scheduled_for) >= new Date(new Date().setHours(0, 0, 0, 0)))
+              .filter(s => s.status !== 'completed' && new Date(s.scheduled_for) >= new Date(new Date().setHours(0, 0, 0, 0)))
               .sort((a, b) => new Date(a.scheduled_for) - new Date(b.scheduled_for))
               .slice(0, 5)
               .map((schedule) => {
@@ -536,7 +536,7 @@ export default function DashboardKaderContent() {
                 );
               })}
 
-            {allSchedules.filter(s => new Date(s.scheduled_for) >= new Date(new Date().setHours(0, 0, 0, 0))).length === 0 && (
+            {allSchedules.filter(s => s.status !== 'completed' && new Date(s.scheduled_for) >= new Date(new Date().setHours(0, 0, 0, 0))).length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 p-8">
                 <CalendarIcon className="w-12 h-12 mb-3 opacity-20" />
                 <p className="font-medium">Tidak ada jadwal mendatang</p>
