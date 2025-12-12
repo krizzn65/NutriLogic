@@ -154,6 +154,8 @@ class CleanTestDataSeeder extends Seeder
 
         $child2 = Child::create([
             'parent_id' => $parent1->id,
+            
+            
             'posyandu_id' => $posyandu->id,
             'full_name' => 'Siti Aisyah',
             'nik' => '3509010101200002',

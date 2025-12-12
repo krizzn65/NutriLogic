@@ -170,6 +170,15 @@ class WeighingLogController extends Controller
             $this->pointsService->addPoints($user, 10, 'weighing_log');
         }
 
+        // Log activity
+        $roleLabel = $user->isIbu() ? 'Orang tua' : ($user->isKader() ? 'Kader' : 'Admin');
+        AdminActivityLogController::log(
+            'create',
+            "{$roleLabel} {$user->name} menimbang anak: {$child->full_name} (BB: {$log->weight_kg}kg, Status: {$nutritionalStatus})",
+            'WeighingLog',
+            $log->id
+        );
+
         return response()->json([
             'data' => $log->load('child'),
             'message' => 'Weighing log created successfully.',
@@ -234,6 +243,15 @@ class WeighingLogController extends Controller
             'nutritional_status' => $nutritionalStatus,
         ]));
 
+        // Log activity
+        $roleLabel = $user->isIbu() ? 'Orang tua' : ($user->isKader() ? 'Kader' : 'Admin');
+        AdminActivityLogController::log(
+            'update',
+            "{$roleLabel} {$user->name} memperbarui penimbangan anak: {$child->full_name} (BB: {$weight}kg, Status: {$nutritionalStatus})",
+            'WeighingLog',
+            $log->id
+        );
+
         return response()->json([
             'data' => $log->load('child'),
             'message' => 'Weighing log updated successfully.',
@@ -255,7 +273,17 @@ class WeighingLogController extends Controller
             ], 403);
         }
 
+        $childName = $log->child->full_name;
         $log->delete();
+
+        // Log activity
+        $roleLabel = $user->isIbu() ? 'Orang tua' : ($user->isKader() ? 'Kader' : 'Admin');
+        AdminActivityLogController::log(
+            'delete',
+            "{$roleLabel} {$user->name} menghapus data penimbangan anak: {$childName}",
+            'WeighingLog',
+            $id
+        );
 
         return response()->json([
             'message' => 'Weighing log deleted successfully.',

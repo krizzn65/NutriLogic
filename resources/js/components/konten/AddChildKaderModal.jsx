@@ -1,8 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
-import { User, Calendar, Ruler, Weight, FileText, Save, X, ChevronDown, Search, Phone, Mail, AlertCircle, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { User, Calendar, Ruler, Weight, FileText, Save, X, ChevronDown, Search, Phone, Mail, AlertCircle, ChevronLeft, ChevronRight, Check, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
+
+// InputField component defined OUTSIDE to prevent re-creation on every render
+const InputField = ({ label, name, type = "text", placeholder, icon: Icon, required = false, value, onChange, error, ...props }) => (
+    <div className="w-full">
+        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="relative group">
+            {Icon && (
+                <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+            )}
+            <input
+                type={type}
+                name={name}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${error ? 'border-red-500 bg-red-50/50' : ''}`}
+                {...props}
+            />
+        </div>
+        {error && (
+            <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
+                <AlertCircle className="w-3 h-3" />
+                {error}
+            </p>
+        )}
+    </div>
+);
 
 export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
     const [loading, setLoading] = useState(false);
@@ -15,6 +44,9 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
         parent_name: "",
         parent_email: "",
         parent_phone: "",
+        parent_address: "",
+        parent_rt: "",
+        parent_rw: "",
         full_name: "",
         nik: "",
         birth_date: "",
@@ -36,7 +68,7 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
     const parentWrapperRef = useRef(null);
 
     // Data caching
-    const { invalidateCache } = useDataCache();
+    const { invalidateCache, invalidateCacheByPrefix } = useDataCache();
 
     useEffect(() => {
         if (isOpen) {
@@ -70,6 +102,9 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
             parent_name: "",
             parent_email: "",
             parent_phone: "",
+            parent_address: "",
+            parent_rt: "",
+            parent_rw: "",
             full_name: "",
             nik: "",
             birth_date: "",
@@ -101,6 +136,50 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
         setFormData(prev => ({ ...prev, [name]: value }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
+        }
+    };
+
+    // Special handler for NIK field - only allows numbers
+    const handleNikChange = (e) => {
+        const { value } = e.target;
+        // Remove any non-numeric characters
+        const numericValue = value.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, nik: numericValue }));
+        if (errors.nik) {
+            setErrors(prev => ({ ...prev, nik: null }));
+        }
+    };
+
+    // Special handler for phone field - only allows numbers
+    const handlePhoneChange = (e) => {
+        const { value } = e.target;
+        // Remove any non-numeric characters
+        const numericValue = value.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, parent_phone: numericValue }));
+        if (errors.parent_phone) {
+            setErrors(prev => ({ ...prev, parent_phone: null }));
+        }
+    };
+
+    // Special handler for RT field - only allows numbers
+    const handleRtChange = (e) => {
+        const { value } = e.target;
+        // Remove any non-numeric characters
+        const numericValue = value.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, parent_rt: numericValue }));
+        if (errors.parent_rt) {
+            setErrors(prev => ({ ...prev, parent_rt: null }));
+        }
+    };
+
+    // Special handler for RW field - only allows numbers
+    const handleRwChange = (e) => {
+        const { value } = e.target;
+        // Remove any non-numeric characters
+        const numericValue = value.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, parent_rw: numericValue }));
+        if (errors.parent_rw) {
+            setErrors(prev => ({ ...prev, parent_rw: null }));
         }
     };
 
@@ -148,13 +227,15 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
                 dataToSubmit.parent_name = formData.parent_name;
                 dataToSubmit.parent_email = formData.parent_email || null;
                 dataToSubmit.parent_phone = formData.parent_phone || null;
+                dataToSubmit.parent_address = formData.parent_address || null;
+                dataToSubmit.parent_rt = formData.parent_rt || null;
+                dataToSubmit.parent_rw = formData.parent_rw || null;
             }
 
             await api.post('/kader/children', dataToSubmit);
 
-            // Invalidate relevant caches
-            invalidateCache('kader_children_all');
-            invalidateCache('kader_children_active');
+            // Invalidate all children-related caches (including filtered ones)
+            invalidateCacheByPrefix('kader_children');
             invalidateCache('kader_dashboard');
             invalidateCache('kader_priority_children');
 
@@ -171,34 +252,6 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
             setLoading(false);
         }
     };
-
-    const InputField = ({ label, name, type = "text", placeholder, icon: Icon, required = false, ...props }) => (
-        <div className="w-full">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
-                {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <div className="relative group">
-                {Icon && (
-                    <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                )}
-                <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    placeholder={placeholder}
-                    className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${errors[name] ? 'border-red-500 bg-red-50/50' : ''}`}
-                    {...props}
-                />
-            </div>
-            {errors[name] && (
-                <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors[name]}
-                </p>
-            )}
-        </div>
-    );
 
     return (
         <AnimatePresence>
@@ -346,10 +399,15 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="md:col-span-2">
-                                                <InputField label="Nama Orang Tua" name="parent_name" placeholder="Masukkan nama lengkap" icon={User} required />
+                                                <InputField label="Nama Orang Tua" name="parent_name" placeholder="Masukkan nama lengkap" icon={User} required value={formData.parent_name} onChange={handleChange} error={errors.parent_name} />
                                             </div>
-                                            <InputField label="Email" name="parent_email" type="email" placeholder="email@example.com" icon={Mail} />
-                                            <InputField label="No. Telepon" name="parent_phone" type="tel" placeholder="08xxxxxxxxxx" icon={Phone} />
+                                            <InputField label="Email" name="parent_email" type="email" placeholder="email@example.com" icon={Mail} value={formData.parent_email} onChange={handleChange} error={errors.parent_email} />
+                                            <InputField label="No. Telepon" name="parent_phone" type="tel" placeholder="08xxxxxxxxxx" icon={Phone} value={formData.parent_phone} onChange={handlePhoneChange} error={errors.parent_phone} inputMode="numeric" pattern="[0-9]*" />
+                                            <div className="md:col-span-2">
+                                                <InputField label="Alamat" name="parent_address" placeholder="Masukkan alamat lengkap" icon={MapPin} value={formData.parent_address} onChange={handleChange} error={errors.parent_address} />
+                                            </div>
+                                            <InputField label="RT" name="parent_rt" placeholder="001" maxLength="3" value={formData.parent_rt} onChange={handleRtChange} error={errors.parent_rt} inputMode="numeric" pattern="[0-9]*" />
+                                            <InputField label="RW" name="parent_rw" placeholder="001" maxLength="3" value={formData.parent_rw} onChange={handleRwChange} error={errors.parent_rw} inputMode="numeric" pattern="[0-9]*" />
                                         </div>
                                     )}
                                 </div>
@@ -363,10 +421,10 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="md:col-span-2">
-                                            <InputField label="Nama Lengkap Anak" name="full_name" placeholder="Masukkan nama lengkap" icon={User} required />
+                                            <InputField label="Nama Lengkap Anak" name="full_name" placeholder="Masukkan nama lengkap" icon={User} required value={formData.full_name} onChange={handleChange} error={errors.full_name} />
                                         </div>
 
-                                        <InputField label="NIK" name="nik" placeholder="Nomor Induk Kependudukan" icon={FileText} maxLength="16" />
+                                        <InputField label="NIK" name="nik" placeholder="Nomor Induk Kependudukan" icon={FileText} maxLength="16" value={formData.nik} onChange={handleNikChange} error={errors.nik} inputMode="numeric" pattern="[0-9]*" />
 
                                         {/* Date Picker */}
                                         <div className="relative" ref={dateWrapperRef}>
@@ -472,8 +530,8 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
                                             {errors.gender && <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.gender}</p>}
                                         </div>
 
-                                        <InputField label="Berat Lahir (kg)" name="birth_weight_kg" type="number" placeholder="0.0" step="0.1" icon={Weight} />
-                                        <InputField label="Tinggi Lahir (cm)" name="birth_height_cm" type="number" placeholder="0.0" step="0.1" icon={Ruler} />
+                                        <InputField label="Berat Lahir (kg)" name="birth_weight_kg" type="number" placeholder="0.0" step="0.1" icon={Weight} value={formData.birth_weight_kg} onChange={handleChange} error={errors.birth_weight_kg} />
+                                        <InputField label="Tinggi Lahir (cm)" name="birth_height_cm" type="number" placeholder="0.0" step="0.1" icon={Ruler} value={formData.birth_height_cm} onChange={handleChange} error={errors.birth_height_cm} />
 
                                         <div className="md:col-span-2">
                                             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">Catatan</label>

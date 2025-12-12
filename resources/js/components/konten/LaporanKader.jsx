@@ -350,6 +350,8 @@ export default function LaporanKader() {
                                             { value: "sangat_pendek", label: "Sangat Pendek", color: "bg-red-500" },
                                             { value: "kurus", label: "Kurus (Wasting)", color: "bg-yellow-500" },
                                             { value: "sangat_kurus", label: "Sangat Kurus", color: "bg-red-500" },
+                                            { value: "lebih", label: "Risiko Lebih", color: "bg-blue-500" },
+                                            { value: "gemuk", label: "Gemuk (Obesitas)", color: "bg-purple-500" },
                                         ].map((status) => (
                                             <DropdownMenuItem key={status.value} onClick={() => handleFilterChange("status", status.value)} className="cursor-pointer gap-2">
                                                 <span className={`w-2 h-2 rounded-full ${status.color}`} />

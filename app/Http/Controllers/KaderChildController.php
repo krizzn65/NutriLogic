@@ -140,6 +140,9 @@ class KaderChildController extends Controller
             'parent_name' => ['required_without:parent_id', 'string', 'max:100'],
             'parent_email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'parent_phone' => ['nullable', 'string', 'max:20'],
+            'parent_address' => ['nullable', 'string', 'max:500'],
+            'parent_rt' => ['nullable', 'string', 'max:10'],
+            'parent_rw' => ['nullable', 'string', 'max:10'],
             'full_name' => ['required', 'string', 'max:150'],
             'nik' => ['nullable', 'string', 'size:16', 'regex:/^\d{16}$/', 'unique:children,nik'],
             'birth_date' => ['required', 'date', 'before_or_equal:today', 'after:' . now()->subYears(5)->format('Y-m-d')],
@@ -166,6 +169,9 @@ class KaderChildController extends Controller
                 'name' => $validated['parent_name'],
                 'email' => $validated['parent_email'] ?? null,
                 'phone' => $validated['parent_phone'] ?? null,
+                'address' => $validated['parent_address'] ?? null,
+                'rt' => $validated['parent_rt'] ?? null,
+                'rw' => $validated['parent_rw'] ?? null,
                 'password' => Hash::make($randomPassword),
                 'role' => 'ibu',
                 'posyandu_id' => $user->posyandu_id,
@@ -189,6 +195,9 @@ class KaderChildController extends Controller
             'birth_height_cm' => $validated['birth_height_cm'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        // Log activity
+        AdminActivityLogController::log('create', "Kader {$user->name} mendaftarkan anak: {$child->full_name}", 'Child', $child->id);
 
         $response = [
             'data' => $child->load(['parent', 'posyandu']),
@@ -245,6 +254,9 @@ class KaderChildController extends Controller
 
         $child->update($validated);
 
+        // Log activity
+        AdminActivityLogController::log('update', "Kader {$user->name} memperbarui data anak: {$child->full_name}", 'Child', $child->id);
+
         return response()->json([
             'data' => $child->load(['parent', 'posyandu']),
             'message' => 'Data anak berhasil diperbarui.',
@@ -267,6 +279,9 @@ class KaderChildController extends Controller
         }
 
         $child->update(['is_active' => false]);
+
+        // Log activity
+        AdminActivityLogController::log('delete', "Kader {$user->name} menonaktifkan anak: {$child->full_name}", 'Child', $child->id);
 
         return response()->json([
             'message' => 'Data anak berhasil dinonaktifkan.',

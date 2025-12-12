@@ -70,12 +70,12 @@ export default function DataAnakKader() {
         fetchChildren(1); // Always start from page 1 when filters change
     }, [filterStatus, filterActive]);
 
-    const fetchChildren = async (page = 1) => {
+    const fetchChildren = async (page = 1, forceRefresh = false) => {
         // Cache key based on filters (no search to avoid too many cache entries)
         const cacheKey = `kader_children_status_${filterStatus || 'all'}_active_${filterActive || 'all'}`;
 
-        // Only use cache when there's no search term
-        if (!searchTerm && page === 1) {
+        // Only use cache when there's no search term and not force refreshing
+        if (!searchTerm && page === 1 && !forceRefresh) {
             const cachedChildren = getCachedData(cacheKey);
             if (cachedChildren) {
                 setChildren(cachedChildren);
@@ -321,17 +321,38 @@ export default function DataAnakKader() {
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
                         <User className="w-10 h-10 text-gray-300" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada data anak</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto mb-8">
-                        Data anak yang terdaftar akan muncul di sini. Mulai dengan menambahkan data anak baru.
-                    </p>
-                    <button
-                        className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center gap-2 font-medium"
-                        onClick={() => navigate('/dashboard/data-anak/tambah')}
-                    >
-                        <Plus className="w-5 h-5" />
-                        Tambah Anak Pertama
-                    </button>
+                    {searchTerm || filterStatus || filterActive !== "1" ? (
+                        <>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Data tidak ditemukan</h3>
+                            <p className="text-gray-500 max-w-sm mx-auto mb-8">
+                                Tidak ada data anak yang sesuai dengan filter yang dipilih. Coba ubah filter atau kata kunci pencarian.
+                            </p>
+                            <button
+                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2 font-medium"
+                                onClick={() => {
+                                    setSearchTerm("");
+                                    setFilterStatus("");
+                                    setFilterActive("1");
+                                }}
+                            >
+                                Reset Filter
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada data anak</h3>
+                            <p className="text-gray-500 max-w-sm mx-auto mb-8">
+                                Data anak yang terdaftar akan muncul di sini. Mulai dengan menambahkan data anak baru.
+                            </p>
+                            <button
+                                className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center gap-2 font-medium"
+                                onClick={() => setIsAddModalOpen(true)}
+                            >
+                                <Plus className="w-5 h-5" />
+                                Tambah Anak Pertama
+                            </button>
+                        </>
+                    )}
                 </div>
             ) : (
                 <>
@@ -581,7 +602,8 @@ export default function DataAnakKader() {
                 onClose={() => setIsEditModalOpen(false)}
                 onSuccess={(msg) => {
                     setSuccessMessage(msg);
-                    fetchChildren();
+                    fetchChildren(1, true); // Force refresh from server
+                    setTimeout(() => setSuccessMessage(null), 5000);
                 }}
                 childId={selectedChildId}
             />
@@ -591,7 +613,7 @@ export default function DataAnakKader() {
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={(msg) => {
                     setSuccessMessage(msg);
-                    fetchChildren();
+                    fetchChildren(1, true); // Force refresh from server
                     setTimeout(() => setSuccessMessage(null), 5000);
                 }}
             />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
-import { ArrowLeft, Send, CheckCircle, Clock, User, MoreVertical, Phone, Video, Trash2, AlertTriangle, Paperclip, Image as ImageIcon, FileText, X } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle, Clock, User, MoreVertical, Phone, Video, Trash2, AlertTriangle, Paperclip, Image as ImageIcon, FileText, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import DetailKonsultasiKaderSkeleton from "../loading/DetailKonsultasiKaderSkeleton";
@@ -19,9 +20,12 @@ export default function DetailKonsultasiKader({ selectedId, onBack, onDeleteSucc
     const [showMenu, setShowMenu] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showCloseModal, setShowCloseModal] = useState(false);
+    const [closing, setClosing] = useState(false);
     const [showAttachMenu, setShowAttachMenu] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [viewingImage, setViewingImage] = useState(null);
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
     const attachMenuRef = useRef(null);
@@ -224,15 +228,25 @@ Catatan: ${data.notes || '-'}`;
         }
     };
 
-    const handleClose = async () => {
-        if (!window.confirm('Apakah Anda yakin ingin menutup konsultasi ini?')) return;
+    const handleClose = () => {
+        setShowCloseModal(true);
+    };
 
+    const confirmClose = async () => {
         try {
+            setClosing(true);
             await api.put(`/kader/consultations/${id}/close`);
+            // Invalidate cache
+            invalidateCache('kader_consultations_all');
+            invalidateCache('kader_consultations_open');
+            invalidateCache('kader_consultations_closed');
             // Refresh consultation data
             fetchConsultation(id);
+            setShowCloseModal(false);
         } catch (err) {
             alert('Gagal menutup konsultasi.');
+        } finally {
+            setClosing(false);
         }
     };
 
@@ -400,7 +414,10 @@ Catatan: ${data.notes || '-'}`;
                                         )}
 
                                         {message.attachment_path && message.attachment_type === 'image' && (
-                                            <div className={`${message.message && message.message.trim() ? 'mt-2' : ''} rounded-xl overflow-hidden border border-slate-200 max-w-xs ${isKader ? 'ml-auto' : 'mr-auto'}`}>
+                                            <div
+                                                className={`${message.message && message.message.trim() ? 'mt-2' : ''} rounded-xl overflow-hidden border border-slate-200 max-w-xs ${isKader ? 'ml-auto' : 'mr-auto'} cursor-pointer hover:opacity-90 transition-opacity`}
+                                                onClick={() => setViewingImage(message.attachment_path)}
+                                            >
                                                 <img
                                                     src={message.attachment_path}
                                                     alt="Attachment"
@@ -653,6 +670,109 @@ Catatan: ${data.notes || '-'}`;
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Close Session Confirmation Modal */}
+            <AnimatePresence>
+                {showCloseModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                            onClick={() => !closing && setShowCloseModal(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-sm relative overflow-hidden"
+                        >
+                            <div className="p-6 text-center">
+                                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle className="w-8 h-8 text-emerald-600" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">Akhiri Sesi Konsultasi?</h3>
+                                <p className="text-slate-500 text-sm mb-6">
+                                    Apakah Anda yakin ingin mengakhiri sesi konsultasi ini? Percakapan akan diarsipkan.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowCloseModal(false)}
+                                        disabled={closing}
+                                        className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium transition-colors disabled:opacity-50"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={confirmClose}
+                                        disabled={closing}
+                                        className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium transition-colors shadow-lg shadow-emerald-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {closing ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span>Menutup...</span>
+                                            </>
+                                        ) : (
+                                            <span>Ya, Akhiri</span>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Image Preview Modal - Using Portal to escape z-index stacking */}
+            {viewingImage && ReactDOM.createPortal(
+                <AnimatePresence>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+                        onClick={() => setViewingImage(null)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative max-w-4xl max-h-[90vh] w-full"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Action Buttons */}
+                            <div className="absolute -top-14 right-0 flex items-center gap-2">
+                                <a
+                                    href={viewingImage}
+                                    download
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2.5 text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10 flex items-center gap-2"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <Download className="w-6 h-6" />
+                                    <span className="text-sm font-medium">Download</span>
+                                </a>
+                                <button
+                                    onClick={() => setViewingImage(null)}
+                                    className="p-2.5 text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                                >
+                                    <X className="w-7 h-7" />
+                                </button>
+                            </div>
+                            <img
+                                src={viewingImage}
+                                alt="Preview"
+                                className="w-full h-auto max-h-[85vh] object-contain rounded-xl shadow-2xl"
+                            />
+                        </motion.div>
+                    </motion.div>
+                </AnimatePresence>,
+                document.body
+            )}
         </div >
     );
 }

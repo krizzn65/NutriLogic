@@ -188,6 +188,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('weighings')->group(function () {
             Route::get('/today', [App\Http\Controllers\KaderWeighingController::class, 'todayList']);
             Route::post('/bulk', [App\Http\Controllers\KaderWeighingController::class, 'bulkStore']);
+            Route::put('/{id}', [App\Http\Controllers\KaderWeighingController::class, 'update']);
         });
 
         // Vitamin Distribution Management
@@ -195,6 +196,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/children', [App\Http\Controllers\KaderVitaminController::class, 'getChildren']);
             Route::post('/bulk', [App\Http\Controllers\KaderVitaminController::class, 'storeBulk']);
             Route::get('/', [App\Http\Controllers\KaderVitaminController::class, 'index']);
+            Route::put('/{id}', [App\Http\Controllers\KaderVitaminController::class, 'update']);
             Route::delete('/{id}', [App\Http\Controllers\KaderVitaminController::class, 'destroy']);
         });
 
@@ -203,6 +205,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/children', [App\Http\Controllers\KaderImmunizationController::class, 'getChildren']);
             Route::post('/bulk', [App\Http\Controllers\KaderImmunizationController::class, 'storeBulk']);
             Route::get('/', [App\Http\Controllers\KaderImmunizationController::class, 'index']);
+            Route::put('/{id}', [App\Http\Controllers\KaderImmunizationController::class, 'update']);
             Route::delete('/{id}', [App\Http\Controllers\KaderImmunizationController::class, 'destroy']);
         });
 

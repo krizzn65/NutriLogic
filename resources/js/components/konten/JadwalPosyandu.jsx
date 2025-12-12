@@ -24,6 +24,7 @@ import DashboardLayout from "../dashboard/DashboardLayout";
 import kepalaBayi from "../../assets/kepala_bayi.png";
 import kepalaBayiCewe from "../../assets/kepala_bayi_cewe.png";
 import JadwalPosyanduSkeleton from "../loading/JadwalPosyanduSkeleton";
+import ConfirmationModal from "../ui/ConfirmationModal";
 
 export default function JadwalPosyandu() {
     const [loading, setLoading] = useState(true);
@@ -41,6 +42,20 @@ export default function JadwalPosyandu() {
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    // Expanded title state
+    const [expandedTitleId, setExpandedTitleId] = useState(null);
+
+    // Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        description: '',
+        confirmText: '',
+        variant: 'primary',
+        onConfirm: null,
+        isLoading: false
+    });
 
     const statusDropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -93,7 +108,19 @@ export default function JadwalPosyandu() {
 
     const handleMarkComplete = async (id, e) => {
         e.stopPropagation();
-        if (!window.confirm('Apakah Anda yakin ingin menandai jadwal ini sebagai selesai?')) return;
+        setConfirmModal({
+            isOpen: true,
+            title: 'Tandai Selesai?',
+            description: 'Apakah Anda yakin ingin menandai jadwal ini sebagai selesai?',
+            confirmText: 'Ya, Tandai Selesai',
+            variant: 'success',
+            isLoading: false,
+            onConfirm: () => executeMarkComplete(id)
+        });
+    };
+
+    const executeMarkComplete = async (id) => {
+        setConfirmModal(prev => ({ ...prev, isLoading: true }));
 
         // Optimistic update
         const previousSchedules = [...schedules];
@@ -108,15 +135,29 @@ export default function JadwalPosyandu() {
             invalidateCache('kader_schedules');
             invalidateCache('kader_dashboard');
             fetchSchedules(true);
+            setConfirmModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
         } catch (err) {
             setSchedules(previousSchedules);
+            setConfirmModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
             alert('Gagal mengupdate status jadwal.');
         }
     };
 
     const handleDelete = async (id, e) => {
         e.stopPropagation();
-        if (!window.confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) return;
+        setConfirmModal({
+            isOpen: true,
+            title: 'Hapus Jadwal?',
+            description: 'Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.',
+            confirmText: 'Ya, Hapus',
+            variant: 'danger',
+            isLoading: false,
+            onConfirm: () => executeDelete(id)
+        });
+    };
+
+    const executeDelete = async (id) => {
+        setConfirmModal(prev => ({ ...prev, isLoading: true }));
 
         // Optimistic update
         const previousSchedules = [...schedules];
@@ -127,8 +168,10 @@ export default function JadwalPosyandu() {
             invalidateCache('kader_schedules');
             invalidateCache('kader_dashboard');
             fetchSchedules(true);
+            setConfirmModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
         } catch (err) {
             setSchedules(previousSchedules);
+            setConfirmModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
             alert('Gagal menghapus jadwal.');
         }
     };
@@ -350,7 +393,18 @@ export default function JadwalPosyandu() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <h4 className="font-bold text-gray-900 text-sm">{schedule.title}</h4>
+                                        <button
+                                            onClick={() => setExpandedTitleId(expandedTitleId === schedule.id ? null : schedule.id)}
+                                            className="text-left group cursor-pointer"
+                                            title="Klik untuk melihat judul lengkap"
+                                        >
+                                            <h4 className={`font-bold text-gray-900 text-sm ${expandedTitleId === schedule.id ? '' : 'line-clamp-1'}`}>
+                                                {schedule.title}
+                                            </h4>
+                                            {schedule.title.length > 40 && expandedTitleId !== schedule.id && (
+                                                <span className="text-blue-500 text-[10px] group-hover:underline">lihat selengkapnya</span>
+                                            )}
+                                        </button>
                                         <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="w-3.5 h-3.5 text-gray-400" />
@@ -465,9 +519,18 @@ export default function JadwalPosyandu() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <p className="text-sm font-medium text-gray-900 line-clamp-1 max-w-[200px]">
-                                                        {schedule.title}
-                                                    </p>
+                                                    <button
+                                                        onClick={() => setExpandedTitleId(expandedTitleId === schedule.id ? null : schedule.id)}
+                                                        className="text-left group cursor-pointer max-w-[200px]"
+                                                        title="Klik untuk melihat judul lengkap"
+                                                    >
+                                                        <p className={`text-sm font-medium text-gray-900 ${expandedTitleId === schedule.id ? '' : 'truncate'}`}>
+                                                            {schedule.title}
+                                                        </p>
+                                                        {schedule.title.length > 25 && expandedTitleId !== schedule.id && (
+                                                            <span className="text-blue-500 text-[10px] group-hover:underline">lihat</span>
+                                                        )}
+                                                    </button>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col text-sm text-gray-600">
@@ -605,6 +668,18 @@ export default function JadwalPosyandu() {
             >
                 <Plus className="w-7 h-7" />
             </button>
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                description={confirmModal.description}
+                confirmText={confirmModal.confirmText}
+                variant={confirmModal.variant}
+                isLoading={confirmModal.isLoading}
+            />
         </DashboardLayout>
     );
 }

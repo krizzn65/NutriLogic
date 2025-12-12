@@ -4,17 +4,12 @@ import {
     Dialog,
     DialogContent,
 } from "../ui/dialog";
-import { Switch } from "../ui/switch";
 import api from "../../lib/api";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
 
 export default function AdminSettingsModal({ isOpen, onClose }) {
     const [settings, setSettings] = useState({
-        app_name: 'NutriLogic',
-        maintenance_mode: false,
-        allow_registration: true,
-        max_file_size: '5',
         session_timeout: '60',
     });
     const [saving, setSaving] = useState(false);
@@ -34,11 +29,7 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
             const response = await api.get('/admin/settings');
             const data = response.data.data;
             setSettings({
-                app_name: data.app_name || 'NutriLogic',
-                maintenance_mode: data.maintenance_mode || false,
-                allow_registration: data.allow_registration !== false,
                 session_timeout: (data.session_timeout || 60).toString(),
-                max_file_size: (data.max_file_size || 5).toString(),
             });
         } catch (err) {
             console.error('Failed to load settings:', err);
@@ -56,15 +47,10 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
         try {
             // Save to backend
             await api.put('/admin/settings', {
-                app_name: settings.app_name,
-                maintenance_mode: settings.maintenance_mode,
-                allow_registration: settings.allow_registration,
                 session_timeout: parseInt(settings.session_timeout, 10),
-                max_file_size: parseInt(settings.max_file_size, 10),
             });
 
             // Sync to localStorage for client-side checks (read-only)
-            localStorage.setItem('nutrilogic_maintenance_mode', settings.maintenance_mode.toString());
             localStorage.setItem('nutrilogic_session_timeout', settings.session_timeout);
 
             // Trigger storage event for other tabs/components
@@ -83,7 +69,7 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
     return (
         <>
             <Dialog open={isOpen && !confirmOpen} onOpenChange={onClose}>
-                <DialogContent hideClose={true} className="w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-2xl overflow-hidden">
+                <DialogContent hideClose={true} className="w-[90%] md:w-full sm:max-w-md p-0 bg-white border-none shadow-2xl rounded-2xl overflow-hidden">
                     {/* Header */}
                     <div className="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -104,66 +90,27 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 max-h-[70vh] overflow-y-auto">
+                    <div className="p-6">
                         <div className="space-y-5">
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
-                                <p className="text-sm text-blue-800 flex gap-2">
-                                    <span className="font-bold">Info:</span>
-                                    Pengaturan ini akan mempengaruhi seluruh sistem.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nama Aplikasi
-                                </label>
-                                <input
-                                    type="text"
-                                    value={settings.app_name}
-                                    onChange={(e) => setSettings({ ...settings, app_name: e.target.value })}
-                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 bg-white outline-none"
-                                />
-                            </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Timeout Sesi (menit)
                                 </label>
+                                <p className="text-xs text-gray-500 mb-2">
+                                    Durasi waktu tidak aktif sebelum sesi pengguna berakhir otomatis.
+                                </p>
                                 <input
                                     type="number"
+                                    min="5"
+                                    max="1440"
                                     value={settings.session_timeout}
                                     onChange={(e) => setSettings({ ...settings, session_timeout: e.target.value })}
                                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 bg-white outline-none"
+                                    placeholder="Masukkan durasi dalam menit"
                                 />
                             </div>
 
-                            <div className="space-y-3 pt-2">
-                                <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                                    <label htmlFor="maintenance_mode" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">
-                                        Mode Maintenance
-                                        <p className="text-xs text-gray-500 font-normal mt-0.5">Aktifkan untuk menutup akses publik sementara</p>
-                                    </label>
-                                    <Switch
-                                        id="maintenance_mode"
-                                        checked={settings.maintenance_mode}
-                                        onCheckedChange={(checked) => setSettings({ ...settings, maintenance_mode: checked })}
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                                    <label htmlFor="allow_registration" className="text-sm font-medium text-gray-700 cursor-pointer flex-1">
-                                        Izinkan Registrasi Baru
-                                        <p className="text-xs text-gray-500 font-normal mt-0.5">Pengguna baru dapat mendaftar akun</p>
-                                    </label>
-                                    <Switch
-                                        id="allow_registration"
-                                        checked={settings.allow_registration}
-                                        onCheckedChange={(checked) => setSettings({ ...settings, allow_registration: checked })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-4">
+                            <div className="pt-2">
                                 <button
                                     onClick={handleSave}
                                     disabled={saving}

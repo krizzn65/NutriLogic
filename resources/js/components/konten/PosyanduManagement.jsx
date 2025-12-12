@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { Building2, Plus, Edit2, Power, MapPin, Users, Baby } from "lucide-react";
+import { Building2, Plus, Edit2, Power, MapPin, Users, Baby, Search, X } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
@@ -18,6 +18,19 @@ export default function PosyanduManagement() {
         posyandu: null,
         action: null // 'aktifkan' or 'nonaktifkan'
     });
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Filtered posyandus based on search
+    const filteredPosyandus = useMemo(() => {
+        if (!searchTerm) return posyandus;
+        const searchLower = searchTerm.toLowerCase();
+        return posyandus.filter(p =>
+            p.name?.toLowerCase().includes(searchLower) ||
+            p.village?.toLowerCase().includes(searchLower) ||
+            p.city?.toLowerCase().includes(searchLower) ||
+            p.rt_rw?.includes(searchTerm)
+        );
+    }, [posyandus, searchTerm]);
 
     // Data caching
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
@@ -268,6 +281,32 @@ export default function PosyanduManagement() {
                     </div>
                 )}
 
+                {/* Search Input */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Cari nama posyandu, desa, atau kota..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                </motion.div>
+
                 {/* Desktop Table */}
                 <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
@@ -283,14 +322,24 @@ export default function PosyanduManagement() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {posyandus.length === 0 ? (
+                                {filteredPosyandus.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="py-8 text-center text-gray-500">
-                                            Tidak ada data posyandu
+                                        <td colSpan="6" className="py-8 text-center">
+                                            <div className="text-gray-500">
+                                                {searchTerm ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada data posyandu'}
+                                            </div>
+                                            {searchTerm && (
+                                                <button
+                                                    onClick={() => setSearchTerm('')}
+                                                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                >
+                                                    Reset Pencarian
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ) : (
-                                    posyandus.map((posyandu, index) => (
+                                    filteredPosyandus.map((posyandu, index) => (
                                         <motion.tr
                                             key={posyandu.id}
                                             initial={{ opacity: 0, y: 20 }}
@@ -362,14 +411,23 @@ export default function PosyanduManagement() {
                     </div>
                 </div>
 
-                {/* Mobile Card List */}
                 <div className="md:hidden space-y-3">
-                    {posyandus.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 bg-white rounded-lg border border-gray-200">
-                            Tidak ada data posyandu
+                    {filteredPosyandus.length === 0 ? (
+                        <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
+                            <div className="text-gray-500">
+                                {searchTerm ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada data posyandu'}
+                            </div>
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                >
+                                    Reset Pencarian
+                                </button>
+                            )}
                         </div>
                     ) : (
-                        posyandus.map((posyandu, index) => (
+                        filteredPosyandus.map((posyandu, index) => (
                             <motion.div
                                 key={posyandu.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -486,7 +544,8 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
         village: '',
         city: '',
         address: '',
-        rt_rw: '',
+        rt: '',
+        rw: '',
         latitude: '',
         longitude: '',
     });
@@ -495,12 +554,21 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
 
     // Reset form when modal opens or posyandu changes
     useEffect(() => {
+        // Parse rt_rw if exists (format: "001/002")
+        let rt = '';
+        let rw = '';
+        if (posyandu?.rt_rw) {
+            const parts = posyandu.rt_rw.split('/');
+            rt = parts[0] || '';
+            rw = parts[1] || '';
+        }
         setFormData({
             name: posyandu?.name || '',
             village: posyandu?.village || '',
             city: posyandu?.city || '',
             address: posyandu?.address || '',
-            rt_rw: posyandu?.rt_rw || '',
+            rt: rt,
+            rw: rw,
             latitude: posyandu?.latitude || '',
             longitude: posyandu?.longitude || '',
         });
@@ -508,16 +576,35 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
         setSubmitting(false);
     }, [posyandu]);
 
+    // Handler for numeric-only RT/RW input
+    const handleRtChange = (e) => {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        setFormData({ ...formData, rt: value });
+    };
+
+    const handleRwChange = (e) => {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        setFormData({ ...formData, rw: value });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         setError(null);
 
+        // Combine RT and RW for backend
+        const dataToSubmit = {
+            ...formData,
+            rt_rw: formData.rt && formData.rw ? `${formData.rt}/${formData.rw}` : '',
+        };
+        delete dataToSubmit.rt;
+        delete dataToSubmit.rw;
+
         try {
             if (posyandu) {
-                await api.put(`/admin/posyandus/${posyandu.id}`, formData);
+                await api.put(`/admin/posyandus/${posyandu.id}`, dataToSubmit);
             } else {
-                await api.post('/admin/posyandus', formData);
+                await api.post('/admin/posyandus', dataToSubmit);
             }
             onSuccess();
         } catch (err) {
@@ -623,17 +710,37 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            RT/RW
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.rt_rw}
-                            onChange={(e) => setFormData({ ...formData, rt_rw: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                            placeholder="Contoh: 001/002"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                RT
+                            </label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={formData.rt}
+                                onChange={handleRtChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                placeholder="001"
+                                maxLength={5}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                RW
+                            </label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={formData.rw}
+                                onChange={handleRwChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                placeholder="002"
+                                maxLength={5}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -163,12 +163,12 @@ export default function TambahAnakKaderForm() {
             } else {
                 // Calculate age in months
                 const ageInMonths = (today - birthDate) / (1000 * 60 * 60 * 24 * 30.44);
-                
+
                 // Check if child is too old (>60 months = 5 years)
                 if (ageInMonths > 60) {
                     newErrors.birth_date = "Anak harus berusia maksimal 60 bulan (5 tahun)";
                 }
-                
+
                 // Check if age is negative (shouldn't happen, but double-check)
                 if (ageInMonths < 0) {
                     newErrors.birth_date = "Tanggal lahir tidak valid";
@@ -227,7 +227,7 @@ export default function TambahAnakKaderForm() {
             if (response.data.parent_info) {
                 setGeneratedPasswordInfo(response.data.parent_info);
                 setShowPasswordModal(true);
-                
+
                 // Clear form
                 setFormData({
                     parent_id: "",
