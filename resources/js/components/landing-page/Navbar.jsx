@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { assets } from '../../assets/assets';
 import { isAuthenticated } from '../../lib/auth';
 
-const AnimatedNavLink = ({ onClick, children, isScrolled }) => {
-  const defaultTextColor = isScrolled ? 'text-gray-600' : 'text-gray-200';
-  const hoverTextColor = isScrolled ? 'text-gray-900' : 'text-white';
+const AnimatedNavLink = ({ onClick, children, isScrolled, isActive }) => {
+  const defaultTextColor = isActive
+    ? 'text-[#00BFEF]'
+    : isScrolled ? 'text-gray-600' : 'text-gray-200';
+  const hoverTextColor = 'text-[#00BFEF]';
   const textSizeClass = 'text-sm';
 
   return (
@@ -19,6 +21,11 @@ const AnimatedNavLink = ({ onClick, children, isScrolled }) => {
         <span className={defaultTextColor}>{children}</span>
         <span className={hoverTextColor}>{children}</span>
       </div>
+      {/* Active underline */}
+      <span
+        className={`absolute bottom-0 left-0 h-[2px] bg-[#00BFEF] rounded-full transition-all duration-300 ease-in-out ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+          }`}
+      />
     </button>
   );
 };
@@ -27,6 +34,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('Home');
   const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
   const shapeTimeoutRef = useRef(null);
 
@@ -41,6 +49,30 @@ export default function Navbar() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Active section detection
+  useEffect(() => {
+    const sectionIds = ['Home', 'About', 'Problem', 'Fitur', 'Penggunaan', 'Contact'];
+    const observers = [];
+
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            if (entry.isIntersecting) {
+              setActiveSection(id);
+            }
+          },
+          { threshold: 0.3, rootMargin: '-80px 0px -40% 0px' }
+        );
+        observer.observe(element);
+        observers.push(observer);
+      }
+    });
+
+    return () => observers.forEach((obs) => obs.disconnect());
   }, []);
 
   useEffect(() => {
@@ -127,7 +159,7 @@ export default function Navbar() {
         <nav className={`hidden sm:flex items-center text-sm transition-all duration-500 ${isScrolled ? 'space-x-4 sm:space-x-6' : 'space-x-6 sm:space-x-8'
           }`}>
           {navLinksData.map((link) => (
-            <AnimatedNavLink key={link.id} onClick={() => handleNavClick(link.id)} isScrolled={isScrolled}>
+            <AnimatedNavLink key={link.id} onClick={() => handleNavClick(link.id)} isScrolled={isScrolled} isActive={activeSection === link.id}>
               {link.label}
             </AnimatedNavLink>
           ))}
@@ -175,11 +207,16 @@ export default function Navbar() {
             <button
               key={link.id}
               onClick={() => handleNavClick(link.id)}
-              className={`transition-colors w-full text-center ${isScrolled
-                ? 'text-gray-600 hover:text-gray-900'
-                : 'text-gray-200 hover:text-white'
+              className={`relative transition-colors w-full text-center pb-1 ${activeSection === link.id
+                ? 'text-[#00BFEF] font-semibold'
+                : isScrolled
+                  ? 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-200 hover:text-white'
                 }`}>
               {link.label}
+              {activeSection === link.id && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-[#00BFEF] rounded-full" />
+              )}
             </button>
           ))}
         </nav>
