@@ -3,8 +3,9 @@ import React, { useRef, useState, useEffect, memo } from 'react'
 import { assets } from '../../assets/assets'
 import { TimelineContent } from '../ui/timeline-animation'
 import { VerticalCutReveal } from '../ui/vertical-cut-reveal'
-import { ArrowRight, Heart, Baby, Brain, ShieldCheck } from 'lucide-react'
+import { Heart, Baby, Brain, ShieldCheck } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { FlowButton } from '../ui/flow-button'
 
 const images = [assets.gmb_1, assets.gmb_2, assets.gmb_3, assets.gmb_4]
 
@@ -354,19 +355,21 @@ const AboutUs = () => {
               </TimelineContent>
 
               <TimelineContent
-                as="button"
+                as="div"
                 animationNum={15}
                 timelineRef={heroRef}
                 customVariants={revealVariants}
-                onClick={() => {
-                  const element = document.querySelector('#Fitur')
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' })
-                  }
-                }}
-                className="bg-gradient-to-r from-[#00BFEF] to-[#0088c2] hover:from-[#00a8d6] hover:to-[#006b9e] shadow-lg shadow-[#00BFEF]/30 border border-[#00BFEF]/50 flex w-fit mx-auto md:ml-auto md:mr-0 gap-2 hover:gap-4 transition-all duration-300 ease-in-out text-white px-4 py-2.5 md:px-5 md:py-3 rounded-lg cursor-pointer font-semibold text-sm md:text-base"
+                className="flex justify-center md:justify-end"
               >
-                PELAJARI LEBIH LANJUT <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+                <FlowButton
+                  text="PELAJARI LEBIH LANJUT"
+                  onClick={() => {
+                    const element = document.querySelector('#Fitur')
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' })
+                    }
+                  }}
+                />
               </TimelineContent>
             </div>
           </div>
