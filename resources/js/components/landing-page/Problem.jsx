@@ -342,14 +342,14 @@ const Problem = () => {
                     {
                       quarter: "2025",
                       title: "16%",
-                      description: "Progress",
-                      status: "in-progress"
+                      description: "Selesai",
+                      status: "done"
                     },
                     {
                       quarter: "2026",
                       title: "14%",
-                      description: "Goal",
-                      status: "upcoming"
+                      description: "Progress",
+                      status: "in-progress"
                     }
                   ]}
                 />
