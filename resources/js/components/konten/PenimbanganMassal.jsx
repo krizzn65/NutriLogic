@@ -787,7 +787,7 @@ export default function KegiatanPosyandu() {
                     <button
                         onClick={() => setActiveTab('imunisasi')}
                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'imunisasi'
-                            ? 'bg-purple-600 text-white shadow-lg shadow-purple-200'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
                             : 'text-gray-600 hover:bg-gray-100'
                             }`}
                     >
@@ -847,7 +847,7 @@ export default function KegiatanPosyandu() {
                                     <p className="font-bold text-gray-900">{child?.full_name}</p>
                                     <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                         <span>{weighing.weight_kg} kg</span>
-                                        <span className="text-gray-300">•</span>
+                                        <span className="text-gray-300"></span>
                                         <span>{weighing.height_cm} cm</span>
                                     </div>
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-3 ${getStatusColor(weighing.nutritional_status)}`}>
@@ -1078,10 +1078,10 @@ export default function KegiatanPosyandu() {
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                                                 {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                                             </span>
-                                                            <span className="text-xs text-gray-400">•</span>
+                                                            <span className="text-xs text-gray-400"></span>
                                                             <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
                                                         </div>
                                                     </div>
@@ -1389,10 +1389,10 @@ export default function KegiatanPosyandu() {
                                                                     )}
                                                                 </div>
                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                                                         {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-400">•</span>
+                                                                    <span className="text-xs text-gray-400"></span>
                                                                     <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
                                                                 </div>
                                                             </div>
@@ -1620,7 +1620,7 @@ export default function KegiatanPosyandu() {
                                             <p className="font-bold text-yellow-800 text-sm mb-2">Peringatan:</p>
                                             <ul className="space-y-1">
                                                 {vitaminWarnings.map((warning, idx) => (
-                                                    <li key={idx} className="text-xs text-yellow-700">• {warning}</li>
+                                                    <li key={idx} className="text-xs text-yellow-700"> {warning}</li>
                                                 ))}
                                             </ul>
                                         </div>
@@ -1849,10 +1849,10 @@ export default function KegiatanPosyandu() {
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                                                 {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                                             </span>
-                                                            <span className="text-xs text-gray-400">•</span>
+                                                            <span className="text-xs text-gray-400"></span>
                                                             <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
                                                         </div>
                                                     </div>
@@ -1943,9 +1943,9 @@ export default function KegiatanPosyandu() {
                                                                 }`}
                                                         >
                                                             <option value="">Pilih Vitamin</option>
-                                                            <option value="vitamin_a_blue">🔵 Vitamin A Biru (100.000 IU)</option>
-                                                            <option value="vitamin_a_red">🔴 Vitamin A Merah (200.000 IU)</option>
-                                                            <option value="other">📦 Lainnya</option>
+                                                            <option value="vitamin_a_blue"> Vitamin A Biru (100.000 IU)</option>
+                                                            <option value="vitamin_a_red"> Vitamin A Merah (200.000 IU)</option>
+                                                            <option value="other"> Lainnya</option>
                                                         </select>
                                                     </div>
                                                     <div>
@@ -2019,10 +2019,10 @@ export default function KegiatanPosyandu() {
                                                                     {child.full_name}
                                                                 </span>
                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                                                         {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-400">•</span>
+                                                                    <span className="text-xs text-gray-400"></span>
                                                                     <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
                                                                 </div>
                                                             </div>
@@ -2092,9 +2092,9 @@ export default function KegiatanPosyandu() {
                                                                     }`}
                                                             >
                                                                 <option value="">Pilih Vitamin</option>
-                                                                <option value="vitamin_a_blue">🔵 Vitamin A Biru (100.000 IU)</option>
-                                                                <option value="vitamin_a_red">🔴 Vitamin A Merah (200.000 IU)</option>
-                                                                <option value="other">📦 Lainnya</option>
+                                                                <option value="vitamin_a_blue"> Vitamin A Biru (100.000 IU)</option>
+                                                                <option value="vitamin_a_red"> Vitamin A Merah (200.000 IU)</option>
+                                                                <option value="other"> Lainnya</option>
                                                             </select>
                                                         </td>
                                                         <td className="px-6 py-4">
@@ -2185,12 +2185,12 @@ export default function KegiatanPosyandu() {
                 <>
                     {/* Immunization Success Results */}
                     {immunizationResults && (
-                        <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6 animate-in fade-in slide-in-from-top-2 flex-shrink-0">
+                        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 animate-in fade-in slide-in-from-top-2 flex-shrink-0">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                                    <Check className="w-5 h-5 text-purple-600" />
+                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <Check className="w-5 h-5 text-blue-600" />
                                 </div>
-                                <h3 className="text-lg font-bold text-purple-800">{immunizationResults.message}</h3>
+                                <h3 className="text-lg font-bold text-blue-800">{immunizationResults.message}</h3>
                             </div>
 
                             {immunizationWarnings && immunizationWarnings.length > 0 && (
@@ -2203,7 +2203,7 @@ export default function KegiatanPosyandu() {
                                             <p className="font-bold text-yellow-800 text-sm mb-2">Peringatan:</p>
                                             <ul className="space-y-1">
                                                 {immunizationWarnings.map((warning, idx) => (
-                                                    <li key={idx} className="text-xs text-yellow-700">• {warning}</li>
+                                                    <li key={idx} className="text-xs text-yellow-700"> {warning}</li>
                                                 ))}
                                             </ul>
                                         </div>
@@ -2215,7 +2215,7 @@ export default function KegiatanPosyandu() {
                                 {immunizationResults.data.map((record) => {
                                     const child = children.find(c => c.id === record.child_id);
                                     return (
-                                        <div key={record.id} className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+                                        <div key={record.id} className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
                                             <p className="font-bold text-gray-900">{child?.full_name}</p>
                                             <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                                 <Syringe className="w-4 h-4" />
@@ -2230,7 +2230,7 @@ export default function KegiatanPosyandu() {
                                     setImmunizationResults(null);
                                     setImmunizationWarnings(null);
                                 }}
-                                className="mt-6 text-purple-700 hover:text-purple-900 text-sm font-semibold hover:underline"
+                                className="mt-6 text-blue-700 hover:text-blue-900 text-sm font-semibold hover:underline"
                             >
                                 Tutup Notifikasi
                             </button>
@@ -2251,7 +2251,7 @@ export default function KegiatanPosyandu() {
                                             type="button"
                                             ref={immunizationDateButtonRef}
                                             onClick={toggleImmunizationDatePicker}
-                                            className="w-full md:w-64 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-left text-gray-900 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all flex items-center justify-between hover:bg-gray-50 hover:border-gray-300"
+                                            className="w-full md:w-64 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-left text-gray-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all flex items-center justify-between hover:bg-gray-50 hover:border-gray-300"
                                         >
                                             <span className="font-medium">
                                                 {new Date(immunizationDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -2331,9 +2331,9 @@ export default function KegiatanPosyandu() {
                                                                         }}
                                                                         className={`w-10 h-10 text-sm rounded-full flex items-center justify-center transition-all
                                                                     ${isSelected
-                                                                                ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30'
+                                                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
                                                                                 : isToday
-                                                                                    ? 'text-purple-600 font-bold bg-purple-50'
+                                                                                    ? 'text-blue-600 font-bold bg-blue-50'
                                                                                     : 'text-gray-700 hover:bg-gray-100'
                                                                             }`}
                                                                     >
@@ -2355,7 +2355,7 @@ export default function KegiatanPosyandu() {
                                                                 setImmunizationPickerDate(today);
                                                                 setIsImmunizationDatePickerOpen(false);
                                                             }}
-                                                            className="w-full text-xs text-purple-600 hover:text-purple-800 font-medium px-2 py-1.5 rounded hover:bg-purple-50 transition-colors text-center"
+                                                            className="w-full text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1.5 rounded hover:bg-blue-50 transition-colors text-center"
                                                         >
                                                             Pilih Hari Ini
                                                         </button>
@@ -2367,8 +2367,8 @@ export default function KegiatanPosyandu() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 text-sm text-gray-500 bg-purple-50/50 px-4 py-2 rounded-lg border border-purple-100">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                <div className="flex items-center gap-2 text-sm text-gray-500 bg-blue-50/50 px-4 py-2 rounded-lg border border-blue-100">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                                     Hanya isi data anak yang hadir
                                 </div>
                             </div>
@@ -2385,7 +2385,7 @@ export default function KegiatanPosyandu() {
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         placeholder="Cari nama anak..."
-                                        className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                                        className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     />
                                     {searchQuery && (
                                         <button
@@ -2425,16 +2425,16 @@ export default function KegiatanPosyandu() {
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <span className="font-bold text-gray-900">{child.full_name}</span>
                                                             {child.today_immunization && (
-                                                                <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-purple-200">
+                                                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-200">
                                                                     <Check className="w-3 h-3" /> Sudah
                                                                 </span>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                                                 {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                                             </span>
-                                                            <span className="text-xs text-gray-400">•</span>
+                                                            <span className="text-xs text-gray-400"></span>
                                                             <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
                                                         </div>
                                                     </div>
@@ -2446,7 +2446,7 @@ export default function KegiatanPosyandu() {
                                                                 onClick={() => imunisasiEditMode[child.id] ? updateImunisasi(child) : toggleImunisasiEditMode(child.id)}
                                                                 className={`p-2 rounded-lg transition-colors mb-2 ml-auto ${imunisasiEditMode[child.id]
                                                                     ? 'bg-green-500 text-white hover:bg-green-600 shadow-sm'
-                                                                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                                                     }`}
                                                                 title={imunisasiEditMode[child.id] ? 'Simpan' : 'Edit'}
                                                             >
@@ -2461,7 +2461,7 @@ export default function KegiatanPosyandu() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => toggleExpandedImmunizationData(child.id)}
-                                                                className="flex items-center gap-1 text-[10px] font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-lg transition-colors ml-auto"
+                                                                className="flex items-center gap-1 text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors ml-auto"
                                                             >
                                                                 {expandedImmunizationData[child.id] ? 'Tutup' : 'Data Terakhir'}
                                                                 {expandedImmunizationData[child.id] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -2479,7 +2479,7 @@ export default function KegiatanPosyandu() {
                                                             exit={{ opacity: 0, height: 0 }}
                                                             className="overflow-hidden"
                                                         >
-                                                            <div className="bg-purple-50/80 rounded-lg p-3 border border-purple-100/50 mb-2">
+                                                            <div className="bg-blue-50/80 rounded-lg p-3 border border-blue-100/50 mb-2">
                                                                 <div className="flex justify-between items-center mb-2">
                                                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                                                                         <Clock className="w-3 h-3 text-gray-400" />
@@ -2487,13 +2487,13 @@ export default function KegiatanPosyandu() {
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <Syringe className="w-4 h-4 text-purple-600" />
+                                                                    <Syringe className="w-4 h-4 text-blue-600" />
                                                                     <span className="text-xs font-bold text-gray-700">
                                                                         {child.latest_immunization.vaccine_type.replace(/_/g, ' ').toUpperCase()}
                                                                     </span>
                                                                 </div>
                                                                 {child.latest_immunization.notes && (
-                                                                    <div className="mt-2 pt-2 border-t border-purple-200">
+                                                                    <div className="mt-2 pt-2 border-t border-blue-200">
                                                                         <span className="text-[9px] text-gray-400 uppercase">Catatan:</span>
                                                                         <p className="text-xs text-gray-600 mt-0.5">{child.latest_immunization.notes}</p>
                                                                     </div>
@@ -2513,36 +2513,36 @@ export default function KegiatanPosyandu() {
                                                             disabled={isImunisasiInputDisabled(child)}
                                                             className={`w-full px-3 py-2 border rounded-lg transition-all text-sm font-medium ${isImunisasiInputDisabled(child)
                                                                 ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
-                                                                : 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
+                                                                : 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10'
                                                                 }`}
                                                         >
                                                             <option value="">Pilih Vaksin</option>
                                                             <optgroup label="BCG & Hepatitis B">
-                                                                <option value="bcg">💉 BCG</option>
-                                                                <option value="hepatitis_b_0">💉 Hepatitis B 0 (HB0)</option>
-                                                                <option value="hepatitis_b_1">💉 Hepatitis B 1</option>
-                                                                <option value="hepatitis_b_2">💉 Hepatitis B 2</option>
-                                                                <option value="hepatitis_b_3">💉 Hepatitis B 3</option>
+                                                                <option value="bcg"> BCG</option>
+                                                                <option value="hepatitis_b_0"> Hepatitis B 0 (HB0)</option>
+                                                                <option value="hepatitis_b_1"> Hepatitis B 1</option>
+                                                                <option value="hepatitis_b_2"> Hepatitis B 2</option>
+                                                                <option value="hepatitis_b_3"> Hepatitis B 3</option>
                                                             </optgroup>
                                                             <optgroup label="Polio">
-                                                                <option value="polio_0">💧 Polio 0</option>
-                                                                <option value="polio_1">💧 Polio 1</option>
-                                                                <option value="polio_2">💧 Polio 2</option>
-                                                                <option value="polio_3">💧 Polio 3</option>
-                                                                <option value="polio_4">💧 Polio 4</option>
+                                                                <option value="polio_0"> Polio 0</option>
+                                                                <option value="polio_1"> Polio 1</option>
+                                                                <option value="polio_2"> Polio 2</option>
+                                                                <option value="polio_3"> Polio 3</option>
+                                                                <option value="polio_4"> Polio 4</option>
                                                             </optgroup>
                                                             <optgroup label="DPT-HiB-HepB (Pentavalent)">
-                                                                <option value="dpt_hib_hep_b_1">💉 DPT-HiB-HepB 1</option>
-                                                                <option value="dpt_hib_hep_b_2">💉 DPT-HiB-HepB 2</option>
-                                                                <option value="dpt_hib_hep_b_3">💉 DPT-HiB-HepB 3</option>
+                                                                <option value="dpt_hib_hep_b_1"> DPT-HiB-HepB 1</option>
+                                                                <option value="dpt_hib_hep_b_2"> DPT-HiB-HepB 2</option>
+                                                                <option value="dpt_hib_hep_b_3"> DPT-HiB-HepB 3</option>
                                                             </optgroup>
                                                             <optgroup label="IPV & Campak-Rubella">
-                                                                <option value="ipv_1">💉 IPV 1 (Polio Suntik)</option>
-                                                                <option value="ipv_2">💉 IPV 2 (Polio Suntik)</option>
-                                                                <option value="campak_rubella_1">💉 Campak-Rubella 1 (MR1)</option>
-                                                                <option value="campak_rubella_2">💉 Campak-Rubella 2 (MR2)</option>
+                                                                <option value="ipv_1"> IPV 1 (Polio Suntik)</option>
+                                                                <option value="ipv_2"> IPV 2 (Polio Suntik)</option>
+                                                                <option value="campak_rubella_1"> Campak-Rubella 1 (MR1)</option>
+                                                                <option value="campak_rubella_2"> Campak-Rubella 2 (MR2)</option>
                                                             </optgroup>
-                                                            <option value="other">📦 Lainnya</option>
+                                                            <option value="other"> Lainnya</option>
                                                         </select>
                                                     </div>
                                                     <div>
@@ -2554,7 +2554,7 @@ export default function KegiatanPosyandu() {
                                                             disabled={isImunisasiInputDisabled(child)}
                                                             className={`w-full px-3 py-2 border rounded-lg transition-all text-sm ${isImunisasiInputDisabled(child)
                                                                 ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed'
-                                                                : 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10'
+                                                                : 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10'
                                                                 }`}
                                                             placeholder="Catatan tambahan..."
                                                         />
@@ -2588,20 +2588,20 @@ export default function KegiatanPosyandu() {
                                                 </tr>
                                             ) : (
                                                 filteredChildren.map((child, index) => (
-                                                    <tr key={child.id} className={`group transition-colors ${child.today_immunization ? 'bg-purple-50/60' : 'hover:bg-purple-50/30'}`}>
+                                                    <tr key={child.id} className={`group transition-colors ${child.today_immunization ? 'bg-blue-50/60' : 'hover:bg-blue-50/30'}`}>
                                                         <td className="px-6 py-4 text-sm text-gray-500 font-medium">
                                                             {index + 1}
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex flex-col">
-                                                                <span className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+                                                                <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                                                                     {child.full_name}
                                                                 </span>
                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
+                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                                                         {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-400">•</span>
+                                                                    <span className="text-xs text-gray-400"></span>
                                                                     <span className="text-xs text-gray-500">{formatAge(child.age_in_months)}</span>
                                                                 </div>
                                                             </div>
@@ -2609,34 +2609,34 @@ export default function KegiatanPosyandu() {
                                                         <td className="px-6 py-4 cursor-pointer align-top" onClick={() => toggleExpandedImmunizationData(child.id)}>
                                                             {child.latest_immunization ? (
                                                                 expandedImmunizationData[child.id] ? (
-                                                                    <div className="bg-purple-50 rounded-lg p-2.5 border border-purple-100 min-w-[200px] shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                                                                        <div className="flex justify-between items-start mb-2 pb-2 border-b border-purple-200/60">
+                                                                    <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100 min-w-[200px] shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                                                                        <div className="flex justify-between items-start mb-2 pb-2 border-b border-blue-200/60">
                                                                             <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
                                                                                 <Clock className="w-3 h-3 text-gray-400" />
                                                                                 {new Date(child.latest_immunization.immunization_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                                             </span>
                                                                         </div>
                                                                         <div className="flex items-center gap-2">
-                                                                            <Syringe className="w-4 h-4 text-purple-600" />
+                                                                            <Syringe className="w-4 h-4 text-blue-600" />
                                                                             <span className="text-xs font-bold text-gray-700">
                                                                                 {child.latest_immunization.vaccine_type.replace(/_/g, ' ').toUpperCase()}
                                                                             </span>
                                                                         </div>
                                                                         {child.latest_immunization.notes && (
-                                                                            <div className="mt-2 pt-1.5 border-t border-purple-200/60">
+                                                                            <div className="mt-2 pt-1.5 border-t border-blue-200/60">
                                                                                 <span className="text-[9px] text-gray-400 uppercase">Catatan:</span>
                                                                                 <p className="text-xs text-gray-600 mt-0.5">{child.latest_immunization.notes}</p>
                                                                             </div>
                                                                         )}
-                                                                        <div className="mt-2 pt-1 border-t border-purple-100 text-center">
-                                                                            <span className="text-[10px] text-purple-500 hover:text-purple-700 flex items-center justify-center gap-1">
+                                                                        <div className="mt-2 pt-1 border-t border-blue-100 text-center">
+                                                                            <span className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center justify-center gap-1">
                                                                                 <ChevronUp className="w-3 h-3" /> Tutup
                                                                             </span>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex flex-col gap-1 group">
-                                                                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 group-hover:text-purple-600 transition-colors">
+                                                                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">
                                                                             <Syringe className="w-3.5 h-3.5" />
                                                                             <span className="truncate max-w-[150px]">{child.latest_immunization.vaccine_type.replace(/_/g, ' ').toUpperCase()}</span>
                                                                         </div>
@@ -2644,7 +2644,7 @@ export default function KegiatanPosyandu() {
                                                                             <span className="text-[10px] text-gray-400">
                                                                                 {new Date(child.latest_immunization.immunization_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                                             </span>
-                                                                            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-purple-400">
+                                                                            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-400">
                                                                                 <ChevronDown className="w-3 h-3" />
                                                                             </span>
                                                                         </div>
@@ -2661,36 +2661,36 @@ export default function KegiatanPosyandu() {
                                                                 disabled={isImunisasiInputDisabled(child)}
                                                                 className={`w-full px-3 py-2 border rounded-lg transition-all text-sm font-medium ${isImunisasiInputDisabled(child)
                                                                     ? 'bg-transparent border-transparent text-gray-500 cursor-not-allowed'
-                                                                    : 'bg-gray-50 border-transparent text-gray-900 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10'
+                                                                    : 'bg-gray-50 border-transparent text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'
                                                                     }`}
                                                             >
                                                                 <option value="">Pilih Vaksin</option>
                                                                 <optgroup label="BCG & Hepatitis B">
-                                                                    <option value="bcg">💉 BCG</option>
-                                                                    <option value="hepatitis_b_0">💉 Hepatitis B 0 (HB0)</option>
-                                                                    <option value="hepatitis_b_1">💉 Hepatitis B 1</option>
-                                                                    <option value="hepatitis_b_2">💉 Hepatitis B 2</option>
-                                                                    <option value="hepatitis_b_3">💉 Hepatitis B 3</option>
+                                                                    <option value="bcg"> BCG</option>
+                                                                    <option value="hepatitis_b_0"> Hepatitis B 0 (HB0)</option>
+                                                                    <option value="hepatitis_b_1"> Hepatitis B 1</option>
+                                                                    <option value="hepatitis_b_2"> Hepatitis B 2</option>
+                                                                    <option value="hepatitis_b_3"> Hepatitis B 3</option>
                                                                 </optgroup>
                                                                 <optgroup label="Polio">
-                                                                    <option value="polio_0">💧 Polio 0</option>
-                                                                    <option value="polio_1">💧 Polio 1</option>
-                                                                    <option value="polio_2">💧 Polio 2</option>
-                                                                    <option value="polio_3">💧 Polio 3</option>
-                                                                    <option value="polio_4">💧 Polio 4</option>
+                                                                    <option value="polio_0"> Polio 0</option>
+                                                                    <option value="polio_1"> Polio 1</option>
+                                                                    <option value="polio_2"> Polio 2</option>
+                                                                    <option value="polio_3"> Polio 3</option>
+                                                                    <option value="polio_4"> Polio 4</option>
                                                                 </optgroup>
                                                                 <optgroup label="DPT-HiB-HepB (Pentavalent)">
-                                                                    <option value="dpt_hib_hep_b_1">💉 DPT-HiB-HepB 1</option>
-                                                                    <option value="dpt_hib_hep_b_2">💉 DPT-HiB-HepB 2</option>
-                                                                    <option value="dpt_hib_hep_b_3">💉 DPT-HiB-HepB 3</option>
+                                                                    <option value="dpt_hib_hep_b_1"> DPT-HiB-HepB 1</option>
+                                                                    <option value="dpt_hib_hep_b_2"> DPT-HiB-HepB 2</option>
+                                                                    <option value="dpt_hib_hep_b_3"> DPT-HiB-HepB 3</option>
                                                                 </optgroup>
                                                                 <optgroup label="IPV & Campak-Rubella">
-                                                                    <option value="ipv_1">💉 IPV 1 (Polio Suntik)</option>
-                                                                    <option value="ipv_2">💉 IPV 2 (Polio Suntik)</option>
-                                                                    <option value="campak_rubella_1">💉 Campak-Rubella 1 (MR1)</option>
-                                                                    <option value="campak_rubella_2">💉 Campak-Rubella 2 (MR2)</option>
+                                                                    <option value="ipv_1"> IPV 1 (Polio Suntik)</option>
+                                                                    <option value="ipv_2"> IPV 2 (Polio Suntik)</option>
+                                                                    <option value="campak_rubella_1"> Campak-Rubella 1 (MR1)</option>
+                                                                    <option value="campak_rubella_2"> Campak-Rubella 2 (MR2)</option>
                                                                 </optgroup>
-                                                                <option value="other">📦 Lainnya</option>
+                                                                <option value="other"> Lainnya</option>
                                                             </select>
                                                         </td>
                                                         <td className="px-6 py-4">
@@ -2701,7 +2701,7 @@ export default function KegiatanPosyandu() {
                                                                 disabled={isImunisasiInputDisabled(child)}
                                                                 className={`w-full px-3 py-2 border rounded-lg transition-all text-sm placeholder:text-gray-400 ${isImunisasiInputDisabled(child)
                                                                     ? 'bg-transparent border-transparent text-gray-500 cursor-not-allowed'
-                                                                    : 'bg-gray-50 border-transparent text-gray-900 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10'
+                                                                    : 'bg-gray-50 border-transparent text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'
                                                                     }`}
                                                                 placeholder="Catatan..."
                                                             />
@@ -2713,7 +2713,7 @@ export default function KegiatanPosyandu() {
                                                                     onClick={() => imunisasiEditMode[child.id] ? updateImunisasi(child) : toggleImunisasiEditMode(child.id)}
                                                                     className={`p-2 rounded-lg transition-colors flex items-center justify-center mx-auto shadow-sm ${imunisasiEditMode[child.id]
                                                                         ? 'bg-green-500 text-white hover:bg-green-600'
-                                                                        : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                                                         }`}
                                                                     title={imunisasiEditMode[child.id] ? 'Simpan' : 'Edit'}
                                                                 >
@@ -2746,7 +2746,7 @@ export default function KegiatanPosyandu() {
                                     <button
                                         type="submit"
                                         disabled={submitting || children.length === 0}
-                                        className="w-full sm:w-auto px-8 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/20 disabled:bg-purple-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:ml-auto"
+                                        className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:ml-auto"
                                     >
                                         {submitting ? (
                                             <>
@@ -2786,18 +2786,18 @@ export default function KegiatanPosyandu() {
                         >
                             {/* Header */}
                             <div className={`px-6 py-4 border-b flex items-center justify-between ${whoModalType === 'weight' ? 'bg-green-50 border-green-100' :
-                                whoModalType === 'height' ? 'bg-purple-50 border-purple-100' :
+                                whoModalType === 'height' ? 'bg-blue-50 border-blue-100' :
                                     whoModalType === 'muac' ? 'bg-teal-50 border-teal-100' :
                                         'bg-blue-50 border-blue-100'
                                 }`}>
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-xl ${whoModalType === 'weight' ? 'bg-green-100' :
-                                        whoModalType === 'height' ? 'bg-purple-100' :
+                                        whoModalType === 'height' ? 'bg-blue-100' :
                                             whoModalType === 'muac' ? 'bg-teal-100' :
                                                 'bg-blue-100'
                                         }`}>
                                         <FileText className={`w-5 h-5 ${whoModalType === 'weight' ? 'text-green-600' :
-                                            whoModalType === 'height' ? 'text-purple-600' :
+                                            whoModalType === 'height' ? 'text-blue-600' :
                                                 whoModalType === 'muac' ? 'text-teal-600' :
                                                     'text-blue-600'
                                             }`} />
@@ -2877,7 +2877,7 @@ export default function KegiatanPosyandu() {
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
-                                            <p className="font-medium">📌 Catatan:</p>
+                                            <p className="font-medium"> Catatan:</p>
                                             <p className="text-xs mt-1">Rentang input yang diterima sistem: <span className="font-bold">1 - 30 kg</span></p>
                                         </div>
                                     </div>
@@ -2886,44 +2886,44 @@ export default function KegiatanPosyandu() {
                                 {/* Height Standards */}
                                 {whoModalType === 'height' && (
                                     <div className="space-y-4">
-                                        <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-                                            <h4 className="font-bold text-purple-800 mb-3">Tinggi/Panjang Badan berdasarkan Usia</h4>
+                                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                            <h4 className="font-bold text-blue-800 mb-3">Tinggi/Panjang Badan berdasarkan Usia</h4>
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm">
                                                     <thead>
-                                                        <tr className="border-b border-purple-200">
-                                                            <th className="py-2 px-3 text-left text-purple-700 font-semibold">Usia</th>
-                                                            <th className="py-2 px-3 text-center text-purple-700 font-semibold">Laki-laki</th>
-                                                            <th className="py-2 px-3 text-center text-purple-700 font-semibold">Perempuan</th>
+                                                        <tr className="border-b border-blue-200">
+                                                            <th className="py-2 px-3 text-left text-blue-700 font-semibold">Usia</th>
+                                                            <th className="py-2 px-3 text-center text-blue-700 font-semibold">Laki-laki</th>
+                                                            <th className="py-2 px-3 text-center text-blue-700 font-semibold">Perempuan</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="text-gray-700">
-                                                        <tr className="border-b border-purple-100">
+                                                        <tr className="border-b border-blue-100">
                                                             <td className="py-2 px-3 font-medium">Lahir</td>
                                                             <td className="py-2 px-3 text-center">46.1 - 53.7 cm</td>
                                                             <td className="py-2 px-3 text-center">45.4 - 52.9 cm</td>
                                                         </tr>
-                                                        <tr className="border-b border-purple-100">
+                                                        <tr className="border-b border-blue-100">
                                                             <td className="py-2 px-3 font-medium">3 bulan</td>
                                                             <td className="py-2 px-3 text-center">57.3 - 65.5 cm</td>
                                                             <td className="py-2 px-3 text-center">55.6 - 64.0 cm</td>
                                                         </tr>
-                                                        <tr className="border-b border-purple-100">
+                                                        <tr className="border-b border-blue-100">
                                                             <td className="py-2 px-3 font-medium">6 bulan</td>
                                                             <td className="py-2 px-3 text-center">63.3 - 71.9 cm</td>
                                                             <td className="py-2 px-3 text-center">61.2 - 70.3 cm</td>
                                                         </tr>
-                                                        <tr className="border-b border-purple-100">
+                                                        <tr className="border-b border-blue-100">
                                                             <td className="py-2 px-3 font-medium">12 bulan</td>
                                                             <td className="py-2 px-3 text-center">71.0 - 80.5 cm</td>
                                                             <td className="py-2 px-3 text-center">68.9 - 79.2 cm</td>
                                                         </tr>
-                                                        <tr className="border-b border-purple-100">
+                                                        <tr className="border-b border-blue-100">
                                                             <td className="py-2 px-3 font-medium">2 tahun</td>
                                                             <td className="py-2 px-3 text-center">81.7 - 93.9 cm</td>
                                                             <td className="py-2 px-3 text-center">80.0 - 92.9 cm</td>
                                                         </tr>
-                                                        <tr className="border-b border-purple-100">
+                                                        <tr className="border-b border-blue-100">
                                                             <td className="py-2 px-3 font-medium">3 tahun</td>
                                                             <td className="py-2 px-3 text-center">88.7 - 103.5 cm</td>
                                                             <td className="py-2 px-3 text-center">87.4 - 102.7 cm</td>
@@ -2938,9 +2938,9 @@ export default function KegiatanPosyandu() {
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
-                                            <p className="font-medium">📌 Catatan:</p>
+                                            <p className="font-medium"> Catatan:</p>
                                             <p className="text-xs mt-1">Rentang input yang diterima sistem: <span className="font-bold">40 - 130 cm</span></p>
-                                            <p className="text-xs mt-1">Anak &lt;2 tahun diukur berbaring (panjang), ≥2 tahun berdiri (tinggi)</p>
+                                            <p className="text-xs mt-1">Anak &lt;2 tahun diukur berbaring (panjang), 2 tahun berdiri (tinggi)</p>
                                         </div>
                                     </div>
                                 )}
@@ -2962,7 +2962,7 @@ export default function KegiatanPosyandu() {
                                                     <tbody className="text-gray-700">
                                                         <tr className="border-b border-teal-100">
                                                             <td className="py-2 px-3 font-medium">Gizi Normal</td>
-                                                            <td className="py-2 px-3 text-center">≥ 12.5 cm</td>
+                                                            <td className="py-2 px-3 text-center"> 12.5 cm</td>
                                                             <td className="py-2 px-3 text-center">
                                                                 <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">Normal</span>
                                                             </td>
@@ -2986,7 +2986,7 @@ export default function KegiatanPosyandu() {
                                             </div>
                                         </div>
                                         <div className="bg-teal-50 rounded-lg p-3 text-sm text-gray-600 border border-teal-100">
-                                            <p className="font-medium text-teal-800">📌 Catatan:</p>
+                                            <p className="font-medium text-teal-800"> Catatan:</p>
                                             <p className="text-xs mt-1">Rentang input yang diterima sistem: <span className="font-bold">8 - 25 cm</span></p>
                                             <p className="text-xs mt-1">Pengukuran dilakukan di lengan kiri, titik tengah antara bahu dan siku</p>
                                         </div>
@@ -3048,7 +3048,7 @@ export default function KegiatanPosyandu() {
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
-                                            <p className="font-medium">📌 Catatan:</p>
+                                            <p className="font-medium"> Catatan:</p>
                                             <p className="text-xs mt-1">Rentang input yang diterima sistem: <span className="font-bold">30 - 60 cm</span></p>
                                             <p className="text-xs mt-1">Lingkar kepala penting untuk memantau perkembangan otak anak</p>
                                         </div>
@@ -3067,3 +3067,4 @@ export default function KegiatanPosyandu() {
         </DashboardLayout>
     );
 }
+

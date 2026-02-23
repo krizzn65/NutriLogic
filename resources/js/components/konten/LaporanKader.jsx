@@ -351,7 +351,7 @@ export default function LaporanKader() {
                                             { value: "kurus", label: "Kurus (Wasting)", color: "bg-yellow-500" },
                                             { value: "sangat_kurus", label: "Sangat Kurus", color: "bg-red-500" },
                                             { value: "lebih", label: "Risiko Lebih", color: "bg-blue-500" },
-                                            { value: "gemuk", label: "Gemuk (Obesitas)", color: "bg-purple-500" },
+                                            { value: "gemuk", label: "Gemuk (Obesitas)", color: "bg-indigo-500" },
                                         ].map((status) => (
                                             <DropdownMenuItem key={status.value} onClick={() => handleFilterChange("status", status.value)} className="cursor-pointer gap-2">
                                                 <span className={`w-2 h-2 rounded-full ${status.color}`} />
@@ -391,7 +391,7 @@ export default function LaporanKader() {
                                                 placeholder="Mulai"
                                                 className="h-9 w-auto min-w-[100px] text-sm border-0 bg-transparent focus:ring-0 px-2 justify-start hover:bg-gray-100 rounded-lg"
                                             />
-                                            <span className="text-gray-300">→</span>
+                                            <span className="text-gray-300"></span>
                                             <DatePicker
                                                 value={filters.end_date}
                                                 onChange={(date) => handleFilterChange("end_date", date)}
@@ -709,3 +709,4 @@ export default function LaporanKader() {
         </DashboardLayout>
     );
 }
+

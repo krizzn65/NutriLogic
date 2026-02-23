@@ -457,7 +457,7 @@ export default function TambahAnakKaderForm() {
                     <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
                         <div className="mb-6 border-b border-gray-100 pb-6">
                             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <User className="w-5 h-5 text-pink-500" />
+                                <User className="w-5 h-5 text-orange-600" />
                                 Data Anak
                             </h2>
                             <p className="text-sm text-gray-500 mt-1">Informasi lengkap anak yang akan didaftarkan</p>
@@ -811,3 +811,4 @@ export default function TambahAnakKaderForm() {
         </div>
     );
 }
+
