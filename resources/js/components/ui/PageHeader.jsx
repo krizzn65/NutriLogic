@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, Bell, Shield, UserCog, Settings, LogOut } from "lucide-react";
+import {
+    Calendar,
+    Bell,
+    Shield,
+    UserCog,
+    Settings,
+    LogOut,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getUser, logoutWithApi } from "../../lib/auth";
 import { getMaintenanceMode } from "../../lib/sessionTimeout";
@@ -10,7 +17,15 @@ import AdminSettingsModal from "../dashboard/AdminSettingsModal";
 import SettingsModal from "../dashboard/SettingsModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
 
-export default function PageHeader({ title, subtitle, children, showProfile = true, profileClassName = "", dashboardData = null, generateNotifications = null }) {
+export default function PageHeader({
+    title,
+    subtitle,
+    children,
+    showProfile = true,
+    profileClassName = "",
+    dashboardData = null,
+    generateNotifications = null,
+}) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -19,6 +34,8 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const notificationPanelId = "page-header-notifications-panel";
+    const profileMenuId = "page-header-profile-menu";
 
     const fetchNotifications = useCallback(async () => {
         try {
@@ -26,17 +43,17 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
             const user = getUser();
             if (!user) return;
 
-            let endpoint = '/notifications/unread';
-            if (user.role === 'kader') {
-                endpoint = '/kader/notifications/unread';
-            } else if (user.role === 'admin') {
-                endpoint = '/admin/notifications/unread';
-            } else if (user.role === 'ibu') {
-                endpoint = '/parent/notifications/unread';
+            let endpoint = "/notifications/unread";
+            if (user.role === "kader") {
+                endpoint = "/kader/notifications/unread";
+            } else if (user.role === "admin") {
+                endpoint = "/admin/notifications/unread";
+            } else if (user.role === "ibu") {
+                endpoint = "/parent/notifications/unread";
             }
 
             const response = await api.get(endpoint);
-            const dbNotifications = response.data.data.map(notif => ({
+            const dbNotifications = response.data.data.map((notif) => ({
                 id: `db_${notif.id}`,
                 type: notif.type,
                 title: notif.title,
@@ -44,19 +61,21 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                 link: notif.link,
                 timestamp: notif.timestamp,
                 dbId: notif.id, // Store original DB ID
-                source: 'database', // Mark as database notification
+                source: "database", // Mark as database notification
                 is_read: notif.is_read, // Map is_read status
             }));
 
             // Always update database notifications
-            setNotifications(prev => {
+            setNotifications((prev) => {
                 // Keep non-database notifications (maintenance, AI notifications)
-                const nonDbNotifs = prev.filter(n => !n.source || n.source !== 'database');
+                const nonDbNotifs = prev.filter(
+                    (n) => !n.source || n.source !== "database",
+                );
                 const merged = [...nonDbNotifs, ...dbNotifications];
                 return merged;
             });
         } catch (err) {
-            console.error('Failed to fetch notifications:', err);
+            console.error("Failed to fetch notifications:", err);
         }
     }, []);
 
@@ -82,21 +101,30 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
         const checkMaintenanceMode = () => {
             const isMaintenanceActive = getMaintenanceMode();
 
-            setNotifications(prev => {
-                const maintenanceNotifId = 'maintenance-mode-active';
-                const hasMaintenanceNotif = prev.some(n => n.id === maintenanceNotifId);
+            setNotifications((prev) => {
+                const maintenanceNotifId = "maintenance-mode-active";
+                const hasMaintenanceNotif = prev.some(
+                    (n) => n.id === maintenanceNotifId,
+                );
 
                 if (isMaintenanceActive && !hasMaintenanceNotif) {
-                    return [{
-                        id: maintenanceNotifId,
-                        type: 'warning',
-                        title: 'Mode Maintenance Aktif',
-                        message: 'Sistem sedang dalam mode maintenance. Pengguna non-admin tidak dapat mengakses aplikasi.',
-                        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                        persistent: true
-                    }, ...prev];
+                    return [
+                        {
+                            id: maintenanceNotifId,
+                            type: "warning",
+                            title: "Mode Maintenance Aktif",
+                            message:
+                                "Sistem sedang dalam mode maintenance. Pengguna non-admin tidak dapat mengakses aplikasi.",
+                            timestamp: new Date().toLocaleTimeString("id-ID", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            }),
+                            persistent: true,
+                        },
+                        ...prev,
+                    ];
                 } else if (!isMaintenanceActive && hasMaintenanceNotif) {
-                    return prev.filter(n => n.id !== maintenanceNotifId);
+                    return prev.filter((n) => n.id !== maintenanceNotifId);
                 }
                 return prev;
             });
@@ -104,15 +132,15 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
 
         checkMaintenanceMode();
         const handleStorageChange = (e) => {
-            if (e.key === 'nutrilogic_maintenance_mode') {
+            if (e.key === "nutrilogic_maintenance_mode") {
                 checkMaintenanceMode();
             }
         };
-        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener("storage", handleStorageChange);
         const interval = setInterval(checkMaintenanceMode, 1000);
 
         return () => {
-            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener("storage", handleStorageChange);
             clearInterval(interval);
         };
     }, []);
@@ -121,57 +149,75 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
     useEffect(() => {
         if (dashboardData && generateNotifications) {
             const smartNotifications = generateNotifications(dashboardData);
-            const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-            const filteredNotifications = smartNotifications.filter(n => !dismissedIds.includes(n.id)).map(n => ({
-                ...n,
-                source: 'ai', // Mark as AI notification
-            }));
+            const dismissedIds = JSON.parse(
+                localStorage.getItem("dismissedNotifications") || "[]",
+            );
+            const filteredNotifications = smartNotifications
+                .filter((n) => !dismissedIds.includes(n.id))
+                .map((n) => ({
+                    ...n,
+                    source: "ai", // Mark as AI notification
+                }));
 
             // Save AI notifications to localStorage for persistence across pages
             if (filteredNotifications.length > 0) {
-                localStorage.setItem('aiNotifications', JSON.stringify(filteredNotifications));
+                localStorage.setItem(
+                    "aiNotifications",
+                    JSON.stringify(filteredNotifications),
+                );
             }
 
-            setNotifications(prev => {
+            setNotifications((prev) => {
                 // Keep maintenance and database notifications
-                const persistentNotifs = prev.filter(n =>
-                    n.id === 'maintenance-mode-active' ||
-                    n.source === 'database'
+                const persistentNotifs = prev.filter(
+                    (n) =>
+                        n.id === "maintenance-mode-active" ||
+                        n.source === "database",
                 );
                 return [...persistentNotifs, ...filteredNotifications];
             });
         } else {
             // Load AI notifications from localStorage when not on dashboard
-            const savedAiNotifs = localStorage.getItem('aiNotifications');
+            const savedAiNotifs = localStorage.getItem("aiNotifications");
             if (savedAiNotifs) {
                 try {
                     const aiNotifications = JSON.parse(savedAiNotifs);
-                    const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-                    const activeAiNotifs = aiNotifications.filter(n => !dismissedIds.includes(n.id));
+                    const dismissedIds = JSON.parse(
+                        localStorage.getItem("dismissedNotifications") || "[]",
+                    );
+                    const activeAiNotifs = aiNotifications.filter(
+                        (n) => !dismissedIds.includes(n.id),
+                    );
 
                     if (activeAiNotifs.length > 0) {
-                        setNotifications(prev => {
+                        setNotifications((prev) => {
                             // Only add AI notifications if they're not already there
-                            const hasAiNotifs = prev.some(n => n.source === 'ai');
+                            const hasAiNotifs = prev.some(
+                                (n) => n.source === "ai",
+                            );
                             if (hasAiNotifs) return prev;
 
                             // Keep maintenance and database notifications
-                            const persistentNotifs = prev.filter(n =>
-                                n.id === 'maintenance-mode-active' ||
-                                n.source === 'database'
+                            const persistentNotifs = prev.filter(
+                                (n) =>
+                                    n.id === "maintenance-mode-active" ||
+                                    n.source === "database",
                             );
                             return [...persistentNotifs, ...activeAiNotifs];
                         });
                     }
                 } catch (err) {
-                    console.error('Failed to parse AI notifications from localStorage:', err);
+                    console.error(
+                        "Failed to parse AI notifications from localStorage:",
+                        err,
+                    );
                 }
             }
         }
     }, [dashboardData, generateNotifications]);
 
     const handleNotificationClick = (notification) => {
-        if (notification.id === 'maintenance-mode-active') {
+        if (notification.id === "maintenance-mode-active") {
             setIsNotificationOpen(false);
             setIsSettingsModalOpen(true);
             return;
@@ -179,36 +225,55 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
 
         // Mark as read in database if it's a DB notification
         if (notification.dbId) {
-            api.post(`/notifications/${notification.dbId}/read`).catch(err => {
-                console.error('Failed to mark notification as read:', err);
-            });
+            api.post(`/notifications/${notification.dbId}/read`).catch(
+                (err) => {
+                    console.error("Failed to mark notification as read:", err);
+                },
+            );
 
             // If it's a broadcast, don't remove it, just mark as read locally
-            if (notification.type === 'broadcast') {
-                setNotifications(prev => prev.map(n =>
-                    n.id === notification.id ? { ...n, is_read: true } : n
-                ));
+            if (notification.type === "broadcast") {
+                setNotifications((prev) =>
+                    prev.map((n) =>
+                        n.id === notification.id ? { ...n, is_read: true } : n,
+                    ),
+                );
             } else {
                 // For other DB notifications, remove from list (standard behavior)
-                setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                setNotifications((prev) =>
+                    prev.filter((n) => n.id !== notification.id),
+                );
             }
-        } else if (notification.source === 'ai') {
+        } else if (notification.source === "ai") {
             // Save dismissed notification ID to localStorage for AI notifications
-            const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+            const dismissedIds = JSON.parse(
+                localStorage.getItem("dismissedNotifications") || "[]",
+            );
             if (!dismissedIds.includes(notification.id)) {
                 dismissedIds.push(notification.id);
-                localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedIds));
+                localStorage.setItem(
+                    "dismissedNotifications",
+                    JSON.stringify(dismissedIds),
+                );
             }
 
             // Also update aiNotifications in localStorage
-            const savedAiNotifs = localStorage.getItem('aiNotifications');
+            const savedAiNotifs = localStorage.getItem("aiNotifications");
             if (savedAiNotifs) {
                 try {
                     const aiNotifications = JSON.parse(savedAiNotifs);
-                    const updatedAiNotifs = aiNotifications.filter(n => n.id !== notification.id);
-                    localStorage.setItem('aiNotifications', JSON.stringify(updatedAiNotifs));
+                    const updatedAiNotifs = aiNotifications.filter(
+                        (n) => n.id !== notification.id,
+                    );
+                    localStorage.setItem(
+                        "aiNotifications",
+                        JSON.stringify(updatedAiNotifs),
+                    );
                 } catch (err) {
-                    console.error('Failed to update AI notifications in localStorage:', err);
+                    console.error(
+                        "Failed to update AI notifications in localStorage:",
+                        err,
+                    );
                 }
             }
         }
@@ -216,7 +281,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
         setIsNotificationOpen(false);
 
         // Skip navigation for broadcast notifications - just close and mark as read
-        if (notification.type === 'broadcast') {
+        if (notification.type === "broadcast") {
             return;
         }
 
@@ -234,10 +299,18 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
         <>
             <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">{title}</h1>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">
+                        {title}
+                    </h1>
                     <p className="text-xs text-gray-500 font-medium mt-0.5 flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {subtitle || new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        {subtitle ||
+                            new Date().toLocaleDateString("id-ID", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                            })}
                     </p>
                 </div>
 
@@ -245,19 +318,41 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                     {children}
 
                     {showProfile && (
-                        <div className={`flex items-center gap-4 ${profileClassName}`}>
+                        <div
+                            className={`flex items-center gap-4 ${profileClassName}`}
+                        >
                             {/* Notifications Dropdown */}
                             <div className="relative">
                                 <button
-                                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                    onClick={() =>
+                                        setIsNotificationOpen(
+                                            !isNotificationOpen,
+                                        )
+                                    }
                                     className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+                                    aria-label={`Notifikasi, ${notifications.filter((n) => !n.is_read).length} belum dibaca`}
+                                    aria-haspopup="dialog"
+                                    aria-expanded={isNotificationOpen}
+                                    aria-controls={notificationPanelId}
                                 >
                                     <Bell className="w-5 h-5" />
-                                    {notifications.filter(n => !n.is_read).length > 0 && (
+                                    {notifications.filter((n) => !n.is_read)
+                                        .length > 0 && (
                                         <>
-                                            {notifications.filter(n => n.type === 'danger' && !n.is_read).length > 0 ? (
+                                            {notifications.filter(
+                                                (n) =>
+                                                    n.type === "danger" &&
+                                                    !n.is_read,
+                                            ).length > 0 ? (
                                                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                                                    {notifications.filter(n => n.type === 'danger' && !n.is_read).length}
+                                                    {
+                                                        notifications.filter(
+                                                            (n) =>
+                                                                n.type ===
+                                                                    "danger" &&
+                                                                !n.is_read,
+                                                        ).length
+                                                    }
                                                 </span>
                                             ) : (
                                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
@@ -267,46 +362,104 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </button>
 
                                 {isNotificationOpen && (
-                                    <div className="fixed sm:absolute left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 sm:right-0 top-16 sm:top-auto mt-0 sm:mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
+                                    <div
+                                        id={notificationPanelId}
+                                        role="dialog"
+                                        aria-label="Panel notifikasi"
+                                        className="fixed sm:absolute left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 sm:right-0 top-16 sm:top-auto mt-0 sm:mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200"
+                                        style={{ zIndex: 100 }}
+                                    >
                                         <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
-                                            <h3 className="font-semibold text-gray-800">Notifikasi</h3>
-                                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">{notifications.filter(n => !n.is_read).length} Baru</span>
+                                            <h3 className="font-semibold text-gray-800">
+                                                Notifikasi
+                                            </h3>
+                                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">
+                                                {
+                                                    notifications.filter(
+                                                        (n) => !n.is_read,
+                                                    ).length
+                                                }{" "}
+                                                Baru
+                                            </span>
                                         </div>
                                         <div className="max-h-[300px] overflow-y-auto">
                                             {notifications.length > 0 ? (
                                                 notifications.map((notif) => (
-                                                    <div
+                                                    <button
+                                                        type="button"
                                                         key={notif.id}
-                                                        onClick={() => handleNotificationClick(notif)}
-                                                        className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 relative group ${notif.is_read ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50 bg-white'
-                                                            }`}
+                                                        onClick={() =>
+                                                            handleNotificationClick(
+                                                                notif,
+                                                            )
+                                                        }
+                                                        aria-label={`${notif.title}. ${notif.message}`}
+                                                        className={`w-full text-left px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 relative group ${
+                                                            notif.is_read
+                                                                ? "bg-gray-50 opacity-60"
+                                                                : "hover:bg-gray-50 bg-white"
+                                                        }`}
                                                     >
                                                         <div className="flex gap-3">
-                                                            <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${notif.type === 'danger' ? 'bg-red-500' :
-                                                                notif.type === 'warning' ? 'bg-orange-500' : 'bg-blue-500'
-                                                                }`} />
+                                                            <div
+                                                                className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                                                                    notif.type ===
+                                                                    "danger"
+                                                                        ? "bg-red-500"
+                                                                        : notif.type ===
+                                                                            "warning"
+                                                                          ? "bg-orange-500"
+                                                                          : "bg-blue-500"
+                                                                }`}
+                                                            />
                                                             <div>
-                                                                <h4 className={`text-sm font-semibold mb-1 ${notif.type === 'danger' ? 'text-red-700' :
-                                                                    notif.type === 'warning' ? 'text-orange-700' : 'text-gray-800'
-                                                                    }`}>{notif.title}</h4>
-                                                                <p className="text-xs text-gray-600 leading-relaxed mb-1.5">{notif.message}</p>
-                                                                <p className="text-[10px] text-gray-400 font-medium">{notif.timestamp}</p>
+                                                                <h4
+                                                                    className={`text-sm font-semibold mb-1 ${
+                                                                        notif.type ===
+                                                                        "danger"
+                                                                            ? "text-red-700"
+                                                                            : notif.type ===
+                                                                                "warning"
+                                                                              ? "text-orange-700"
+                                                                              : "text-gray-800"
+                                                                    }`}
+                                                                >
+                                                                    {
+                                                                        notif.title
+                                                                    }
+                                                                </h4>
+                                                                <p className="text-xs text-gray-600 leading-relaxed mb-1.5">
+                                                                    {
+                                                                        notif.message
+                                                                    }
+                                                                </p>
+                                                                <p className="text-[10px] text-gray-400 font-medium">
+                                                                    {
+                                                                        notif.timestamp
+                                                                    }
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                 ))
                                             ) : (
                                                 <div className="px-4 py-8 text-center text-gray-400">
                                                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                                    <p className="text-sm">Tidak ada notifikasi baru</p>
+                                                    <p className="text-sm">
+                                                        Tidak ada notifikasi
+                                                        baru
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
                                         {notifications.length > 0 && (
                                             <div className="px-4 py-2 border-t border-gray-50 bg-gray-50/50 text-center">
                                                 <button
-                                                    onClick={() => setNotifications([])}
+                                                    onClick={() =>
+                                                        setNotifications([])
+                                                    }
                                                     className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                                                    aria-label="Tandai semua notifikasi sebagai sudah dibaca"
                                                 >
                                                     Tandai semua sudah dibaca
                                                 </button>
@@ -319,12 +472,26 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                             {/* Profile Avatar */}
                             <div className="relative">
                                 <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    onClick={() =>
+                                        setIsDropdownOpen(!isDropdownOpen)
+                                    }
                                     className="flex items-center gap-3 pl-4 border-l border-gray-200 focus:outline-none"
+                                    aria-label="Buka menu profil"
+                                    aria-haspopup="menu"
+                                    aria-expanded={isDropdownOpen}
+                                    aria-controls={profileMenuId}
                                 >
                                     <div className="text-right hidden md:block">
-                                        <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name || 'User'}</p>
-                                        <p className="text-xs text-gray-500 mt-1 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
+                                        <p className="text-sm font-semibold text-gray-800 leading-none">
+                                            {user?.name || "User"}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1 capitalize">
+                                            {user?.role === "admin"
+                                                ? "Administrator"
+                                                : user?.role === "kader"
+                                                  ? "Kader"
+                                                  : "Orang Tua"}
+                                        </p>
                                     </div>
                                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow">
                                         {user?.profile_photo_url ? (
@@ -335,8 +502,8 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                             />
                                         ) : (
                                             <img
-                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
-                                                alt={user?.name || 'User'}
+                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=random`}
+                                                alt={user?.name || "User"}
                                                 className="w-full h-full object-cover"
                                             />
                                         )}
@@ -344,10 +511,24 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </button>
 
                                 {isDropdownOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
+                                    <div
+                                        id={profileMenuId}
+                                        role="menu"
+                                        aria-label="Menu profil"
+                                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-in fade-in zoom-in-95 duration-200"
+                                        style={{ zIndex: 100 }}
+                                    >
                                         <div className="px-4 py-3 border-b border-gray-50 md:hidden">
-                                            <p className="text-sm font-semibold text-gray-800">{user?.name || 'User'}</p>
-                                            <p className="text-xs text-gray-500 capitalize">{user?.role === 'admin' ? 'Administrator' : user?.role === 'kader' ? 'Kader' : 'Orang Tua'}</p>
+                                            <p className="text-sm font-semibold text-gray-800">
+                                                {user?.name || "User"}
+                                            </p>
+                                            <p className="text-xs text-gray-500 capitalize">
+                                                {user?.role === "admin"
+                                                    ? "Administrator"
+                                                    : user?.role === "kader"
+                                                      ? "Kader"
+                                                      : "Orang Tua"}
+                                            </p>
                                         </div>
                                         <button
                                             onClick={() => {
@@ -355,6 +536,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                                 setIsDropdownOpen(false);
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                            role="menuitem"
                                         >
                                             <UserCog className="w-4 h-4" />
                                             Profil Saya
@@ -365,6 +547,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                                 setIsDropdownOpen(false);
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                            role="menuitem"
                                         >
                                             <Settings className="w-4 h-4" />
                                             Pengaturan
@@ -376,6 +559,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                                 setIsDropdownOpen(false);
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                            role="menuitem"
                                         >
                                             <LogOut className="w-4 h-4" />
                                             Keluar
@@ -389,15 +573,27 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
             </header>
 
             {/* Modals */}
-            {user?.role === 'admin' ? (
-                <AdminProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+            {user?.role === "admin" ? (
+                <AdminProfileModal
+                    isOpen={isProfileModalOpen}
+                    onClose={() => setIsProfileModalOpen(false)}
+                />
             ) : (
-                <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+                <ProfileModal
+                    isOpen={isProfileModalOpen}
+                    onClose={() => setIsProfileModalOpen(false)}
+                />
             )}
-            {user?.role === 'admin' ? (
-                <AdminSettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+            {user?.role === "admin" ? (
+                <AdminSettingsModal
+                    isOpen={isSettingsModalOpen}
+                    onClose={() => setIsSettingsModalOpen(false)}
+                />
             ) : (
-                <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+                <SettingsModal
+                    isOpen={isSettingsModalOpen}
+                    onClose={() => setIsSettingsModalOpen(false)}
+                />
             )}
             <ConfirmationModal
                 isOpen={confirmOpen}

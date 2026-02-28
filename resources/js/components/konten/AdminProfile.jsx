@@ -8,14 +8,14 @@ export default function AdminProfile() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
+        name: "",
+        email: "",
+        phone: "",
     });
     const [passwordData, setPasswordData] = useState({
-        current_password: '',
-        new_password: '',
-        confirm_password: '',
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
     });
     const [saving, setSaving] = useState(false);
     const [changingPassword, setChangingPassword] = useState(false);
@@ -29,13 +29,13 @@ export default function AdminProfile() {
 
     const fetchProfile = async () => {
         // Check cache first
-        const cachedProfile = getCachedData('admin_profile');
+        const cachedProfile = getCachedData("admin_profile");
         if (cachedProfile) {
             setUser(cachedProfile);
             setFormData({
                 name: cachedProfile.name,
                 email: cachedProfile.email,
-                phone: cachedProfile.phone || '',
+                phone: cachedProfile.phone || "",
             });
             setLoading(false);
             return;
@@ -43,16 +43,16 @@ export default function AdminProfile() {
 
         try {
             setLoading(true);
-            const response = await api.get('/me');
+            const response = await api.get("/me");
             setUser(response.data.data);
             setFormData({
                 name: response.data.data.name,
                 email: response.data.data.email,
-                phone: response.data.data.phone || '',
+                phone: response.data.data.phone || "",
             });
-            setCachedData('admin_profile', response.data.data);
+            setCachedData("admin_profile", response.data.data);
         } catch (err) {
-            console.error('Profile fetch error:', err);
+            console.error("Profile fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -64,9 +64,9 @@ export default function AdminProfile() {
         // Simulate save
         setTimeout(() => {
             setSaving(false);
-            invalidateCache('admin_profile');
-            invalidateCache('admin_user_profile');
-            alert('Profil berhasil diperbarui!');
+            invalidateCache("admin_profile");
+            invalidateCache("admin_user_profile");
+            alert("Profil berhasil diperbarui!");
         }, 1000);
     };
 
@@ -74,7 +74,7 @@ export default function AdminProfile() {
         e.preventDefault();
 
         if (passwordData.new_password !== passwordData.confirm_password) {
-            alert('Password baru dan konfirmasi tidak cocok!');
+            alert("Password baru dan konfirmasi tidak cocok!");
             return;
         }
 
@@ -83,14 +83,13 @@ export default function AdminProfile() {
         setTimeout(() => {
             setChangingPassword(false);
             setPasswordData({
-                current_password: '',
-                new_password: '',
-                confirm_password: '',
+                current_password: "",
+                new_password: "",
+                confirm_password: "",
             });
-            alert('Password berhasil diubah!');
+            alert("Password berhasil diubah!");
         }, 1000);
     };
-
 
     if (loading) {
         return (
@@ -105,9 +104,11 @@ export default function AdminProfile() {
 
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
-            <PageHeader title="Profil SuperAdmin" subtitle="Kelola informasi profil Anda" />
+            <PageHeader
+                title="Profil SuperAdmin"
+                subtitle="Kelola informasi profil Anda"
+            />
             <div className="flex-1 overflow-auto p-6 space-y-6">
-
                 {/* Profile Info Card */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div className="flex items-center gap-4 mb-6">
@@ -115,25 +116,41 @@ export default function AdminProfile() {
                             <Shield className="w-10 h-10 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-800">{user?.name}</h2>
-                            <p className="text-sm text-gray-600">{user?.email}</p>
+                            <h2 className="text-xl font-semibold text-gray-800">
+                                {user?.name}
+                            </h2>
+                            <p className="text-sm text-gray-600">
+                                {user?.email}
+                            </p>
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mt-1">
                                 Super Administrator
                             </span>
                         </div>
                     </div>
 
-                    <form onSubmit={handleUpdateProfile} className="space-y-4 max-w-2xl">
+                    <form
+                        onSubmit={handleUpdateProfile}
+                        className="space-y-4 max-w-2xl"
+                    >
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="admin-profile-name"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Nama Lengkap
                             </label>
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
+                                    id="admin-profile-name"
                                     type="text"
                                     value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            name: e.target.value,
+                                        })
+                                    }
                                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
@@ -141,15 +158,24 @@ export default function AdminProfile() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="admin-profile-email"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Email
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
+                                    id="admin-profile-email"
                                     type="email"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            email: e.target.value,
+                                        })
+                                    }
                                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
@@ -157,15 +183,24 @@ export default function AdminProfile() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="admin-profile-phone"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Telepon
                             </label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
+                                    id="admin-profile-phone"
                                     type="tel"
                                     value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            phone: e.target.value,
+                                        })
+                                    }
                                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
                             </div>
@@ -178,7 +213,7 @@ export default function AdminProfile() {
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 <Save className="w-4 h-4" />
-                                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                {saving ? "Menyimpan..." : "Simpan Perubahan"}
                             </button>
                         </div>
                     </form>
@@ -191,28 +226,49 @@ export default function AdminProfile() {
                         Ubah Password
                     </h2>
 
-                    <form onSubmit={handleChangePassword} className="space-y-4 max-w-2xl">
+                    <form
+                        onSubmit={handleChangePassword}
+                        className="space-y-4 max-w-2xl"
+                    >
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="admin-current-password"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Password Saat Ini
                             </label>
                             <input
+                                id="admin-current-password"
                                 type="password"
                                 value={passwordData.current_password}
-                                onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                                onChange={(e) =>
+                                    setPasswordData({
+                                        ...passwordData,
+                                        current_password: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="admin-new-password"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Password Baru
                             </label>
                             <input
+                                id="admin-new-password"
                                 type="password"
                                 value={passwordData.new_password}
-                                onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                                onChange={(e) =>
+                                    setPasswordData({
+                                        ...passwordData,
+                                        new_password: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 required
                                 minLength={8}
@@ -220,13 +276,22 @@ export default function AdminProfile() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="admin-confirm-password"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Konfirmasi Password Baru
                             </label>
                             <input
+                                id="admin-confirm-password"
                                 type="password"
                                 value={passwordData.confirm_password}
-                                onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                                onChange={(e) =>
+                                    setPasswordData({
+                                        ...passwordData,
+                                        confirm_password: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 required
                                 minLength={8}
@@ -240,7 +305,9 @@ export default function AdminProfile() {
                                 className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 <Key className="w-4 h-4" />
-                                {changingPassword ? 'Mengubah...' : 'Ubah Password'}
+                                {changingPassword
+                                    ? "Mengubah..."
+                                    : "Ubah Password"}
                             </button>
                         </div>
                     </form>

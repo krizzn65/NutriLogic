@@ -1,15 +1,29 @@
-import React, { useState, useRef, memo, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Loader2, Check, AlertCircle, Clock, Utensils, ChevronDown, Sparkles } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useState, useRef, memo, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    Plus,
+    Loader2,
+    Check,
+    AlertCircle,
+    Clock,
+    Utensils,
+    ChevronDown,
+    Sparkles,
+} from "lucide-react";
+import api from "../../lib/api";
 
-const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialData }) {
+const QuickAddForm = memo(function QuickAddForm({
+    childId,
+    onSuccess,
+    initialData,
+}) {
+    const NOTES_MAX_LENGTH = 255;
     const [formData, setFormData] = useState({
-        time_of_day: 'pagi',
-        description: '',
-        ingredients: '',
-        portion: 'habis',
-        notes: '',
+        time_of_day: "pagi",
+        description: "",
+        ingredients: "",
+        portion: "habis",
+        notes: "",
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -18,92 +32,97 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
     const [isFromNutriAssist, setIsFromNutriAssist] = useState(false);
 
     const descriptionRef = useRef(null);
+    const notesCount = formData.notes.length;
 
     // Populate form with initial data from NutriAssistPage
     useEffect(() => {
         if (initialData) {
             setFormData({
-                time_of_day: initialData.time_of_day || 'siang',
-                description: initialData.description || '',
-                ingredients: initialData.ingredients || '',
-                portion: 'habis', // Default portion
-                notes: initialData.notes || '',
+                time_of_day: initialData.time_of_day || "siang",
+                description: initialData.description || "",
+                ingredients: initialData.ingredients || "",
+                portion: "habis", // Default portion
+                notes: initialData.notes || "",
             });
-            setIsFromNutriAssist(initialData.source === 'nutri-assist');
+            setIsFromNutriAssist(initialData.source === "nutri-assist");
         }
     }, [initialData]);
 
     const timeOptions = [
-        { value: 'pagi', label: 'Pagi' },
-        { value: 'siang', label: 'Siang' },
-        { value: 'malam', label: 'Malam' },
-        { value: 'snack', label: 'Snack' },
+        { value: "pagi", label: "Pagi" },
+        { value: "siang", label: "Siang" },
+        { value: "malam", label: "Malam" },
+        { value: "snack", label: "Snack" },
     ];
 
     const portionOptions = [
-        { value: 'habis', label: 'Habis' },
-        { value: 'setengah', label: 'Setengah' },
-        { value: 'sedikit', label: 'Sedikit' },
-        { value: 'tidak_mau', label: 'Tidak Mau' },
+        { value: "habis", label: "Habis" },
+        { value: "setengah", label: "Setengah" },
+        { value: "sedikit", label: "Sedikit" },
+        { value: "tidak_mau", label: "Tidak Mau" },
     ];
 
-    const handleSubmit = useCallback(async (e) => {
-        e.preventDefault();
+    const handleSubmit = useCallback(
+        async (e) => {
+            e.preventDefault();
 
-        if (!formData.description.trim()) {
-            setError('Nama makanan harus diisi');
-            if (descriptionRef.current) {
-                descriptionRef.current.focus();
-            }
-            return;
-        }
-
-        setSubmitting(true);
-        setError(null);
-
-        try {
-            await api.post('/meal-logs', {
-                child_id: childId,
-                eaten_at: new Date().toISOString().split('T')[0],
-                time_of_day: formData.time_of_day,
-                description: formData.description,
-                ingredients: formData.ingredients || null,
-                portion: formData.portion,
-                notes: formData.notes || null,
-                source: 'ortu',
-            });
-
-            setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 2500);
-
-            setFormData({
-                time_of_day: 'pagi',
-                description: '',
-                ingredients: '',
-                portion: 'habis',
-                notes: '',
-            });
-
-            if (onSuccess) onSuccess();
-        } catch (err) {
-            console.error('Error adding meal log:', err);
-            // Show a more user-friendly error message
-            let errorMessage = 'Gagal menyimpan data. Silakan coba lagi.';
-
-            if (err.response?.data?.message) {
-                // If it's a specific SQL error that shouldn't be shown to users
-                if (err.response.data.message.includes('SQLSTATE')) {
-                    errorMessage = 'Terjadi kesalahan sistem. Mohon hubungi admin.';
-                } else {
-                    errorMessage = err.response.data.message;
+            if (!formData.description.trim()) {
+                setError("Nama makanan harus diisi");
+                if (descriptionRef.current) {
+                    descriptionRef.current.focus();
                 }
+                return;
             }
 
-            setError(errorMessage);
-        } finally {
-            setSubmitting(false);
-        }
-    }, [childId, formData, onSuccess]);
+            setSubmitting(true);
+            setError(null);
+
+            try {
+                await api.post("/meal-logs", {
+                    child_id: childId,
+                    eaten_at: new Date().toISOString().split("T")[0],
+                    time_of_day: formData.time_of_day,
+                    description: formData.description,
+                    ingredients: formData.ingredients || null,
+                    portion: formData.portion,
+                    notes: formData.notes || null,
+                    source: "ortu",
+                });
+
+                setShowSuccess(true);
+                setTimeout(() => setShowSuccess(false), 2500);
+
+                setFormData({
+                    time_of_day: "pagi",
+                    description: "",
+                    ingredients: "",
+                    portion: "habis",
+                    notes: "",
+                });
+
+                if (onSuccess) onSuccess();
+            } catch (err) {
+                console.error("Error adding meal log:", err);
+                // Show a more user-friendly error message
+                let errorMessage = "Gagal menyimpan data. Silakan coba lagi.";
+
+                if (err.response?.data?.message) {
+                    // If it's a specific SQL error that shouldn't be shown to users
+                    if (err.response.data.message.includes("SQLSTATE")) {
+                        errorMessage =
+                            "Terjadi kesalahan sistem. Mohon hubungi admin.";
+                    } else {
+                        errorMessage = err.response.data.message;
+                    }
+                }
+
+                setError(errorMessage);
+            } finally {
+                setSubmitting(false);
+            }
+        },
+        [childId, formData, onSuccess],
+    );
 
     return (
         <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -119,8 +138,13 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                         <Sparkles className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-blue-800">Dari Nutri-Assist</p>
-                        <p className="text-xs text-blue-600">Data terisi otomatis dari rekomendasi. Sesuaikan jika perlu.</p>
+                        <p className="text-sm font-semibold text-blue-800">
+                            Dari Nutri-Assist
+                        </p>
+                        <p className="text-xs text-blue-600">
+                            Data terisi otomatis dari rekomendasi. Sesuaikan
+                            jika perlu.
+                        </p>
                     </div>
                 </div>
             )}
@@ -129,17 +153,32 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                 {/* Top Row: Time & Portion */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Waktu</label>
-                        <div className="flex gap-2">
+                        <p
+                            id="quickadd-time-of-day-label"
+                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                            Waktu
+                        </p>
+                        <div
+                            className="flex gap-2"
+                            role="group"
+                            aria-labelledby="quickadd-time-of-day-label"
+                        >
                             {timeOptions.map((option) => (
                                 <button
                                     key={option.value}
                                     type="button"
-                                    onClick={() => setFormData({ ...formData, time_of_day: option.value })}
-                                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${formData.time_of_day === option.value
-                                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
-                                        : 'bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-                                        }`}
+                                    onClick={() =>
+                                        setFormData({
+                                            ...formData,
+                                            time_of_day: option.value,
+                                        })
+                                    }
+                                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                        formData.time_of_day === option.value
+                                            ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                                            : "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+                                    }`}
                                 >
                                     {option.label}
                                 </button>
@@ -148,16 +187,28 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                     </div>
 
                     <div className="space-y-2 relative">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Porsi</label>
+                        <label
+                            htmlFor="quickadd-portion-toggle"
+                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                            Porsi
+                        </label>
                         <button
+                            id="quickadd-portion-toggle"
                             type="button"
-                            onClick={() => setIsPortionDropdownOpen(!isPortionDropdownOpen)}
+                            onClick={() =>
+                                setIsPortionDropdownOpen(!isPortionDropdownOpen)
+                            }
                             className="w-full flex items-center justify-between p-2.5 bg-gray-50 rounded-lg text-sm font-medium text-gray-900 hover:bg-blue-50 transition-colors focus:ring-2 focus:ring-blue-200"
                         >
                             <span>
-                                {portionOptions.find(opt => opt.value === formData.portion)?.label || 'Pilih Porsi'}
+                                {portionOptions.find(
+                                    (opt) => opt.value === formData.portion,
+                                )?.label || "Pilih Porsi"}
                             </span>
-                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isPortionDropdownOpen ? 'rotate-180' : ''}`} />
+                            <ChevronDown
+                                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isPortionDropdownOpen ? "rotate-180" : ""}`}
+                            />
                         </button>
 
                         <AnimatePresence>
@@ -165,10 +216,16 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                                 <>
                                     <div
                                         className="fixed inset-0 z-30"
-                                        onClick={() => setIsPortionDropdownOpen(false)}
+                                        onClick={() =>
+                                            setIsPortionDropdownOpen(false)
+                                        }
                                     />
                                     <motion.div
-                                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                        initial={{
+                                            opacity: 0,
+                                            y: 8,
+                                            scale: 0.95,
+                                        }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                                         transition={{ duration: 0.2 }}
@@ -176,22 +233,35 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                                     >
                                         <div className="p-1.5 space-y-1">
                                             {portionOptions.map((option) => {
-                                                const isSelected = formData.portion === option.value;
+                                                const isSelected =
+                                                    formData.portion ===
+                                                    option.value;
                                                 return (
                                                     <button
                                                         key={option.value}
                                                         type="button"
                                                         onClick={() => {
-                                                            setFormData({ ...formData, portion: option.value });
-                                                            setIsPortionDropdownOpen(false);
+                                                            setFormData({
+                                                                ...formData,
+                                                                portion:
+                                                                    option.value,
+                                                            });
+                                                            setIsPortionDropdownOpen(
+                                                                false,
+                                                            );
                                                         }}
-                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isSelected
-                                                            ? 'bg-blue-50 text-blue-700'
-                                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                                            }`}
+                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                                            isSelected
+                                                                ? "bg-blue-50 text-blue-700"
+                                                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                                        }`}
                                                     >
-                                                        <span>{option.label}</span>
-                                                        {isSelected && <Check className="w-4 h-4 text-blue-600" />}
+                                                        <span>
+                                                            {option.label}
+                                                        </span>
+                                                        {isSelected && (
+                                                            <Check className="w-4 h-4 text-blue-600" />
+                                                        )}
                                                     </button>
                                                 );
                                             })}
@@ -205,20 +275,32 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
 
                 {/* Main Input: Description */}
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu Makanan</label>
+                    <label
+                        htmlFor="quickadd-description"
+                        className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >
+                        Menu Makanan
+                    </label>
                     <div className="relative">
                         <Utensils className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
+                            id="quickadd-description"
                             ref={descriptionRef}
                             type="text"
                             value={formData.description}
                             onChange={(e) => {
-                                setFormData({ ...formData, description: e.target.value });
+                                setFormData({
+                                    ...formData,
+                                    description: e.target.value,
+                                });
                                 if (error) setError(null);
                             }}
                             placeholder="Apa yang dimakan si kecil?"
-                            className={`w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl text-base font-medium text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:bg-blue-50/30 transition-all ${error ? 'ring-2 ring-red-500/20 bg-red-50/50' : ''
-                                }`}
+                            className={`w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl text-base font-medium text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:bg-blue-50/30 transition-all ${
+                                error
+                                    ? "ring-2 ring-red-500/20 bg-red-50/50"
+                                    : ""
+                            }`}
                         />
                     </div>
                 </div>
@@ -226,24 +308,52 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                 {/* Secondary Inputs: Ingredients & Notes */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Bahan (Opsional)</label>
+                        <label
+                            htmlFor="quickadd-ingredients"
+                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                            Bahan (Opsional)
+                        </label>
                         <input
+                            id="quickadd-ingredients"
                             type="text"
                             value={formData.ingredients}
-                            onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    ingredients: e.target.value,
+                                })
+                            }
                             placeholder="Contoh: Bayam, Wortel"
                             className="w-full px-3 py-2 bg-transparent border-b border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:outline-none transition-colors"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Catatan (Opsional)</label>
+                        <label
+                            htmlFor="quickadd-notes"
+                            className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        >
+                            Catatan (Opsional)
+                        </label>
                         <input
+                            id="quickadd-notes"
                             type="text"
                             value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    notes: e.target.value,
+                                })
+                            }
                             placeholder="Ada catatan khusus?"
+                            maxLength={NOTES_MAX_LENGTH}
                             className="w-full px-3 py-2 bg-transparent border-b border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:outline-none transition-colors"
                         />
+                        <p
+                            className={`text-[11px] text-right ${notesCount >= NOTES_MAX_LENGTH * 0.9 ? "text-amber-600" : "text-gray-400"}`}
+                        >
+                            {notesCount}/{NOTES_MAX_LENGTH}
+                        </p>
                     </div>
                 </div>
 
@@ -281,7 +391,11 @@ const QuickAddForm = memo(function QuickAddForm({ childId, onSuccess, initialDat
                         disabled={submitting}
                         className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all shadow-lg shadow-blue-200 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                        {submitting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Plus className="w-4 h-4" />
+                        )}
                         Simpan
                     </button>
                 </div>

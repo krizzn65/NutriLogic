@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { Baby, Search, X, Building2, User, Calendar, Weight, Ruler, ChevronDown, Check } from "lucide-react";
+import {
+    Baby,
+    Search,
+    X,
+    Building2,
+    User,
+    Calendar,
+    Weight,
+    Ruler,
+    ChevronDown,
+    Check,
+} from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { formatAge } from "../../lib/utils";
 import PageHeader from "../ui/PageHeader";
@@ -12,9 +23,9 @@ export default function ChildrenMonitoring() {
     const [children, setChildren] = useState([]);
     const [posyandus, setPosyandus] = useState([]);
     const [filters, setFilters] = useState({
-        name: '',
-        posyandu_id: '',
-        nutritional_status: '',
+        name: "",
+        posyandu_id: "",
+        nutritional_status: "",
     });
     const [selectedChild, setSelectedChild] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -39,86 +50,96 @@ export default function ChildrenMonitoring() {
     const activeChildrenRequestId = React.useRef(0);
     const hasHydratedOnce = React.useRef(false);
 
-    const fetchPosyandus = useCallback(async (forceRefresh = false) => {
-        // Check cache first (skip if forceRefresh)
-        if (!forceRefresh) {
-            const cachedPosyandus = getCachedData('admin_posyandus');
-            if (cachedPosyandus) {
-                setPosyandus(cachedPosyandus);
-                return;
-            }
-        }
-
-        try {
-            const response = await api.get('/admin/posyandus');
-            setPosyandus(response.data.data);
-            setCachedData('admin_posyandus', response.data.data);
-        } catch (err) {
-            console.error('Posyandus fetch error:', err);
-        }
-    }, [getCachedData, setCachedData]);
-
-
-    const fetchChildren = useCallback(async ({ forceRefresh = false, showLoader = false } = {}) => {
-        const hasFilter = filters.name || filters.posyandu_id || filters.nutritional_status;
-
-        if (!hasFilter && !forceRefresh) {
-            const cachedChildren = getCachedData('admin_children');
-            if (cachedChildren) {
-                setChildren(cachedChildren);
-                setLoading(false);
-                return;
-            }
-        }
-
-        if (showLoader) {
-            setLoading(true);
-        }
-
-        setError(null);
-        const params = {};
-        if (filters.name) params.name = filters.name;
-        if (filters.posyandu_id) params.posyandu_id = filters.posyandu_id;
-        if (filters.nutritional_status) params.nutritional_status = filters.nutritional_status;
-        const requestId = ++activeChildrenRequestId.current;
-
-        try {
-            const response = await api.get('/admin/children', { params });
-
-            if (activeChildrenRequestId.current !== requestId) {
-                return;
+    const fetchPosyandus = useCallback(
+        async (forceRefresh = false) => {
+            // Check cache first (skip if forceRefresh)
+            if (!forceRefresh) {
+                const cachedPosyandus = getCachedData("admin_posyandus");
+                if (cachedPosyandus) {
+                    setPosyandus(cachedPosyandus);
+                    return;
+                }
             }
 
-            setChildren(response.data.data);
+            try {
+                const response = await api.get("/admin/posyandus");
+                setPosyandus(response.data.data);
+                setCachedData("admin_posyandus", response.data.data);
+            } catch (err) {
+                console.error("Posyandus fetch error:", err);
+            }
+        },
+        [getCachedData, setCachedData],
+    );
 
-            if (!hasFilter) {
-                setCachedData('admin_children', response.data.data);
-            }
-        } catch (err) {
-            if (activeChildrenRequestId.current !== requestId) {
-                return;
+    const fetchChildren = useCallback(
+        async ({ forceRefresh = false, showLoader = false } = {}) => {
+            const hasFilter =
+                filters.name ||
+                filters.posyandu_id ||
+                filters.nutritional_status;
+
+            if (!hasFilter && !forceRefresh) {
+                const cachedChildren = getCachedData("admin_children");
+                if (cachedChildren) {
+                    setChildren(cachedChildren);
+                    setLoading(false);
+                    return;
+                }
             }
 
-            const errorMessage = err.response?.data?.message || 'Gagal memuat data anak.';
-            setError(errorMessage);
-            console.error('Children fetch error:', err);
-        } finally {
-            if (activeChildrenRequestId.current === requestId) {
-                setLoading(false);
+            if (showLoader) {
+                setLoading(true);
             }
-        }
-    }, [filters, getCachedData, setCachedData]);
+
+            setError(null);
+            const params = {};
+            if (filters.name) params.name = filters.name;
+            if (filters.posyandu_id) params.posyandu_id = filters.posyandu_id;
+            if (filters.nutritional_status)
+                params.nutritional_status = filters.nutritional_status;
+            const requestId = ++activeChildrenRequestId.current;
+
+            try {
+                const response = await api.get("/admin/children", { params });
+
+                if (activeChildrenRequestId.current !== requestId) {
+                    return;
+                }
+
+                setChildren(response.data.data);
+
+                if (!hasFilter) {
+                    setCachedData("admin_children", response.data.data);
+                }
+            } catch (err) {
+                if (activeChildrenRequestId.current !== requestId) {
+                    return;
+                }
+
+                const errorMessage =
+                    err.response?.data?.message || "Gagal memuat data anak.";
+                setError(errorMessage);
+                console.error("Children fetch error:", err);
+            } finally {
+                if (activeChildrenRequestId.current === requestId) {
+                    setLoading(false);
+                }
+            }
+        },
+        [filters, getCachedData, setCachedData],
+    );
 
     useEffect(() => {
         if (hasHydratedOnce.current) return;
         hasHydratedOnce.current = true;
 
-        const cachedPosyandus = getCachedData('admin_posyandus');
+        const cachedPosyandus = getCachedData("admin_posyandus");
         if (cachedPosyandus) {
             setPosyandus(cachedPosyandus);
         }
 
-        const cachedChildren = getCachedData('admin_children');
+        const cachedChildren = getCachedData("admin_children");
         if (cachedChildren) {
             setChildren(cachedChildren);
             setLoading(false);
@@ -129,7 +150,6 @@ export default function ChildrenMonitoring() {
 
         fetchPosyandus();
     }, [fetchPosyandus, fetchChildren, getCachedData]);
-
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -145,9 +165,9 @@ export default function ChildrenMonitoring() {
 
     const handleClearFilters = () => {
         setFilters({
-            name: '',
-            posyandu_id: '',
-            nutritional_status: '',
+            name: "",
+            posyandu_id: "",
+            nutritional_status: "",
         });
     };
 
@@ -157,30 +177,30 @@ export default function ChildrenMonitoring() {
             setSelectedChild(response.data.data);
             setShowDetailModal(true);
         } catch (err) {
-            alert(err.response?.data?.message || 'Gagal memuat detail anak.');
+            alert(err.response?.data?.message || "Gagal memuat detail anak.");
         }
     };
 
     const getStatusColor = (status) => {
-        if (!status) return 'bg-gray-100 text-gray-800';
-        if (status === 'normal') return 'bg-green-100 text-green-800';
-        if (status.includes('sangat')) return 'bg-red-100 text-red-800';
-        return 'bg-orange-100 text-orange-800';
+        if (!status) return "bg-gray-100 text-gray-800";
+        if (status === "normal") return "bg-green-100 text-green-800";
+        if (status.includes("sangat")) return "bg-red-100 text-red-800";
+        return "bg-orange-100 text-orange-800";
     };
 
     const getStatusLabel = (status) => {
         const labels = {
-            normal: 'Normal',
-            kurang: 'Kurang',
-            sangat_kurang: 'Sangat Kurang',
-            pendek: 'Pendek',
-            sangat_pendek: 'Sangat Pendek',
-            kurus: 'Kurus',
-            sangat_kurus: 'Sangat Kurus',
-            lebih: 'Lebih',
-            gemuk: 'Gemuk',
+            normal: "Normal",
+            kurang: "Kurang",
+            sangat_kurang: "Sangat Kurang",
+            pendek: "Pendek",
+            sangat_pendek: "Sangat Pendek",
+            kurus: "Kurus",
+            sangat_kurus: "Sangat Kurus",
+            lebih: "Lebih",
+            gemuk: "Gemuk",
         };
-        return labels[status] || status || '-';
+        return labels[status] || status || "-";
     };
 
     if (loading && children.length === 0) {
@@ -196,10 +216,12 @@ export default function ChildrenMonitoring() {
 
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
-            <PageHeader title="Monitoring Data Anak" subtitle="Pantau data anak di seluruh posyandu" />
+            <PageHeader
+                title="Monitoring Data Anak"
+                subtitle="Pantau data anak di seluruh posyandu"
+            />
 
             <div className="flex-1 overflow-auto p-6 space-y-6">
-
                 {/* Filters */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -209,15 +231,24 @@ export default function ChildrenMonitoring() {
                 >
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="col-span-2 md:col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="children-monitor-name"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Nama Anak
                             </label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
+                                    id="children-monitor-name"
                                     type="text"
                                     value={filters.name}
-                                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                                    onChange={(e) =>
+                                        setFilters({
+                                            ...filters,
+                                            name: e.target.value,
+                                        })
+                                    }
                                     placeholder="Cari nama..."
                                     className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                                 />
@@ -225,63 +256,106 @@ export default function ChildrenMonitoring() {
                         </div>
 
                         <div className="col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="children-monitor-posyandu"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Posyandu
                             </label>
                             <div className="relative">
                                 <button
+                                    id="children-monitor-posyandu"
                                     type="button"
-                                    onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                    onClick={() =>
+                                        setIsPosyanduDropdownOpen(
+                                            !isPosyanduDropdownOpen,
+                                        )
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                 >
                                     <span className="text-gray-900 truncate text-sm">
                                         {filters.posyandu_id
-                                            ? posyandus.find(p => p.id === parseInt(filters.posyandu_id))?.name || "Posyandu"
+                                            ? posyandus.find(
+                                                  (p) =>
+                                                      p.id ===
+                                                      parseInt(
+                                                          filters.posyandu_id,
+                                                      ),
+                                              )?.name || "Posyandu"
                                             : "Semua"}
                                     </span>
-                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
+                                    <ChevronDown
+                                        className={`w-4 h-4 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`}
+                                    />
                                 </button>
 
                                 <AnimatePresence>
                                     {isPosyanduDropdownOpen && (
                                         <>
-                                            <div className="fixed inset-0 z-10" onClick={() => setIsPosyanduDropdownOpen(false)} />
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() =>
+                                                    setIsPosyanduDropdownOpen(
+                                                        false,
+                                                    )
+                                                }
+                                            />
                                             <motion.div
                                                 initial={{ opacity: 0, y: -10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -10 }}
                                                 className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
                                             >
-                                                <div
+                                                <button
+                                                    type="button"
                                                     onClick={() => {
-                                                        setFilters({ ...filters, posyandu_id: '' });
-                                                        setIsPosyanduDropdownOpen(false);
+                                                        setFilters({
+                                                            ...filters,
+                                                            posyandu_id: "",
+                                                        });
+                                                        setIsPosyanduDropdownOpen(
+                                                            false,
+                                                        );
                                                     }}
-                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                    className="w-full text-left px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                                 >
-                                                    <span className={`text-sm ${filters.posyandu_id === '' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                    <span
+                                                        className={`text-sm ${filters.posyandu_id === "" ? "text-blue-600 font-medium" : "text-gray-700"}`}
+                                                    >
                                                         Semua
                                                     </span>
-                                                    {filters.posyandu_id === '' && (
+                                                    {filters.posyandu_id ===
+                                                        "" && (
                                                         <Check className="w-4 h-4 text-blue-600" />
                                                     )}
-                                                </div>
+                                                </button>
                                                 {posyandus.map((posyandu) => (
-                                                    <div
+                                                    <button
+                                                        type="button"
                                                         key={posyandu.id}
                                                         onClick={() => {
-                                                            setFilters({ ...filters, posyandu_id: posyandu.id });
-                                                            setIsPosyanduDropdownOpen(false);
+                                                            setFilters({
+                                                                ...filters,
+                                                                posyandu_id:
+                                                                    posyandu.id,
+                                                            });
+                                                            setIsPosyanduDropdownOpen(
+                                                                false,
+                                                            );
                                                         }}
-                                                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                        className="w-full text-left px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                                     >
-                                                        <span className={`text-sm ${parseInt(filters.posyandu_id) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                        <span
+                                                            className={`text-sm ${parseInt(filters.posyandu_id) === posyandu.id ? "text-blue-600 font-medium" : "text-gray-700"}`}
+                                                        >
                                                             {posyandu.name}
                                                         </span>
-                                                        {parseInt(filters.posyandu_id) === posyandu.id && (
+                                                        {parseInt(
+                                                            filters.posyandu_id,
+                                                        ) === posyandu.id && (
                                                             <Check className="w-4 h-4 text-blue-600" />
                                                         )}
-                                                    </div>
+                                                    </button>
                                                 ))}
                                             </motion.div>
                                         </>
@@ -291,25 +365,46 @@ export default function ChildrenMonitoring() {
                         </div>
 
                         <div className="col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="children-monitor-status"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Status Gizi
                             </label>
                             <div className="relative">
                                 <button
+                                    id="children-monitor-status"
                                     type="button"
-                                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                                    onClick={() =>
+                                        setIsStatusDropdownOpen(
+                                            !isStatusDropdownOpen,
+                                        )
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                 >
                                     <span className="text-gray-900 truncate text-sm">
-                                        {statusOptions.find(opt => opt.value === filters.nutritional_status)?.label || "Semua"}
+                                        {statusOptions.find(
+                                            (opt) =>
+                                                opt.value ===
+                                                filters.nutritional_status,
+                                        )?.label || "Semua"}
                                     </span>
-                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isStatusDropdownOpen ? "rotate-180" : ""}`} />
+                                    <ChevronDown
+                                        className={`w-4 h-4 text-gray-400 transition-transform ${isStatusDropdownOpen ? "rotate-180" : ""}`}
+                                    />
                                 </button>
 
                                 <AnimatePresence>
                                     {isStatusDropdownOpen && (
                                         <>
-                                            <div className="fixed inset-0 z-10" onClick={() => setIsStatusDropdownOpen(false)} />
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() =>
+                                                    setIsStatusDropdownOpen(
+                                                        false,
+                                                    )
+                                                }
+                                            />
                                             <motion.div
                                                 initial={{ opacity: 0, y: -10 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -317,21 +412,31 @@ export default function ChildrenMonitoring() {
                                                 className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
                                             >
                                                 {statusOptions.map((option) => (
-                                                    <div
+                                                    <button
+                                                        type="button"
                                                         key={option.value}
                                                         onClick={() => {
-                                                            setFilters({ ...filters, nutritional_status: option.value });
-                                                            setIsStatusDropdownOpen(false);
+                                                            setFilters({
+                                                                ...filters,
+                                                                nutritional_status:
+                                                                    option.value,
+                                                            });
+                                                            setIsStatusDropdownOpen(
+                                                                false,
+                                                            );
                                                         }}
-                                                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
+                                                        className="w-full text-left px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group"
                                                     >
-                                                        <span className={`text-sm ${filters.nutritional_status === option.value ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                                                        <span
+                                                            className={`text-sm ${filters.nutritional_status === option.value ? "text-blue-600 font-medium" : "text-gray-700"}`}
+                                                        >
                                                             {option.label}
                                                         </span>
-                                                        {filters.nutritional_status === option.value && (
+                                                        {filters.nutritional_status ===
+                                                            option.value && (
                                                             <Check className="w-4 h-4 text-blue-600" />
                                                         )}
-                                                    </div>
+                                                    </button>
                                                 ))}
                                             </motion.div>
                                         </>
@@ -341,16 +446,18 @@ export default function ChildrenMonitoring() {
                         </div>
 
                         <div className="col-span-2 md:col-span-1">
-                            <label className="hidden md:block text-sm font-medium text-transparent mb-1 select-none">
+                            <p className="hidden md:block text-sm font-medium text-transparent mb-1 select-none">
                                 Filter
-                            </label>
+                            </p>
                             <button
                                 onClick={handleClearFilters}
                                 className="w-full md:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                                 title="Clear Filters"
                             >
                                 <X className="w-5 h-5" />
-                                <span className="md:hidden text-sm font-medium">Reset Filter</span>
+                                <span className="md:hidden text-sm font-medium">
+                                    Reset Filter
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -376,8 +483,12 @@ export default function ChildrenMonitoring() {
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Baby className="w-8 h-8 text-gray-300" />
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900">Tidak ada data anak</h3>
-                            <p className="text-gray-500 text-sm mt-1">Belum ada data yang tersedia.</p>
+                            <h3 className="text-lg font-medium text-gray-900">
+                                Tidak ada data anak
+                            </h3>
+                            <p className="text-gray-500 text-sm mt-1">
+                                Belum ada data yang tersedia.
+                            </p>
                         </div>
                     ) : (
                         children.map((child, index) => (
@@ -385,21 +496,43 @@ export default function ChildrenMonitoring() {
                                 key={child.id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05, duration: 0.3 }}
+                                transition={{
+                                    delay: index * 0.05,
+                                    duration: 0.3,
+                                }}
                                 className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-4"
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${child.gender === 'L' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'}`}>
+                                        <div
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center ${child.gender === "L" ? "bg-blue-100 text-blue-600" : "bg-pink-100 text-pink-600"}`}
+                                        >
                                             <Baby className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-900">{child.full_name}</h3>
-                                            <p className="text-xs text-gray-500">{child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} • {child.age_months ? formatAge(child.age_months) : '-'}</p>
+                                            <h3 className="font-bold text-gray-900">
+                                                {child.full_name}
+                                            </h3>
+                                            <p className="text-xs text-gray-500">
+                                                {child.gender === "L"
+                                                    ? "Laki-laki"
+                                                    : "Perempuan"}{" "}
+                                                •{" "}
+                                                {child.age_months
+                                                    ? formatAge(
+                                                          child.age_months,
+                                                      )
+                                                    : "-"}
+                                            </p>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(child.latest_weighing?.nutritional_status)}`}>
-                                        {getStatusLabel(child.latest_weighing?.nutritional_status)}
+                                    <span
+                                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(child.latest_weighing?.nutritional_status)}`}
+                                    >
+                                        {getStatusLabel(
+                                            child.latest_weighing
+                                                ?.nutritional_status,
+                                        )}
                                     </span>
                                 </div>
 
@@ -407,20 +540,26 @@ export default function ChildrenMonitoring() {
                                     {child.parent && (
                                         <div className="flex items-center gap-2">
                                             <User className="w-4 h-4 text-gray-400" />
-                                            <span className="font-medium text-gray-900">{child.parent.name}</span>
+                                            <span className="font-medium text-gray-900">
+                                                {child.parent.name}
+                                            </span>
                                         </div>
                                     )}
                                     {child.posyandu && (
                                         <div className="flex items-center gap-2">
                                             <Building2 className="w-4 h-4 text-gray-400" />
-                                            <span className="font-medium text-gray-900">{child.posyandu.name}</span>
+                                            <span className="font-medium text-gray-900">
+                                                {child.posyandu.name}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="pt-3 border-t border-gray-100">
                                     <button
-                                        onClick={() => handleViewDetail(child.id)}
+                                        onClick={() =>
+                                            handleViewDetail(child.id)
+                                        }
                                         className="w-full py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
                                     >
                                         Lihat Detail
@@ -437,18 +576,33 @@ export default function ChildrenMonitoring() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Nama Anak</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Umur</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Orang Tua</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Posyandu</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status Gizi</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Aksi</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Nama Anak
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Umur
+                                    </th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Orang Tua
+                                    </th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Posyandu
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Status Gizi
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {children.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="py-8 text-center text-gray-500">
+                                        <td
+                                            colSpan="6"
+                                            className="py-8 text-center text-gray-500"
+                                        >
                                             Tidak ada data anak
                                         </td>
                                     </tr>
@@ -458,22 +612,34 @@ export default function ChildrenMonitoring() {
                                             key={child.id}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                                            transition={{
+                                                delay: index * 0.05,
+                                                duration: 0.3,
+                                            }}
                                             className="border-b border-gray-100 hover:bg-gray-50"
                                         >
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <Baby className="w-5 h-5 text-blue-600" />
                                                     <div>
-                                                        <div className="font-medium text-gray-800">{child.full_name}</div>
+                                                        <div className="font-medium text-gray-800">
+                                                            {child.full_name}
+                                                        </div>
                                                         <div className="text-xs text-gray-500">
-                                                            {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                                            {child.gender ===
+                                                            "L"
+                                                                ? "Laki-laki"
+                                                                : "Perempuan"}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-center text-sm text-gray-600">
-                                                {child.age_months ? formatAge(child.age_months) : '-'}
+                                                {child.age_months
+                                                    ? formatAge(
+                                                          child.age_months,
+                                                      )
+                                                    : "-"}
                                             </td>
                                             <td className="py-3 px-4">
                                                 {child.parent ? (
@@ -482,7 +648,9 @@ export default function ChildrenMonitoring() {
                                                         {child.parent.name}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-sm text-gray-400">-</span>
+                                                    <span className="text-sm text-gray-400">
+                                                        -
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4">
@@ -492,18 +660,31 @@ export default function ChildrenMonitoring() {
                                                         {child.posyandu.name}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-sm text-gray-400">-</span>
+                                                    <span className="text-sm text-gray-400">
+                                                        -
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(child.latest_weighing?.nutritional_status)
-                                                    }`}>
-                                                    {getStatusLabel(child.latest_weighing?.nutritional_status)}
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                                        child.latest_weighing
+                                                            ?.nutritional_status,
+                                                    )}`}
+                                                >
+                                                    {getStatusLabel(
+                                                        child.latest_weighing
+                                                            ?.nutritional_status,
+                                                    )}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <button
-                                                    onClick={() => handleViewDetail(child.id)}
+                                                    onClick={() =>
+                                                        handleViewDetail(
+                                                            child.id,
+                                                        )
+                                                    }
                                                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                                 >
                                                     Lihat Detail
@@ -537,43 +718,43 @@ export default function ChildrenMonitoring() {
 // Child Detail Modal
 function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
     const controls = useDragControls();
-    const [activeTab, setActiveTab] = useState('weighing');
+    const [activeTab, setActiveTab] = useState("weighing");
 
     // Helper for date formatting
     const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
+        if (!dateString) return "-";
+        return new Date(dateString).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
         });
     };
 
     const tabs = [
-        { id: 'weighing', label: 'Penimbangan', icon: '⚖️' },
-        { id: 'vitamin', label: 'Vitamin', icon: '💊' },
-        { id: 'immunization', label: 'Imunisasi', icon: '💉' },
-        { id: 'meal', label: 'Makanan', icon: '🍽️' },
-        { id: 'pmt', label: 'PMT', icon: '🥛' },
+        { id: "weighing", label: "Penimbangan", icon: "⚖️" },
+        { id: "vitamin", label: "Vitamin", icon: "💊" },
+        { id: "immunization", label: "Imunisasi", icon: "💉" },
+        { id: "meal", label: "Makanan", icon: "🍽️" },
+        { id: "pmt", label: "PMT", icon: "🥛" },
     ];
 
     // Get PMT status color
     const getPmtStatusColor = (status) => {
         const colors = {
-            consumed: 'bg-green-100 text-green-700',
-            partial: 'bg-yellow-100 text-yellow-700',
-            refused: 'bg-red-100 text-red-700',
+            consumed: "bg-green-100 text-green-700",
+            partial: "bg-yellow-100 text-yellow-700",
+            refused: "bg-red-100 text-red-700",
         };
-        return colors[status] || 'bg-gray-100 text-gray-700';
+        return colors[status] || "bg-gray-100 text-gray-700";
     };
 
     const getPmtStatusLabel = (status) => {
         const labels = {
-            consumed: 'Habis',
-            partial: 'Sebagian',
-            refused: 'Tidak Mau',
+            consumed: "Habis",
+            partial: "Sebagian",
+            refused: "Tidak Mau",
         };
-        return labels[status] || status || '-';
+        return labels[status] || status || "-";
     };
 
     return (
@@ -613,7 +794,9 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
 
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
-                    <h2 className="text-xl font-bold text-gray-800">Detail Anak</h2>
+                    <h2 className="text-xl font-bold text-gray-800">
+                        Detail Anak
+                    </h2>
                     <button
                         onClick={onClose}
                         className="hidden md:flex p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -626,27 +809,49 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
                     {/* Basic Info */}
                     <section>
-                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Informasi Dasar</h3>
+                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">
+                            Informasi Dasar
+                        </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Nama Lengkap</label>
-                                <p className="text-base font-medium text-gray-900">{child.full_name}</p>
+                                <p className="block text-xs font-medium text-gray-500 mb-1">
+                                    Nama Lengkap
+                                </p>
+                                <p className="text-base font-medium text-gray-900">
+                                    {child.full_name}
+                                </p>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Jenis Kelamin</label>
+                                <p className="block text-xs font-medium text-gray-500 mb-1">
+                                    Jenis Kelamin
+                                </p>
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${child.gender === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}`}>
-                                        {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                    <span
+                                        className={`px-2 py-1 rounded-md text-xs font-medium ${child.gender === "L" ? "bg-blue-50 text-blue-700" : "bg-pink-50 text-pink-700"}`}
+                                    >
+                                        {child.gender === "L"
+                                            ? "Laki-laki"
+                                            : "Perempuan"}
                                     </span>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Tanggal Lahir</label>
-                                <p className="text-base text-gray-900">{formatDate(child.birth_date)}</p>
+                                <p className="block text-xs font-medium text-gray-500 mb-1">
+                                    Tanggal Lahir
+                                </p>
+                                <p className="text-base text-gray-900">
+                                    {formatDate(child.birth_date)}
+                                </p>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Umur</label>
-                                <p className="text-base text-gray-900">{child.age_months ? formatAge(child.age_months) : '-'}</p>
+                                <p className="block text-xs font-medium text-gray-500 mb-1">
+                                    Umur
+                                </p>
+                                <p className="text-base text-gray-900">
+                                    {child.age_months
+                                        ? formatAge(child.age_months)
+                                        : "-"}
+                                </p>
                             </div>
                         </div>
                     </section>
@@ -654,24 +859,38 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                     {/* Parent Info */}
                     {child.parent && (
                         <section className="border-t border-gray-100 pt-6">
-                            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Informasi Orang Tua</h3>
+                            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">
+                                Informasi Orang Tua
+                            </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nama Orang Tua</label>
+                                    <p className="block text-xs font-medium text-gray-500 mb-1">
+                                        Nama Orang Tua
+                                    </p>
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
                                             <User className="w-4 h-4" />
                                         </div>
-                                        <p className="text-base font-medium text-gray-900">{child.parent.name}</p>
+                                        <p className="text-base font-medium text-gray-900">
+                                            {child.parent.name}
+                                        </p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
-                                    <p className="text-base text-gray-900">{child.parent.email || '-'}</p>
+                                    <p className="block text-xs font-medium text-gray-500 mb-1">
+                                        Email
+                                    </p>
+                                    <p className="text-base text-gray-900">
+                                        {child.parent.email || "-"}
+                                    </p>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nomor Telepon</label>
-                                    <p className="text-base text-gray-900">{child.parent.phone || '-'}</p>
+                                    <p className="block text-xs font-medium text-gray-500 mb-1">
+                                        Nomor Telepon
+                                    </p>
+                                    <p className="text-base text-gray-900">
+                                        {child.parent.phone || "-"}
+                                    </p>
                                 </div>
                             </div>
                         </section>
@@ -680,17 +899,23 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                     {/* Posyandu Info */}
                     {child.posyandu && (
                         <section className="border-t border-gray-100 pt-6">
-                            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Lokasi Posyandu</h3>
+                            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">
+                                Lokasi Posyandu
+                            </h3>
                             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                                 <div className="flex items-start gap-3">
                                     <div className="p-2 bg-white rounded-lg shadow-sm">
                                         <Building2 className="w-5 h-5 text-blue-600" />
                                     </div>
                                     <div>
-                                        <h4 className="font-medium text-gray-900">{child.posyandu.name}</h4>
+                                        <h4 className="font-medium text-gray-900">
+                                            {child.posyandu.name}
+                                        </h4>
                                         <p className="text-sm text-gray-500 mt-1">
-                                            {child.posyandu.address && `${child.posyandu.address}, `}
-                                            {child.posyandu.village}, {child.posyandu.city}
+                                            {child.posyandu.address &&
+                                                `${child.posyandu.address}, `}
+                                            {child.posyandu.village},{" "}
+                                            {child.posyandu.city}
                                         </p>
                                     </div>
                                 </div>
@@ -700,17 +925,20 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
 
                     {/* Tab Navigation */}
                     <section className="border-t border-gray-100 pt-6">
-                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Riwayat Anak</h3>
+                        <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">
+                            Riwayat Anak
+                        </h3>
 
                         <div className="flex gap-1 overflow-x-auto pb-2 mb-4">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                                        activeTab === tab.id
+                                            ? "bg-blue-600 text-white shadow-md"
+                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
                                 >
                                     <span>{tab.icon}</span>
                                     <span>{tab.label}</span>
@@ -720,36 +948,65 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
 
                         {/* Tab Content */}
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-
                             {/* Weighing Tab */}
-                            {activeTab === 'weighing' && (
+                            {activeTab === "weighing" && (
                                 <>
-                                    {child.weighing_logs && child.weighing_logs.length > 0 ? (
+                                    {child.weighing_logs &&
+                                    child.weighing_logs.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm">
                                                 <thead className="bg-gray-50/50 border-b border-gray-100">
                                                     <tr>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
-                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Berat (kg)</th>
-                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Tinggi (cm)</th>
-                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Status Gizi</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Tanggal
+                                                        </th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">
+                                                            Berat (kg)
+                                                        </th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">
+                                                            Tinggi (cm)
+                                                        </th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">
+                                                            Status Gizi
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
-                                                    {child.weighing_logs.slice(0, 10).map((weighing) => (
-                                                        <tr key={weighing.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-3 px-4 text-gray-900 font-medium">
-                                                                {formatDate(weighing.measured_at)}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-center text-gray-700">{weighing.weight_kg}</td>
-                                                            <td className="py-3 px-4 text-center text-gray-700">{weighing.height_cm}</td>
-                                                            <td className="py-3 px-4 text-center">
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(weighing.nutritional_status)}`}>
-                                                                    {getStatusLabel(weighing.nutritional_status)}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                    {child.weighing_logs
+                                                        .slice(0, 10)
+                                                        .map((weighing) => (
+                                                            <tr
+                                                                key={
+                                                                    weighing.id
+                                                                }
+                                                                className="hover:bg-gray-50/50 transition-colors"
+                                                            >
+                                                                <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                    {formatDate(
+                                                                        weighing.measured_at,
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3 px-4 text-center text-gray-700">
+                                                                    {
+                                                                        weighing.weight_kg
+                                                                    }
+                                                                </td>
+                                                                <td className="py-3 px-4 text-center text-gray-700">
+                                                                    {
+                                                                        weighing.height_cm
+                                                                    }
+                                                                </td>
+                                                                <td className="py-3 px-4 text-center">
+                                                                    <span
+                                                                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(weighing.nutritional_status)}`}
+                                                                    >
+                                                                        {getStatusLabel(
+                                                                            weighing.nutritional_status,
+                                                                        )}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -758,165 +1015,266 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
                                                 <Weight className="w-6 h-6 text-gray-400" />
                                             </div>
-                                            <p className="text-gray-500 font-medium">Belum ada riwayat penimbangan</p>
+                                            <p className="text-gray-500 font-medium">
+                                                Belum ada riwayat penimbangan
+                                            </p>
                                         </div>
                                     )}
                                 </>
                             )}
 
                             {/* Vitamin Tab */}
-                            {activeTab === 'vitamin' && (
+                            {activeTab === "vitamin" && (
                                 <>
-                                    {child.vitamin_distributions && child.vitamin_distributions.length > 0 ? (
+                                    {child.vitamin_distributions &&
+                                    child.vitamin_distributions.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm">
                                                 <thead className="bg-gray-50/50 border-b border-gray-100">
                                                     <tr>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Jenis Vitamin</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Tanggal
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Jenis Vitamin
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Catatan
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
-                                                    {child.vitamin_distributions.slice(0, 10).map((vitamin) => (
-                                                        <tr key={vitamin.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-3 px-4 text-gray-900 font-medium">
-                                                                {formatDate(vitamin.distribution_date)}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-700">
-                                                                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                                                                    {vitamin.vitamin_type}
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-600">{vitamin.notes || '-'}</td>
-                                                        </tr>
-                                                    ))}
+                                                    {child.vitamin_distributions
+                                                        .slice(0, 10)
+                                                        .map((vitamin) => (
+                                                            <tr
+                                                                key={vitamin.id}
+                                                                className="hover:bg-gray-50/50 transition-colors"
+                                                            >
+                                                                <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                    {formatDate(
+                                                                        vitamin.distribution_date,
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-700">
+                                                                    <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                                                                        {
+                                                                            vitamin.vitamin_type
+                                                                        }
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-600">
+                                                                    {vitamin.notes ||
+                                                                        "-"}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">💊</div>
-                                            <p className="text-gray-500 font-medium">Belum ada riwayat vitamin</p>
+                                            <div className="text-4xl mb-3">
+                                                💊
+                                            </div>
+                                            <p className="text-gray-500 font-medium">
+                                                Belum ada riwayat vitamin
+                                            </p>
                                         </div>
                                     )}
                                 </>
                             )}
 
                             {/* Immunization Tab */}
-                            {activeTab === 'immunization' && (
+                            {activeTab === "immunization" && (
                                 <>
-                                    {child.immunization_records && child.immunization_records.length > 0 ? (
+                                    {child.immunization_records &&
+                                    child.immunization_records.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm">
                                                 <thead className="bg-gray-50/50 border-b border-gray-100">
                                                     <tr>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Jenis Imunisasi</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Tanggal
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Jenis Imunisasi
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Catatan
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
-                                                    {child.immunization_records.slice(0, 10).map((record) => (
-                                                        <tr key={record.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-3 px-4 text-gray-900 font-medium">
-                                                                {formatDate(record.immunization_date)}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-700">
-                                                                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                                                                    {record.vaccine_type}
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-600">{record.notes || '-'}</td>
-                                                        </tr>
-                                                    ))}
+                                                    {child.immunization_records
+                                                        .slice(0, 10)
+                                                        .map((record) => (
+                                                            <tr
+                                                                key={record.id}
+                                                                className="hover:bg-gray-50/50 transition-colors"
+                                                            >
+                                                                <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                    {formatDate(
+                                                                        record.immunization_date,
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-700">
+                                                                    <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                                                                        {
+                                                                            record.vaccine_type
+                                                                        }
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-600">
+                                                                    {record.notes ||
+                                                                        "-"}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">💉</div>
-                                            <p className="text-gray-500 font-medium">Belum ada riwayat imunisasi</p>
+                                            <div className="text-4xl mb-3">
+                                                💉
+                                            </div>
+                                            <p className="text-gray-500 font-medium">
+                                                Belum ada riwayat imunisasi
+                                            </p>
                                         </div>
                                     )}
                                 </>
                             )}
 
                             {/* Meal Tab */}
-                            {activeTab === 'meal' && (
+                            {activeTab === "meal" && (
                                 <>
-                                    {child.meal_logs && child.meal_logs.length > 0 ? (
+                                    {child.meal_logs &&
+                                    child.meal_logs.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm">
                                                 <thead className="bg-gray-50/50 border-b border-gray-100">
                                                     <tr>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Waktu Makan</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Menu</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Tanggal
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Waktu Makan
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Menu
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Catatan
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
-                                                    {child.meal_logs.slice(0, 10).map((meal) => (
-                                                        <tr key={meal.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-3 px-4 text-gray-900 font-medium">
-                                                                {formatDate(meal.eaten_at)}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-700">
-                                                                <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium capitalize">
-                                                                    {meal.time_of_day}
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-700">{meal.description || '-'}</td>
-                                                            <td className="py-3 px-4 text-gray-600">{meal.notes || '-'}</td>
-                                                        </tr>
-                                                    ))}
+                                                    {child.meal_logs
+                                                        .slice(0, 10)
+                                                        .map((meal) => (
+                                                            <tr
+                                                                key={meal.id}
+                                                                className="hover:bg-gray-50/50 transition-colors"
+                                                            >
+                                                                <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                    {formatDate(
+                                                                        meal.eaten_at,
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-700">
+                                                                    <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium capitalize">
+                                                                        {
+                                                                            meal.time_of_day
+                                                                        }
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-700">
+                                                                    {meal.description ||
+                                                                        "-"}
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-600">
+                                                                    {meal.notes ||
+                                                                        "-"}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">🍽️</div>
-                                            <p className="text-gray-500 font-medium">Belum ada riwayat jurnal makan</p>
+                                            <div className="text-4xl mb-3">
+                                                🍽️
+                                            </div>
+                                            <p className="text-gray-500 font-medium">
+                                                Belum ada riwayat jurnal makan
+                                            </p>
                                         </div>
                                     )}
                                 </>
                             )}
 
                             {/* PMT Tab */}
-                            {activeTab === 'pmt' && (
+                            {activeTab === "pmt" && (
                                 <>
-                                    {child.pmt_logs && child.pmt_logs.length > 0 ? (
+                                    {child.pmt_logs &&
+                                    child.pmt_logs.length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm">
                                                 <thead className="bg-gray-50/50 border-b border-gray-100">
                                                     <tr>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Tanggal</th>
-                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">Status Konsumsi</th>
-                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">Catatan</th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Tanggal
+                                                        </th>
+                                                        <th className="text-center py-3 px-4 font-medium text-gray-500">
+                                                            Status Konsumsi
+                                                        </th>
+                                                        <th className="text-left py-3 px-4 font-medium text-gray-500">
+                                                            Catatan
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
-                                                    {child.pmt_logs.slice(0, 10).map((pmt) => (
-                                                        <tr key={pmt.id} className="hover:bg-gray-50/50 transition-colors">
-                                                            <td className="py-3 px-4 text-gray-900 font-medium">
-                                                                {formatDate(pmt.date)}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-center">
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getPmtStatusColor(pmt.status)}`}>
-                                                                    {getPmtStatusLabel(pmt.status)}
-                                                                </span>
-                                                            </td>
-                                                            <td className="py-3 px-4 text-gray-600">{pmt.notes || '-'}</td>
-                                                        </tr>
-                                                    ))}
+                                                    {child.pmt_logs
+                                                        .slice(0, 10)
+                                                        .map((pmt) => (
+                                                            <tr
+                                                                key={pmt.id}
+                                                                className="hover:bg-gray-50/50 transition-colors"
+                                                            >
+                                                                <td className="py-3 px-4 text-gray-900 font-medium">
+                                                                    {formatDate(
+                                                                        pmt.date,
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3 px-4 text-center">
+                                                                    <span
+                                                                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getPmtStatusColor(pmt.status)}`}
+                                                                    >
+                                                                        {getPmtStatusLabel(
+                                                                            pmt.status,
+                                                                        )}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-3 px-4 text-gray-600">
+                                                                    {pmt.notes ||
+                                                                        "-"}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">🥛</div>
-                                            <p className="text-gray-500 font-medium">Belum ada riwayat PMT</p>
+                                            <div className="text-4xl mb-3">
+                                                🥛
+                                            </div>
+                                            <p className="text-gray-500 font-medium">
+                                                Belum ada riwayat PMT
+                                            </p>
                                         </div>
                                     )}
                                 </>
@@ -938,4 +1296,3 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
         </div>
     );
 }
-

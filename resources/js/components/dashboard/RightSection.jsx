@@ -1,6 +1,6 @@
-import React from 'react';
-import ChildProfileCard from './ChildProfileCard';
-import { Calendar } from '../ui/calendar';
+import React from "react";
+import ChildProfileCard from "./ChildProfileCard";
+import { Calendar } from "../ui/calendar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,20 +19,27 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Icon } from "@iconify/react";
-import { useNavigate } from 'react-router-dom';
-import { logoutWithApi } from '../../lib/auth';
-import { useProfileModal } from '../../contexts/ProfileModalContext';
-import { useSettingsModal } from '../../contexts/SettingsModalContext';
+import { useNavigate } from "react-router-dom";
+import { logoutWithApi } from "../../lib/auth";
+import { useProfileModal } from "../../contexts/ProfileModalContext";
+import { useSettingsModal } from "../../contexts/SettingsModalContext";
 
-export default function RightSection({ user, childrenData, schedules, selectedChildId, onSelectChild }) {
+export default function RightSection({
+    user,
+    childrenData,
+    schedules,
+    selectedChildId,
+    onSelectChild,
+}) {
     const navigate = useNavigate();
     const { openProfileModal } = useProfileModal();
     const { openSettingsModal } = useSettingsModal();
 
     // Get the display child (selected or featured)
     const displayChild = selectedChildId
-        ? childrenData?.find(c => c.id === selectedChildId)
-        : (childrenData?.find(c => c.latest_nutritional_status?.is_at_risk) || childrenData?.[0]);
+        ? childrenData?.find((c) => c.id === selectedChildId)
+        : childrenData?.find((c) => c.latest_nutritional_status?.is_at_risk) ||
+          childrenData?.[0];
 
     const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
@@ -47,35 +54,57 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
 
     return (
         <div className="flex flex-col gap-10">
-
-
             <div className="shrink-0">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800">Kartu Anak</h3>
+                    <h3 className="text-lg font-bold text-gray-800">
+                        Kartu Anak
+                    </h3>
 
                     {/* Child Selector Dropdown */}
                     {childrenData && childrenData.length > 0 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm">
-                                    <Icon icon="lucide:users" className="text-gray-500 w-4 h-4" />
-                                    <span className="truncate max-w-[120px]">{displayChild?.full_name || "Pilih Anak"}</span>
-                                    <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4" />
+                                    <Icon
+                                        icon="lucide:users"
+                                        className="text-gray-500 w-4 h-4"
+                                    />
+                                    <span className="truncate max-w-[120px]">
+                                        {displayChild?.full_name ||
+                                            "Pilih Anak"}
+                                    </span>
+                                    <Icon
+                                        icon="lucide:chevron-down"
+                                        className="text-gray-400 w-4 h-4"
+                                    />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1">
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-1"
+                            >
                                 {childrenData.map((child) => (
                                     <DropdownMenuItem
                                         key={child.id}
-                                        onClick={() => onSelectChild && onSelectChild(child.id)}
+                                        onClick={() =>
+                                            onSelectChild &&
+                                            onSelectChild(child.id)
+                                        }
                                         className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                                     >
                                         <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-600 font-bold">
-                                            {(child.full_name || '?')[0]}
+                                            {(child.full_name || "?")[0]}
                                         </div>
-                                        <span className="truncate">{child.full_name || 'Nama Anak'}</span>
-                                        {child.id === (selectedChildId || displayChild?.id) && (
-                                            <Icon icon="lucide:check" className="ml-auto text-blue-600 w-4 h-4" />
+                                        <span className="truncate">
+                                            {child.full_name || "Nama Anak"}
+                                        </span>
+                                        {child.id ===
+                                            (selectedChildId ||
+                                                displayChild?.id) && (
+                                            <Icon
+                                                icon="lucide:check"
+                                                className="ml-auto text-blue-600 w-4 h-4"
+                                            />
                                         )}
                                     </DropdownMenuItem>
                                 ))}
@@ -88,7 +117,9 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
                     <ChildProfileCard child={displayChild} />
                 ) : (
                     <div className="bg-blue-50 rounded-[30px] p-8 text-center border border-blue-100 border-dashed">
-                        <p className="text-blue-600 font-medium">Belum ada data anak</p>
+                        <p className="text-blue-600 font-medium">
+                            Belum ada data anak
+                        </p>
                     </div>
                 )}
             </div>
@@ -99,12 +130,21 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
             </div>
 
             {/* Logout Confirmation Dialog */}
-            <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-                <DialogContent className="sm:max-w-[425px] rounded-[30px] p-6 bg-white">
+            <Dialog
+                open={showLogoutConfirm}
+                onOpenChange={setShowLogoutConfirm}
+            >
+                <DialogContent
+                    size="sm"
+                    className="rounded-[30px] p-6 bg-white"
+                >
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-gray-900">Konfirmasi Logout</DialogTitle>
+                        <DialogTitle className="text-xl font-bold text-gray-900">
+                            Konfirmasi Logout
+                        </DialogTitle>
                         <DialogDescription className="text-gray-500 mt-2">
-                            Apakah Anda yakin ingin keluar dari aplikasi? Anda harus login kembali untuk mengakses akun Anda.
+                            Apakah Anda yakin ingin keluar dari aplikasi? Anda
+                            harus login kembali untuk mengakses akun Anda.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-3 mt-6">
@@ -126,5 +166,4 @@ export default function RightSection({ user, childrenData, schedules, selectedCh
             </Dialog>
         </div>
     );
-
 }

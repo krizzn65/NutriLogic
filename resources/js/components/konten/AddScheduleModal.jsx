@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Calendar, Clock, MapPin, FileText, Save, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+    X,
+    Calendar,
+    Clock,
+    MapPin,
+    FileText,
+    Save,
+    AlertCircle,
+    ChevronLeft,
+    ChevronRight,
+} from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { createPortal } from "react-dom";
 import api from "../../lib/api";
@@ -50,10 +60,16 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
         };
 
         const handleClickOutside = (e) => {
-            if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
+            if (
+                datePickerRef.current &&
+                !datePickerRef.current.contains(e.target)
+            ) {
                 setIsDatePickerOpen(false);
             }
-            if (timePickerRef.current && !timePickerRef.current.contains(e.target)) {
+            if (
+                timePickerRef.current &&
+                !timePickerRef.current.contains(e.target)
+            ) {
                 setIsTimePickerOpen(false);
             }
         };
@@ -68,9 +84,9 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
     };
 
@@ -80,11 +96,13 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
         setError(null);
 
         try {
-            await api.post('/kader/schedules', formData);
+            await api.post("/kader/schedules", formData);
             onSuccess?.();
             onClose();
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Gagal menyimpan jadwal. Silakan coba lagi.';
+            const errorMessage =
+                err.response?.data?.message ||
+                "Gagal menyimpan jadwal. Silakan coba lagi.";
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -92,37 +110,56 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
     };
 
     // Date Picker Helpers
-    const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    const firstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    const daysInMonth = (date) =>
+        new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const firstDayOfMonth = (date) =>
+        new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 
     const handleDateSelect = (day) => {
-        const newDate = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day);
+        const newDate = new Date(
+            pickerDate.getFullYear(),
+            pickerDate.getMonth(),
+            day,
+        );
         const offset = newDate.getTimezoneOffset();
-        const localDate = new Date(newDate.getTime() - (offset * 60 * 1000));
-        setFormData(prev => ({ ...prev, scheduled_for: localDate.toISOString().split('T')[0] }));
+        const localDate = new Date(newDate.getTime() - offset * 60 * 1000);
+        setFormData((prev) => ({
+            ...prev,
+            scheduled_for: localDate.toISOString().split("T")[0],
+        }));
         setIsDatePickerOpen(false);
     };
 
     const changeMonth = (offset) => {
-        setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() + offset, 1));
+        setPickerDate(
+            new Date(
+                pickerDate.getFullYear(),
+                pickerDate.getMonth() + offset,
+                1,
+            ),
+        );
     };
 
     // Time Picker Helpers
-    const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+    const hours = Array.from({ length: 24 }, (_, i) =>
+        i.toString().padStart(2, "0"),
+    );
+    const minutes = Array.from({ length: 60 }, (_, i) =>
+        i.toString().padStart(2, "0"),
+    );
 
     const handleTimeSelect = (type, value) => {
         const currentTime = formData.scheduled_time || "09:00";
-        const [currentHour, currentMinute] = currentTime.split(':');
+        const [currentHour, currentMinute] = currentTime.split(":");
 
         let newTime;
-        if (type === 'hour') {
+        if (type === "hour") {
             newTime = `${value}:${currentMinute}`;
         } else {
             newTime = `${currentHour}:${value}`;
         }
 
-        setFormData(prev => ({ ...prev, scheduled_time: newTime }));
+        setFormData((prev) => ({ ...prev, scheduled_time: newTime }));
     };
 
     if (!isOpen) return null;
@@ -155,7 +192,11 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                         initial={{ opacity: 0, y: "100%" }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: "100%" }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        transition={{
+                            type: "spring",
+                            damping: 25,
+                            stiffness: 300,
+                        }}
                         className="relative w-full md:max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl md:rounded-2xl shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -170,9 +211,12 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                         {/* Header */}
                         <div className="sticky top-0 md:top-0 z-10 flex items-center justify-between p-4 md:p-6 bg-white border-b border-gray-200 md:rounded-t-2xl">
                             <div>
-                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Tambah Jadwal Posyandu</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+                                    Tambah Jadwal Posyandu
+                                </h2>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Buat jadwal kegiatan untuk semua anak di posyandu Anda
+                                    Buat jadwal kegiatan untuk semua anak di
+                                    posyandu Anda
                                 </p>
                             </div>
                             <button
@@ -184,7 +228,10 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+                        <form
+                            onSubmit={handleSubmit}
+                            className="p-6 md:p-8 space-y-6"
+                        >
                             {error && (
                                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3">
                                     <AlertCircle className="w-5 h-5" />
@@ -194,11 +241,16 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
                             {/* Title */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                <label
+                                    htmlFor="schedule-title"
+                                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
+                                >
                                     <FileText className="w-4 h-4 text-blue-500" />
-                                    Judul Kegiatan <span className="text-red-500">*</span>
+                                    Judul Kegiatan{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <input
+                                    id="schedule-title"
                                     type="text"
                                     name="title"
                                     value={formData.title}
@@ -212,22 +264,50 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Date Picker */}
                                 <div className="relative" ref={datePickerRef}>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                        <Calendar className="w-4 h-4 text-blue-500" />
-                                        Tanggal <span className="text-red-500">*</span>
-                                    </label>
-                                    <div
-                                        onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                                        className={`w-full px-4 py-3 bg-gray-50 border rounded-xl flex items-center justify-between cursor-pointer transition-all ${isDatePickerOpen ? 'border-blue-500 ring-2 ring-blue-500/20 bg-white' : 'border-gray-200 hover:bg-gray-100'
-                                            }`}
+                                    <label
+                                        htmlFor="schedule-date-picker"
+                                        className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
                                     >
-                                        <span className={formData.scheduled_for ? "text-gray-900" : "text-gray-400"}>
+                                        <Calendar className="w-4 h-4 text-blue-500" />
+                                        Tanggal{" "}
+                                        <span className="text-red-500">*</span>
+                                    </label>
+                                    <button
+                                        id="schedule-date-picker"
+                                        type="button"
+                                        onClick={() =>
+                                            setIsDatePickerOpen(
+                                                !isDatePickerOpen,
+                                            )
+                                        }
+                                        className={`w-full px-4 py-3 bg-gray-50 border rounded-xl flex items-center justify-between cursor-pointer transition-all ${
+                                            isDatePickerOpen
+                                                ? "border-blue-500 ring-2 ring-blue-500/20 bg-white"
+                                                : "border-gray-200 hover:bg-gray-100"
+                                        }`}
+                                    >
+                                        <span
+                                            className={
+                                                formData.scheduled_for
+                                                    ? "text-gray-900"
+                                                    : "text-gray-400"
+                                            }
+                                        >
                                             {formData.scheduled_for
-                                                ? new Date(formData.scheduled_for).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                                                ? new Date(
+                                                      formData.scheduled_for,
+                                                  ).toLocaleDateString(
+                                                      "id-ID",
+                                                      {
+                                                          day: "numeric",
+                                                          month: "long",
+                                                          year: "numeric",
+                                                      },
+                                                  )
                                                 : "Pilih tanggal"}
                                         </span>
                                         <Calendar className="w-4 h-4 text-gray-400" />
-                                    </div>
+                                    </button>
 
                                     <AnimatePresence>
                                         {isDatePickerOpen && (
@@ -240,50 +320,101 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                                                 <div className="flex items-center justify-between mb-4">
                                                     <button
                                                         type="button"
-                                                        onClick={() => changeMonth(-1)}
+                                                        onClick={() =>
+                                                            changeMonth(-1)
+                                                        }
                                                         className="p-1 hover:bg-gray-100 rounded-lg"
                                                     >
                                                         <ChevronLeft className="w-5 h-5 text-gray-600" />
                                                     </button>
                                                     <span className="font-semibold text-gray-800">
-                                                        {pickerDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                        {pickerDate.toLocaleDateString(
+                                                            "id-ID",
+                                                            {
+                                                                month: "long",
+                                                                year: "numeric",
+                                                            },
+                                                        )}
                                                     </span>
                                                     <button
                                                         type="button"
-                                                        onClick={() => changeMonth(1)}
+                                                        onClick={() =>
+                                                            changeMonth(1)
+                                                        }
                                                         className="p-1 hover:bg-gray-100 rounded-lg"
                                                     >
                                                         <ChevronRight className="w-5 h-5 text-gray-600" />
                                                     </button>
                                                 </div>
                                                 <div className="grid grid-cols-7 gap-1 mb-2">
-                                                    {['M', 'S', 'S', 'R', 'K', 'J', 'S'].map((day, i) => (
-                                                        <div key={i} className="text-center text-xs font-medium text-gray-400 py-1">
+                                                    {[
+                                                        "M",
+                                                        "S",
+                                                        "S",
+                                                        "R",
+                                                        "K",
+                                                        "J",
+                                                        "S",
+                                                    ].map((day, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className="text-center text-xs font-medium text-gray-400 py-1"
+                                                        >
                                                             {day}
                                                         </div>
                                                     ))}
                                                 </div>
                                                 <div className="grid grid-cols-7 gap-1">
-                                                    {Array.from({ length: firstDayOfMonth(pickerDate) }).map((_, i) => (
-                                                        <div key={`empty-${i}`} />
+                                                    {Array.from({
+                                                        length: firstDayOfMonth(
+                                                            pickerDate,
+                                                        ),
+                                                    }).map((_, i) => (
+                                                        <div
+                                                            key={`empty-${i}`}
+                                                        />
                                                     ))}
-                                                    {Array.from({ length: daysInMonth(pickerDate) }).map((_, i) => {
+                                                    {Array.from({
+                                                        length: daysInMonth(
+                                                            pickerDate,
+                                                        ),
+                                                    }).map((_, i) => {
                                                         const day = i + 1;
-                                                        const dateStr = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day).toISOString().split('T')[0];
-                                                        const isSelected = formData.scheduled_for === dateStr;
-                                                        const isToday = new Date().toDateString() === new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day).toDateString();
+                                                        const dateStr =
+                                                            new Date(
+                                                                pickerDate.getFullYear(),
+                                                                pickerDate.getMonth(),
+                                                                day,
+                                                            )
+                                                                .toISOString()
+                                                                .split("T")[0];
+                                                        const isSelected =
+                                                            formData.scheduled_for ===
+                                                            dateStr;
+                                                        const isToday =
+                                                            new Date().toDateString() ===
+                                                            new Date(
+                                                                pickerDate.getFullYear(),
+                                                                pickerDate.getMonth(),
+                                                                day,
+                                                            ).toDateString();
 
                                                         return (
                                                             <button
                                                                 key={day}
                                                                 type="button"
-                                                                onClick={() => handleDateSelect(day)}
-                                                                className={`w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-colors ${isSelected
-                                                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                                                    : isToday
-                                                                        ? 'bg-blue-50 text-blue-600 font-bold'
-                                                                        : 'text-gray-700 hover:bg-gray-100'
-                                                                    }`}
+                                                                onClick={() =>
+                                                                    handleDateSelect(
+                                                                        day,
+                                                                    )
+                                                                }
+                                                                className={`w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-colors ${
+                                                                    isSelected
+                                                                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                                                                        : isToday
+                                                                          ? "bg-blue-50 text-blue-600 font-bold"
+                                                                          : "text-gray-700 hover:bg-gray-100"
+                                                                }`}
                                                             >
                                                                 {day}
                                                             </button>
@@ -297,20 +428,39 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
                                 {/* Time Picker */}
                                 <div className="relative" ref={timePickerRef}>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-blue-500" />
-                                        Jam <span className="text-red-500">*</span>
-                                    </label>
-                                    <div
-                                        onClick={() => setIsTimePickerOpen(!isTimePickerOpen)}
-                                        className={`w-full px-4 py-3 bg-gray-50 border rounded-xl flex items-center justify-between cursor-pointer transition-all ${isTimePickerOpen ? 'border-blue-500 ring-2 ring-blue-500/20 bg-white' : 'border-gray-200 hover:bg-gray-100'
-                                            }`}
+                                    <label
+                                        htmlFor="schedule-time-picker"
+                                        className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
                                     >
-                                        <span className={formData.scheduled_time ? "text-gray-900" : "text-gray-400"}>
+                                        <Clock className="w-4 h-4 text-blue-500" />
+                                        Jam{" "}
+                                        <span className="text-red-500">*</span>
+                                    </label>
+                                    <button
+                                        id="schedule-time-picker"
+                                        type="button"
+                                        onClick={() =>
+                                            setIsTimePickerOpen(
+                                                !isTimePickerOpen,
+                                            )
+                                        }
+                                        className={`w-full px-4 py-3 bg-gray-50 border rounded-xl flex items-center justify-between cursor-pointer transition-all ${
+                                            isTimePickerOpen
+                                                ? "border-blue-500 ring-2 ring-blue-500/20 bg-white"
+                                                : "border-gray-200 hover:bg-gray-100"
+                                        }`}
+                                    >
+                                        <span
+                                            className={
+                                                formData.scheduled_time
+                                                    ? "text-gray-900"
+                                                    : "text-gray-400"
+                                            }
+                                        >
                                             {formData.scheduled_time || "--:--"}
                                         </span>
                                         <Clock className="w-4 h-4 text-gray-400" />
-                                    </div>
+                                    </button>
 
                                     <AnimatePresence>
                                         {isTimePickerOpen && (
@@ -325,15 +475,23 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                                                     <div className="sticky top-0 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-500 text-center border-b border-gray-100">
                                                         Jam
                                                     </div>
-                                                    {hours.map(hour => (
+                                                    {hours.map((hour) => (
                                                         <button
                                                             key={hour}
                                                             type="button"
-                                                            onClick={() => handleTimeSelect('hour', hour)}
-                                                            className={`w-full py-2 text-center text-sm hover:bg-gray-50 transition-colors ${formData.scheduled_time?.startsWith(hour)
-                                                                ? 'bg-blue-600 text-white font-bold hover:bg-blue-700'
-                                                                : 'text-gray-700'
-                                                                }`}
+                                                            onClick={() =>
+                                                                handleTimeSelect(
+                                                                    "hour",
+                                                                    hour,
+                                                                )
+                                                            }
+                                                            className={`w-full py-2 text-center text-sm hover:bg-gray-50 transition-colors ${
+                                                                formData.scheduled_time?.startsWith(
+                                                                    hour,
+                                                                )
+                                                                    ? "bg-blue-600 text-white font-bold hover:bg-blue-700"
+                                                                    : "text-gray-700"
+                                                            }`}
                                                         >
                                                             {hour}
                                                         </button>
@@ -345,15 +503,23 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                                                     <div className="sticky top-0 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-500 text-center border-b border-gray-100">
                                                         Menit
                                                     </div>
-                                                    {minutes.map(minute => (
+                                                    {minutes.map((minute) => (
                                                         <button
                                                             key={minute}
                                                             type="button"
-                                                            onClick={() => handleTimeSelect('minute', minute)}
-                                                            className={`w-full py-2 text-center text-sm hover:bg-gray-50 transition-colors ${formData.scheduled_time?.endsWith(minute)
-                                                                ? 'bg-blue-600 text-white font-bold hover:bg-blue-700'
-                                                                : 'text-gray-700'
-                                                                }`}
+                                                            onClick={() =>
+                                                                handleTimeSelect(
+                                                                    "minute",
+                                                                    minute,
+                                                                )
+                                                            }
+                                                            className={`w-full py-2 text-center text-sm hover:bg-gray-50 transition-colors ${
+                                                                formData.scheduled_time?.endsWith(
+                                                                    minute,
+                                                                )
+                                                                    ? "bg-blue-600 text-white font-bold hover:bg-blue-700"
+                                                                    : "text-gray-700"
+                                                            }`}
                                                         >
                                                             {minute}
                                                         </button>
@@ -367,11 +533,16 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
                             {/* Location */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                <label
+                                    htmlFor="schedule-location"
+                                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
+                                >
                                     <MapPin className="w-4 h-4 text-blue-500" />
-                                    Lokasi <span className="text-red-500">*</span>
+                                    Lokasi{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <input
+                                    id="schedule-location"
                                     type="text"
                                     name="location"
                                     value={formData.location}
@@ -384,11 +555,15 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
                             {/* Notes */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                <label
+                                    htmlFor="schedule-notes"
+                                    className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
+                                >
                                     <FileText className="w-4 h-4 text-blue-500" />
                                     Catatan
                                 </label>
                                 <textarea
+                                    id="schedule-notes"
                                     name="notes"
                                     value={formData.notes}
                                     onChange={handleChange}
@@ -430,6 +605,6 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                 </div>
             )}
         </AnimatePresence>,
-        document.body
+        document.body,
     );
 }

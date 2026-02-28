@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { Building2, Plus, Edit2, Power, MapPin, Users, Baby, Search, X } from "lucide-react";
+import {
+    Building2,
+    Plus,
+    Edit2,
+    Power,
+    MapPin,
+    Users,
+    Baby,
+    Search,
+    X,
+} from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
@@ -16,19 +26,20 @@ export default function PosyanduManagement() {
     const [confirmationModal, setConfirmationModal] = useState({
         isOpen: false,
         posyandu: null,
-        action: null // 'aktifkan' or 'nonaktifkan'
+        action: null, // 'aktifkan' or 'nonaktifkan'
     });
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Filtered posyandus based on search
     const filteredPosyandus = useMemo(() => {
         if (!searchTerm) return posyandus;
         const searchLower = searchTerm.toLowerCase();
-        return posyandus.filter(p =>
-            p.name?.toLowerCase().includes(searchLower) ||
-            p.village?.toLowerCase().includes(searchLower) ||
-            p.city?.toLowerCase().includes(searchLower) ||
-            p.rt_rw?.includes(searchTerm)
+        return posyandus.filter(
+            (p) =>
+                p.name?.toLowerCase().includes(searchLower) ||
+                p.village?.toLowerCase().includes(searchLower) ||
+                p.city?.toLowerCase().includes(searchLower) ||
+                p.rt_rw?.includes(searchTerm),
         );
     }, [posyandus, searchTerm]);
 
@@ -41,7 +52,7 @@ export default function PosyanduManagement() {
 
     // Preload all filter data for instant tab switching
     const preloadAllFilters = useCallback(async () => {
-        const filters = ['all', 'active', 'inactive'];
+        const filters = ["all", "active", "inactive"];
 
         for (const filter of filters) {
             const cacheKey = `admin_posyandus_${filter}`;
@@ -49,13 +60,13 @@ export default function PosyanduManagement() {
             if (getCachedData(cacheKey)) continue;
 
             try {
-                const params = filter !== 'all' ? { status: filter } : {};
-                const response = await api.get('/admin/posyandus', { params });
+                const params = filter !== "all" ? { status: filter } : {};
+                const response = await api.get("/admin/posyandus", { params });
                 setCachedData(cacheKey, response.data.data);
 
                 // Also update "all" cache for other pages
-                if (filter === 'all') {
-                    setCachedData('admin_posyandus', response.data.data);
+                if (filter === "all") {
+                    setCachedData("admin_posyandus", response.data.data);
                 }
             } catch (err) {
                 console.error(`Preload ${filter} error:`, err);
@@ -63,54 +74,63 @@ export default function PosyanduManagement() {
         }
     }, [getCachedData, setCachedData]);
 
-    const fetchPosyandus = useCallback(async (targetFilter, { forceRefresh = false, showLoader = false } = {}) => {
-        const cacheKey = `admin_posyandus_${targetFilter}`;
+    const fetchPosyandus = useCallback(
+        async (
+            targetFilter,
+            { forceRefresh = false, showLoader = false } = {},
+        ) => {
+            const cacheKey = `admin_posyandus_${targetFilter}`;
 
-        if (!forceRefresh) {
-            const cachedPosyandus = getCachedData(cacheKey);
-            if (cachedPosyandus) {
-                setPosyandus(cachedPosyandus);
-                setLoading(false);
-                return;
-            }
-        }
-
-        if (showLoader) {
-            setLoading(true);
-        }
-
-        setError(null);
-        const params = targetFilter !== "all" ? { status: targetFilter } : {};
-        const requestId = ++activeRequestId.current;
-
-        try {
-            const response = await api.get('/admin/posyandus', { params });
-
-            // Ignore stale responses that belong to an older request
-            if (activeRequestId.current !== requestId) {
-                return;
+            if (!forceRefresh) {
+                const cachedPosyandus = getCachedData(cacheKey);
+                if (cachedPosyandus) {
+                    setPosyandus(cachedPosyandus);
+                    setLoading(false);
+                    return;
+                }
             }
 
-            setPosyandus(response.data.data);
-            setCachedData(cacheKey, response.data.data);
-
-            if (targetFilter === "all") {
-                setCachedData('admin_posyandus', response.data.data);
-            }
-        } catch (err) {
-            if (activeRequestId.current !== requestId) {
-                return;
+            if (showLoader) {
+                setLoading(true);
             }
 
-            const errorMessage = err.response?.data?.message || 'Gagal memuat data posyandu.';
-            setError(errorMessage);
-            console.error('Posyandus fetch error:', err);
-        } finally {
-            if (activeRequestId.current === requestId) {
-                setLoading(false);
+            setError(null);
+            const params =
+                targetFilter !== "all" ? { status: targetFilter } : {};
+            const requestId = ++activeRequestId.current;
+
+            try {
+                const response = await api.get("/admin/posyandus", { params });
+
+                // Ignore stale responses that belong to an older request
+                if (activeRequestId.current !== requestId) {
+                    return;
+                }
+
+                setPosyandus(response.data.data);
+                setCachedData(cacheKey, response.data.data);
+
+                if (targetFilter === "all") {
+                    setCachedData("admin_posyandus", response.data.data);
+                }
+            } catch (err) {
+                if (activeRequestId.current !== requestId) {
+                    return;
+                }
+
+                const errorMessage =
+                    err.response?.data?.message ||
+                    "Gagal memuat data posyandu.";
+                setError(errorMessage);
+                console.error("Posyandus fetch error:", err);
+            } finally {
+                if (activeRequestId.current === requestId) {
+                    setLoading(false);
+                }
             }
-        }
-    }, [getCachedData, setCachedData]);
+        },
+        [getCachedData, setCachedData],
+    );
 
     useEffect(() => {
         const cacheKey = `admin_posyandus_${filterStatus}`;
@@ -154,7 +174,6 @@ export default function PosyanduManagement() {
         setFilterStatus(newFilter);
     };
 
-
     const handleAddNew = () => {
         setEditingPosyandu(null);
         setShowModal(true);
@@ -166,11 +185,11 @@ export default function PosyanduManagement() {
     };
 
     const handleToggleActive = (posyandu) => {
-        const action = posyandu.is_active ? 'nonaktifkan' : 'aktifkan';
+        const action = posyandu.is_active ? "nonaktifkan" : "aktifkan";
         setConfirmationModal({
             isOpen: true,
             posyandu,
-            action
+            action,
         });
     };
 
@@ -180,9 +199,11 @@ export default function PosyanduManagement() {
 
         // Optimistic update - update UI immediately
         const previousPosyandus = [...posyandus];
-        setPosyandus(prev => prev.map(p =>
-            p.id === posyandu.id ? { ...p, is_active: !p.is_active } : p
-        ));
+        setPosyandus((prev) =>
+            prev.map((p) =>
+                p.id === posyandu.id ? { ...p, is_active: !p.is_active } : p,
+            ),
+        );
 
         // Close modal immediately
         setConfirmationModal({ isOpen: false, posyandu: null, action: null });
@@ -190,21 +211,25 @@ export default function PosyanduManagement() {
         try {
             await api.patch(`/admin/posyandus/${posyandu.id}/toggle-active`);
             // Invalidate all posyandu caches
-            invalidateCache('admin_posyandus');
-            invalidateCache('admin_posyandus_all');
-            invalidateCache('admin_posyandus_active');
-            invalidateCache('admin_posyandus_inactive');
-            invalidateCache('admin_dashboard');
+            invalidateCache("admin_posyandus");
+            invalidateCache("admin_posyandus_all");
+            invalidateCache("admin_posyandus_active");
+            invalidateCache("admin_posyandus_inactive");
+            invalidateCache("admin_dashboard");
             // Fetch fresh data to ensure consistency
-            fetchPosyandus(filterStatus, { forceRefresh: true, showLoader: false });
+            fetchPosyandus(filterStatus, {
+                forceRefresh: true,
+                showLoader: false,
+            });
         } catch (err) {
             // Revert on error
             setPosyandus(previousPosyandus);
-            alert(err.response?.data?.message || 'Gagal mengubah status posyandu.');
+            alert(
+                err.response?.data?.message ||
+                    "Gagal mengubah status posyandu.",
+            );
         }
     };
-
-
 
     if (loading) {
         return (
@@ -219,10 +244,12 @@ export default function PosyanduManagement() {
 
     return (
         <div className="flex flex-col flex-1 w-full h-full bg-gray-50/50 overflow-hidden font-montserrat">
-            <PageHeader title="Manajemen Posyandu" subtitle="Kelola data posyandu di sistem" />
+            <PageHeader
+                title="Manajemen Posyandu"
+                subtitle="Kelola data posyandu di sistem"
+            />
 
             <div className="flex-1 overflow-auto p-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-
                 {/* Filter Tabs with Add Button */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -232,29 +259,32 @@ export default function PosyanduManagement() {
                 >
                     <div className="flex gap-2">
                         <button
-                            onClick={() => handleFilterChange('all')}
-                            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'all'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
+                            onClick={() => handleFilterChange("all")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                filterStatus === "all"
+                                    ? "text-blue-600 border-b-2 border-blue-600"
+                                    : "text-gray-600 hover:text-gray-800"
+                            }`}
                         >
                             Semua
                         </button>
                         <button
-                            onClick={() => handleFilterChange('active')}
-                            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'active'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
+                            onClick={() => handleFilterChange("active")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                filterStatus === "active"
+                                    ? "text-blue-600 border-b-2 border-blue-600"
+                                    : "text-gray-600 hover:text-gray-800"
+                            }`}
                         >
                             Aktif
                         </button>
                         <button
-                            onClick={() => handleFilterChange('inactive')}
-                            className={`px-4 py-2 font-medium transition-colors ${filterStatus === 'inactive'
-                                ? 'text-blue-600 border-b-2 border-blue-600'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
+                            onClick={() => handleFilterChange("inactive")}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                filterStatus === "inactive"
+                                    ? "text-blue-600 border-b-2 border-blue-600"
+                                    : "text-gray-600 hover:text-gray-800"
+                            }`}
                         >
                             Nonaktif
                         </button>
@@ -298,7 +328,7 @@ export default function PosyanduManagement() {
                         />
                         {searchTerm && (
                             <button
-                                onClick={() => setSearchTerm('')}
+                                onClick={() => setSearchTerm("")}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
                                 <X className="w-4 h-4" />
@@ -313,24 +343,43 @@ export default function PosyanduManagement() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Nama Posyandu</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Lokasi</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Kader</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Anak</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Aksi</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Nama Posyandu
+                                    </th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Lokasi
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Kader
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Anak
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Status
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredPosyandus.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="py-8 text-center">
+                                        <td
+                                            colSpan="6"
+                                            className="py-8 text-center"
+                                        >
                                             <div className="text-gray-500">
-                                                {searchTerm ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada data posyandu'}
+                                                {searchTerm
+                                                    ? "Tidak ada hasil untuk pencarian ini"
+                                                    : "Tidak ada data posyandu"}
                                             </div>
                                             {searchTerm && (
                                                 <button
-                                                    onClick={() => setSearchTerm('')}
+                                                    onClick={() =>
+                                                        setSearchTerm("")
+                                                    }
                                                     className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                                                 >
                                                     Reset Pencarian
@@ -344,60 +393,95 @@ export default function PosyanduManagement() {
                                             key={posyandu.id}
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                                            transition={{
+                                                delay: index * 0.05,
+                                                duration: 0.3,
+                                            }}
                                             className="border-b border-gray-100 hover:bg-gray-50"
                                         >
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <Building2 className="w-5 h-5 text-blue-600" />
-                                                    <span className="font-medium text-gray-800">{posyandu.name}</span>
+                                                    <span className="font-medium text-gray-800">
+                                                        {posyandu.name}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-start gap-1 text-sm text-gray-600">
                                                     <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                                                     <div>
-                                                        <div>{posyandu.village}, {posyandu.city}</div>
-                                                        {posyandu.rt_rw && <div className="text-xs text-gray-500">RT/RW: {posyandu.rt_rw}</div>}
+                                                        <div>
+                                                            {posyandu.village},{" "}
+                                                            {posyandu.city}
+                                                        </div>
+                                                        {posyandu.rt_rw && (
+                                                            <div className="text-xs text-gray-500">
+                                                                RT/RW:{" "}
+                                                                {posyandu.rt_rw}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <div className="flex items-center justify-center gap-1">
                                                     <Users className="w-4 h-4 text-gray-500" />
-                                                    <span className="text-sm text-gray-700">{posyandu.kader_count}</span>
+                                                    <span className="text-sm text-gray-700">
+                                                        {posyandu.kader_count}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <div className="flex items-center justify-center gap-1">
                                                     <Baby className="w-4 h-4 text-gray-500" />
-                                                    <span className="text-sm text-gray-700">{posyandu.children_count}</span>
+                                                    <span className="text-sm text-gray-700">
+                                                        {
+                                                            posyandu.children_count
+                                                        }
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${posyandu.is_active
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-800'
-                                                    }`}>
-                                                    {posyandu.is_active ? 'Aktif' : 'Nonaktif'}
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                        posyandu.is_active
+                                                            ? "bg-green-100 text-green-800"
+                                                            : "bg-gray-100 text-gray-800"
+                                                    }`}
+                                                >
+                                                    {posyandu.is_active
+                                                        ? "Aktif"
+                                                        : "Nonaktif"}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={() => handleEdit(posyandu)}
+                                                        onClick={() =>
+                                                            handleEdit(posyandu)
+                                                        }
                                                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                         title="Edit"
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleToggleActive(posyandu)}
-                                                        className={`p-1.5 rounded transition-colors ${posyandu.is_active
-                                                            ? 'text-red-600 hover:bg-red-50'
-                                                            : 'text-green-600 hover:bg-green-50'
-                                                            }`}
-                                                        title={posyandu.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                                        onClick={() =>
+                                                            handleToggleActive(
+                                                                posyandu,
+                                                            )
+                                                        }
+                                                        className={`p-1.5 rounded transition-colors ${
+                                                            posyandu.is_active
+                                                                ? "text-red-600 hover:bg-red-50"
+                                                                : "text-green-600 hover:bg-green-50"
+                                                        }`}
+                                                        title={
+                                                            posyandu.is_active
+                                                                ? "Nonaktifkan"
+                                                                : "Aktifkan"
+                                                        }
                                                     >
                                                         <Power className="w-4 h-4" />
                                                     </button>
@@ -415,11 +499,13 @@ export default function PosyanduManagement() {
                     {filteredPosyandus.length === 0 ? (
                         <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
                             <div className="text-gray-500">
-                                {searchTerm ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada data posyandu'}
+                                {searchTerm
+                                    ? "Tidak ada hasil untuk pencarian ini"
+                                    : "Tidak ada data posyandu"}
                             </div>
                             {searchTerm && (
                                 <button
-                                    onClick={() => setSearchTerm('')}
+                                    onClick={() => setSearchTerm("")}
                                     className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                                 >
                                     Reset Pencarian
@@ -432,7 +518,10 @@ export default function PosyanduManagement() {
                                 key={posyandu.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05, duration: 0.3 }}
+                                transition={{
+                                    delay: index * 0.05,
+                                    duration: 0.3,
+                                }}
                                 className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
                             >
                                 <div className="flex justify-between items-start mb-3">
@@ -441,12 +530,19 @@ export default function PosyanduManagement() {
                                             <Building2 className="w-5 h-5 text-blue-600" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-gray-800">{posyandu.name}</h3>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium mt-1 ${posyandu.is_active
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {posyandu.is_active ? 'Aktif' : 'Nonaktif'}
+                                            <h3 className="font-semibold text-gray-800">
+                                                {posyandu.name}
+                                            </h3>
+                                            <span
+                                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium mt-1 ${
+                                                    posyandu.is_active
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-gray-100 text-gray-800"
+                                                }`}
+                                            >
+                                                {posyandu.is_active
+                                                    ? "Aktif"
+                                                    : "Nonaktif"}
                                             </span>
                                         </div>
                                     </div>
@@ -458,11 +554,14 @@ export default function PosyanduManagement() {
                                             <Edit2 className="w-4 h-4" />
                                         </button>
                                         <button
-                                            onClick={() => handleToggleActive(posyandu)}
-                                            className={`p-2 rounded-lg transition-colors ${posyandu.is_active
-                                                ? 'text-red-600 hover:bg-red-50'
-                                                : 'text-green-600 hover:bg-green-50'
-                                                }`}
+                                            onClick={() =>
+                                                handleToggleActive(posyandu)
+                                            }
+                                            className={`p-2 rounded-lg transition-colors ${
+                                                posyandu.is_active
+                                                    ? "text-red-600 hover:bg-red-50"
+                                                    : "text-green-600 hover:bg-green-50"
+                                            }`}
                                         >
                                             <Power className="w-4 h-4" />
                                         </button>
@@ -473,8 +572,15 @@ export default function PosyanduManagement() {
                                     <div className="flex items-start gap-2 text-sm text-gray-600">
                                         <MapPin className="w-4 h-4 mt-0.5 text-gray-400 shrink-0" />
                                         <div>
-                                            <div>{posyandu.village}, {posyandu.city}</div>
-                                            {posyandu.rt_rw && <div className="text-xs text-gray-500">RT/RW: {posyandu.rt_rw}</div>}
+                                            <div>
+                                                {posyandu.village},{" "}
+                                                {posyandu.city}
+                                            </div>
+                                            {posyandu.rt_rw && (
+                                                <div className="text-xs text-gray-500">
+                                                    RT/RW: {posyandu.rt_rw}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -482,11 +588,15 @@ export default function PosyanduManagement() {
                                 <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
                                     <div className="flex items-center gap-1.5">
                                         <Users className="w-4 h-4 text-gray-400" />
-                                        <span className="text-sm font-medium text-gray-700">{posyandu.kader_count} Kader</span>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            {posyandu.kader_count} Kader
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Baby className="w-4 h-4 text-gray-400" />
-                                        <span className="text-sm font-medium text-gray-700">{posyandu.children_count} Anak</span>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            {posyandu.children_count} Anak
+                                        </span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -509,7 +619,13 @@ export default function PosyanduManagement() {
                 action={confirmationModal.action}
                 posyandu={confirmationModal.posyandu}
                 onConfirm={confirmToggle}
-                onCancel={() => setConfirmationModal({ isOpen: false, posyandu: null, action: null })}
+                onCancel={() =>
+                    setConfirmationModal({
+                        isOpen: false,
+                        posyandu: null,
+                        action: null,
+                    })
+                }
             />
 
             {/* Modal */}
@@ -521,13 +637,16 @@ export default function PosyanduManagement() {
                         onSuccess={() => {
                             setShowModal(false);
                             // Invalidate all posyandu caches first
-                            invalidateCache('admin_posyandus');
-                            invalidateCache('admin_posyandus_all');
-                            invalidateCache('admin_posyandus_active');
-                            invalidateCache('admin_posyandus_inactive');
-                            invalidateCache('admin_dashboard');
+                            invalidateCache("admin_posyandus");
+                            invalidateCache("admin_posyandus_all");
+                            invalidateCache("admin_posyandus_active");
+                            invalidateCache("admin_posyandus_inactive");
+                            invalidateCache("admin_dashboard");
                             // Force refresh current filter to bypass cache
-                            fetchPosyandus(filterStatus, { forceRefresh: true, showLoader: false });
+                            fetchPosyandus(filterStatus, {
+                                forceRefresh: true,
+                                showLoader: false,
+                            });
                         }}
                     />
                 )}
@@ -540,14 +659,14 @@ export default function PosyanduManagement() {
 function PosyanduModal({ posyandu, onClose, onSuccess }) {
     const controls = useDragControls();
     const [formData, setFormData] = useState({
-        name: '',
-        village: '',
-        city: '',
-        address: '',
-        rt: '',
-        rw: '',
-        latitude: '',
-        longitude: '',
+        name: "",
+        village: "",
+        city: "",
+        address: "",
+        rt: "",
+        rw: "",
+        latitude: "",
+        longitude: "",
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -555,22 +674,22 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
     // Reset form when modal opens or posyandu changes
     useEffect(() => {
         // Parse rt_rw if exists (format: "001/002")
-        let rt = '';
-        let rw = '';
+        let rt = "";
+        let rw = "";
         if (posyandu?.rt_rw) {
-            const parts = posyandu.rt_rw.split('/');
-            rt = parts[0] || '';
-            rw = parts[1] || '';
+            const parts = posyandu.rt_rw.split("/");
+            rt = parts[0] || "";
+            rw = parts[1] || "";
         }
         setFormData({
-            name: posyandu?.name || '',
-            village: posyandu?.village || '',
-            city: posyandu?.city || '',
-            address: posyandu?.address || '',
+            name: posyandu?.name || "",
+            village: posyandu?.village || "",
+            city: posyandu?.city || "",
+            address: posyandu?.address || "",
             rt: rt,
             rw: rw,
-            latitude: posyandu?.latitude || '',
-            longitude: posyandu?.longitude || '',
+            latitude: posyandu?.latitude || "",
+            longitude: posyandu?.longitude || "",
         });
         setError(null);
         setSubmitting(false);
@@ -578,12 +697,12 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
 
     // Handler for numeric-only RT/RW input
     const handleRtChange = (e) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
+        const value = e.target.value.replace(/[^0-9]/g, "");
         setFormData({ ...formData, rt: value });
     };
 
     const handleRwChange = (e) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
+        const value = e.target.value.replace(/[^0-9]/g, "");
         setFormData({ ...formData, rw: value });
     };
 
@@ -595,7 +714,10 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
         // Combine RT and RW for backend
         const dataToSubmit = {
             ...formData,
-            rt_rw: formData.rt && formData.rw ? `${formData.rt}/${formData.rw}` : '',
+            rt_rw:
+                formData.rt && formData.rw
+                    ? `${formData.rt}/${formData.rw}`
+                    : "",
         };
         delete dataToSubmit.rt;
         delete dataToSubmit.rw;
@@ -604,11 +726,13 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
             if (posyandu) {
                 await api.put(`/admin/posyandus/${posyandu.id}`, dataToSubmit);
             } else {
-                await api.post('/admin/posyandus', dataToSubmit);
+                await api.post("/admin/posyandus", dataToSubmit);
             }
             onSuccess();
         } catch (err) {
-            setError(err.response?.data?.message || 'Gagal menyimpan data posyandu.');
+            setError(
+                err.response?.data?.message || "Gagal menyimpan data posyandu.",
+            );
         } finally {
             setSubmitting(false);
         }
@@ -642,7 +766,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                 </div>
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
-                        {posyandu ? 'Edit Posyandu' : 'Tambah Posyandu Baru'}
+                        {posyandu ? "Edit Posyandu" : "Tambah Posyandu Baru"}
                     </h2>
                 </div>
 
@@ -654,14 +778,24 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nama Posyandu <span className="text-red-500">*</span>
+                        <label
+                            htmlFor="posyandu-name"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                            Nama Posyandu{" "}
+                            <span className="text-red-500">*</span>
                         </label>
                         <input
+                            id="posyandu-name"
                             type="text"
                             required
                             value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             placeholder="Contoh: Posyandu Melati"
                         />
@@ -669,28 +803,47 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="posyandu-village"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Desa <span className="text-red-500">*</span>
                             </label>
                             <input
+                                id="posyandu-village"
                                 type="text"
                                 required
                                 value={formData.village}
-                                onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        village: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="Nama desa"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Kota/Kabupaten <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="posyandu-city"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
+                                Kota/Kabupaten{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
+                                id="posyandu-city"
                                 type="text"
                                 required
                                 value={formData.city}
-                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        city: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="Nama kota/kabupaten"
                             />
@@ -698,12 +851,21 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="posyandu-address"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             Alamat Lengkap
                         </label>
                         <textarea
+                            id="posyandu-address"
                             value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    address: e.target.value,
+                                })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                             rows="2"
                             placeholder="Alamat lengkap posyandu"
@@ -712,10 +874,14 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="posyandu-rt"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 RT
                             </label>
                             <input
+                                id="posyandu-rt"
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
@@ -727,10 +893,14 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="posyandu-rw"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 RW
                             </label>
                             <input
+                                id="posyandu-rw"
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
@@ -745,28 +915,46 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="posyandu-latitude"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Latitude
                             </label>
                             <input
+                                id="posyandu-latitude"
                                 type="number"
                                 step="any"
                                 value={formData.latitude}
-                                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        latitude: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="-6.200000"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="posyandu-longitude"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Longitude
                             </label>
                             <input
+                                id="posyandu-longitude"
                                 type="number"
                                 step="any"
                                 value={formData.longitude}
-                                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        longitude: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                                 placeholder="106.816666"
                             />
@@ -787,7 +975,7 @@ function PosyanduModal({ posyandu, onClose, onSuccess }) {
                             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                             disabled={submitting}
                         >
-                            {submitting ? 'Menyimpan...' : 'Simpan'}
+                            {submitting ? "Menyimpan..." : "Simpan"}
                         </button>
                     </div>
                 </form>
@@ -819,7 +1007,11 @@ function ConfirmationModal({ isOpen, action, posyandu, onConfirm, onCancel }) {
                         initial={{ opacity: 0, y: "100%" }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: "100%" }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        transition={{
+                            type: "spring",
+                            damping: 25,
+                            stiffness: 300,
+                        }}
                         className="bg-white rounded-t-2xl md:rounded-xl shadow-xl w-full md:max-w-md overflow-hidden"
                     >
                         {/* Drag Handle */}
@@ -831,15 +1023,27 @@ function ConfirmationModal({ isOpen, action, posyandu, onConfirm, onCancel }) {
                         </div>
 
                         <div className="p-6 text-center pt-2 md:pt-6">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${action === 'nonaktifkan' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-                                }`}>
+                            <div
+                                className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                                    action === "nonaktifkan"
+                                        ? "bg-red-100 text-red-600"
+                                        : "bg-green-100 text-green-600"
+                                }`}
+                            >
                                 <Power className="w-6 h-6" />
                             </div>
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                Konfirmasi {action === 'nonaktifkan' ? 'Nonaktifkan' : 'Aktifkan'}
+                                Konfirmasi{" "}
+                                {action === "nonaktifkan"
+                                    ? "Nonaktifkan"
+                                    : "Aktifkan"}
                             </h3>
                             <p className="text-gray-600 mb-6">
-                                Apakah Anda yakin ingin {action} posyandu <span className="font-semibold">{posyandu?.name}</span>?
+                                Apakah Anda yakin ingin {action} posyandu{" "}
+                                <span className="font-semibold">
+                                    {posyandu?.name}
+                                </span>
+                                ?
                             </p>
                             <div className="flex gap-3 justify-center">
                                 <button
@@ -850,12 +1054,16 @@ function ConfirmationModal({ isOpen, action, posyandu, onConfirm, onCancel }) {
                                 </button>
                                 <button
                                     onClick={onConfirm}
-                                    className={`px-4 py-2 text-white rounded-lg transition-colors font-medium ${action === 'nonaktifkan'
-                                        ? 'bg-red-600 hover:bg-red-700'
-                                        : 'bg-green-600 hover:bg-green-700'
-                                        }`}
+                                    className={`px-4 py-2 text-white rounded-lg transition-colors font-medium ${
+                                        action === "nonaktifkan"
+                                            ? "bg-red-600 hover:bg-red-700"
+                                            : "bg-green-600 hover:bg-green-700"
+                                    }`}
                                 >
-                                    Ya, {action === 'nonaktifkan' ? 'Nonaktifkan' : 'Aktifkan'}
+                                    Ya,{" "}
+                                    {action === "nonaktifkan"
+                                        ? "Nonaktifkan"
+                                        : "Aktifkan"}
                                 </button>
                             </div>
                         </div>
@@ -865,4 +1073,3 @@ function ConfirmationModal({ isOpen, action, posyandu, onConfirm, onCancel }) {
         </AnimatePresence>
     );
 }
-

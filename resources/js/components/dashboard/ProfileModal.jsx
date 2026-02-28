@@ -2,10 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/api";
 import { fetchMe, getUser } from "../../lib/auth";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import {
-    Dialog,
-    DialogContent,
-} from "../ui/dialog";
+import { Dialog, DialogContent } from "../ui/dialog";
 import { Camera, X, Loader2, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -36,16 +33,16 @@ export default function ProfileModal({ isOpen, onClose }) {
 
     // Get user role to determine endpoint
     const user = getUser();
-    const isKader = user?.role === 'kader';
-    const isIbu = user?.role === 'ibu';
-    const profileEndpoint = isKader ? '/kader/profile' : '/parent/profile';
+    const isKader = user?.role === "kader";
+    const isIbu = user?.role === "ibu";
+    const profileEndpoint = isKader ? "/kader/profile" : "/parent/profile";
 
     const fetchProfile = useCallback(async () => {
         try {
             setError(null);
             setSuccessMessage(null);
 
-            const cachedData = getCachedData('profile');
+            const cachedData = getCachedData("profile");
             if (cachedData) {
                 setProfileData(cachedData);
                 setLoading(false);
@@ -65,7 +62,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                 profile_photo_url: user.profile_photo_url || null,
             };
             setProfileData(data);
-            setCachedData('profile', data);
+            setCachedData("profile", data);
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
@@ -79,14 +76,14 @@ export default function ProfileModal({ isOpen, onClose }) {
 
     const fetchPosyandus = useCallback(async () => {
         try {
-            const cachedPosyandus = getCachedData('posyandus_list');
+            const cachedPosyandus = getCachedData("posyandus_list");
             if (cachedPosyandus) {
                 setPosyandus(cachedPosyandus);
                 return;
             }
-            const response = await api.get('/posyandus');
+            const response = await api.get("/posyandus");
             setPosyandus(response.data.data || []);
-            setCachedData('posyandus_list', response.data.data || []);
+            setCachedData("posyandus_list", response.data.data || []);
         } catch (err) {
             console.error("Error fetching posyandus:", err);
         }
@@ -122,26 +119,28 @@ export default function ProfileModal({ isOpen, onClose }) {
             setSuccessMessage(null);
 
             const formData = new FormData();
-            formData.append('name', profileData.name);
-            formData.append('email', profileData.email);
-            if (profileData.phone) formData.append('phone', profileData.phone);
-            if (profileData.address) formData.append('address', profileData.address);
-            if (profileData.rt) formData.append('rt', profileData.rt);
-            if (profileData.rw) formData.append('rw', profileData.rw);
-            if (profileData.posyandu_id) formData.append('posyandu_id', profileData.posyandu_id);
+            formData.append("name", profileData.name);
+            formData.append("email", profileData.email);
+            if (profileData.phone) formData.append("phone", profileData.phone);
+            if (profileData.address)
+                formData.append("address", profileData.address);
+            if (profileData.rt) formData.append("rt", profileData.rt);
+            if (profileData.rw) formData.append("rw", profileData.rw);
+            if (profileData.posyandu_id)
+                formData.append("posyandu_id", profileData.posyandu_id);
             if (selectedPhoto) {
-                formData.append('profile_photo', selectedPhoto);
+                formData.append("profile_photo", selectedPhoto);
             }
-            formData.append('_method', 'PUT');
+            formData.append("_method", "PUT");
 
             const response = await api.post(profileEndpoint, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    "Content-Type": "multipart/form-data",
                 },
             });
 
             setSuccessMessage("Profil berhasil diperbarui!");
-            setProfileData(prev => ({
+            setProfileData((prev) => ({
                 ...prev,
                 ...response.data.data,
                 posyandu_id: response.data.data.posyandu?.id || "",
@@ -149,7 +148,7 @@ export default function ProfileModal({ isOpen, onClose }) {
             setPhotoPreview(null);
             setSelectedPhoto(null);
 
-            invalidateCache('profile');
+            invalidateCache("profile");
             // CRITICAL FIX: Must fetch new data (update localStorage) BEFORE notifying listeners
             await fetchMe();
             notifyProfileUpdate();
@@ -177,7 +176,11 @@ export default function ProfileModal({ isOpen, onClose }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent hideClose={true} className={`w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-2xl ${isPosyanduDropdownOpen ? 'overflow-visible' : 'overflow-hidden'} max-h-[90vh]`}>
+            <DialogContent
+                size="xl"
+                hideClose={true}
+                className={`w-[90%] md:w-full p-0 bg-white border-none shadow-2xl rounded-2xl ${isPosyanduDropdownOpen ? "overflow-visible" : "overflow-hidden"} max-h-[90vh]`}
+            >
                 {/* Profile Header Section - LEFT aligned */}
                 <div className="px-8 pt-8 relative">
                     <div className="flex items-start gap-6 mb-6">
@@ -185,7 +188,11 @@ export default function ProfileModal({ isOpen, onClose }) {
                         <div className="relative shrink-0">
                             <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100">
                                 <img
-                                    src={photoPreview || profileData.profile_photo_url || `https://ui-avatars.com/api/?name=${profileData.name}&background=random`}
+                                    src={
+                                        photoPreview ||
+                                        profileData.profile_photo_url ||
+                                        `https://ui-avatars.com/api/?name=${profileData.name}&background=random`
+                                    }
                                     alt="Profile"
                                     className="w-full h-full object-cover"
                                 />
@@ -207,20 +214,32 @@ export default function ProfileModal({ isOpen, onClose }) {
 
                         {/* Title & Email - RIGHT of photo */}
                         <div className="pt-6 flex-1">
-                            <h2 className="text-2xl font-bold text-gray-900">{profileData.name || 'Pengguna'}</h2>
-                            <p className="text-sm text-gray-500 mt-1">{profileData.email}</p>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {profileData.name || "Pengguna"}
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {profileData.email}
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Content Area */}
-                <div className="px-8 pb-8 overflow-y-auto max-h-[60vh]" style={{ overflow: isPosyanduDropdownOpen ? 'visible' : 'auto' }}>
+                <div
+                    className="px-8 pb-8 overflow-y-auto max-h-[60vh]"
+                    style={{
+                        overflow: isPosyanduDropdownOpen ? "visible" : "auto",
+                    }}
+                >
                     {loading ? (
                         <div className="py-12 flex justify-center">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                         </div>
                     ) : (
-                        <form onSubmit={handleProfileSubmit} className="space-y-6 overflow-visible">
+                        <form
+                            onSubmit={handleProfileSubmit}
+                            className="space-y-6 overflow-visible"
+                        >
                             {successMessage && (
                                 <div className="p-4 bg-green-50 text-green-700 rounded-xl text-sm font-medium flex items-center gap-2">
                                     <span>✓</span> {successMessage}
@@ -235,11 +254,22 @@ export default function ProfileModal({ isOpen, onClose }) {
                             {/* Form Fields */}
                             <div className="space-y-4 overflow-visible">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-900">Nama Lengkap</label>
+                                    <label
+                                        htmlFor="profile-name"
+                                        className="text-sm font-bold text-gray-900"
+                                    >
+                                        Nama Lengkap
+                                    </label>
                                     <input
+                                        id="profile-name"
                                         type="text"
                                         value={profileData.name}
-                                        onChange={(e) => handleInputChange("name", e.target.value)}
+                                        onChange={(e) =>
+                                            handleInputChange(
+                                                "name",
+                                                e.target.value,
+                                            )
+                                        }
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
                                         placeholder="Masukkan nama lengkap"
                                         required
@@ -247,11 +277,22 @@ export default function ProfileModal({ isOpen, onClose }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-900">Email</label>
+                                    <label
+                                        htmlFor="profile-email"
+                                        className="text-sm font-bold text-gray-900"
+                                    >
+                                        Email
+                                    </label>
                                     <input
+                                        id="profile-email"
                                         type="email"
                                         value={profileData.email}
-                                        onChange={(e) => handleInputChange("email", e.target.value)}
+                                        onChange={(e) =>
+                                            handleInputChange(
+                                                "email",
+                                                e.target.value,
+                                            )
+                                        }
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
                                         placeholder="Masukkan email"
                                         required
@@ -259,11 +300,22 @@ export default function ProfileModal({ isOpen, onClose }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-900">Nomor Telepon</label>
+                                    <label
+                                        htmlFor="profile-phone"
+                                        className="text-sm font-bold text-gray-900"
+                                    >
+                                        Nomor Telepon
+                                    </label>
                                     <input
+                                        id="profile-phone"
                                         type="text"
                                         value={profileData.phone}
-                                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                                        onChange={(e) =>
+                                            handleInputChange(
+                                                "phone",
+                                                e.target.value,
+                                            )
+                                        }
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
                                         placeholder="Masukkan nomor telepon (opsional)"
                                     />
@@ -273,10 +325,21 @@ export default function ProfileModal({ isOpen, onClose }) {
                                 {isIbu && (
                                     <>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-900">Alamat</label>
+                                            <label
+                                                htmlFor="profile-address"
+                                                className="text-sm font-bold text-gray-900"
+                                            >
+                                                Alamat
+                                            </label>
                                             <textarea
+                                                id="profile-address"
                                                 value={profileData.address}
-                                                onChange={(e) => handleInputChange("address", e.target.value)}
+                                                onChange={(e) =>
+                                                    handleInputChange(
+                                                        "address",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400 resize-none"
                                                 placeholder="Masukkan alamat lengkap"
                                                 rows={2}
@@ -285,22 +348,44 @@ export default function ProfileModal({ isOpen, onClose }) {
 
                                         <div className="flex gap-3">
                                             <div className="flex-1 space-y-2">
-                                                <label className="text-sm font-bold text-gray-900">RT</label>
+                                                <label
+                                                    htmlFor="profile-rt"
+                                                    className="text-sm font-bold text-gray-900"
+                                                >
+                                                    RT
+                                                </label>
                                                 <input
+                                                    id="profile-rt"
                                                     type="text"
                                                     value={profileData.rt}
-                                                    onChange={(e) => handleInputChange("rt", e.target.value)}
+                                                    onChange={(e) =>
+                                                        handleInputChange(
+                                                            "rt",
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
                                                     placeholder="001"
                                                     maxLength={10}
                                                 />
                                             </div>
                                             <div className="flex-1 space-y-2">
-                                                <label className="text-sm font-bold text-gray-900">RW</label>
+                                                <label
+                                                    htmlFor="profile-rw"
+                                                    className="text-sm font-bold text-gray-900"
+                                                >
+                                                    RW
+                                                </label>
                                                 <input
+                                                    id="profile-rw"
                                                     type="text"
                                                     value={profileData.rw}
-                                                    onChange={(e) => handleInputChange("rw", e.target.value)}
+                                                    onChange={(e) =>
+                                                        handleInputChange(
+                                                            "rw",
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm text-gray-900 focus:text-blue-600 placeholder:text-gray-400"
                                                     placeholder="002"
                                                     maxLength={10}
@@ -309,59 +394,129 @@ export default function ProfileModal({ isOpen, onClose }) {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-900">Posyandu</label>
+                                            <label
+                                                htmlFor="posyandu-button"
+                                                className="text-sm font-bold text-gray-900"
+                                            >
+                                                Posyandu
+                                            </label>
                                             <div className="relative">
                                                 <button
                                                     type="button"
                                                     id="posyandu-button"
-                                                    onClick={() => setIsPosyanduDropdownOpen(!isPosyanduDropdownOpen)}
+                                                    onClick={() =>
+                                                        setIsPosyanduDropdownOpen(
+                                                            !isPosyanduDropdownOpen,
+                                                        )
+                                                    }
                                                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-left flex items-center justify-between focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
                                                 >
-                                                    <span className={!profileData.posyandu_id ? "text-gray-400 text-sm" : "text-gray-900 text-sm"}>
+                                                    <span
+                                                        className={
+                                                            !profileData.posyandu_id
+                                                                ? "text-gray-400 text-sm"
+                                                                : "text-gray-900 text-sm"
+                                                        }
+                                                    >
                                                         {profileData.posyandu_id
-                                                            ? posyandus.find(p => p.id === parseInt(profileData.posyandu_id))?.name || "Posyandu Terpilih"
+                                                            ? posyandus.find(
+                                                                  (p) =>
+                                                                      p.id ===
+                                                                      parseInt(
+                                                                          profileData.posyandu_id,
+                                                                      ),
+                                                              )?.name ||
+                                                              "Posyandu Terpilih"
                                                             : "Pilih Posyandu"}
                                                     </span>
-                                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`} />
+                                                    <ChevronDown
+                                                        className={`w-5 h-5 text-gray-400 transition-transform ${isPosyanduDropdownOpen ? "rotate-180" : ""}`}
+                                                    />
                                                 </button>
 
                                                 <AnimatePresence>
                                                     {isPosyanduDropdownOpen && (
                                                         <>
-                                                            <div className="fixed inset-0 z-50" onClick={() => setIsPosyanduDropdownOpen(false)} />
+                                                            <div
+                                                                className="fixed inset-0 z-50"
+                                                                onClick={() =>
+                                                                    setIsPosyanduDropdownOpen(
+                                                                        false,
+                                                                    )
+                                                                }
+                                                            />
                                                             <motion.div
-                                                                initial={{ opacity: 0, y: -10 }}
-                                                                animate={{ opacity: 1, y: 0 }}
-                                                                exit={{ opacity: 0, y: -10 }}
+                                                                initial={{
+                                                                    opacity: 0,
+                                                                    y: -10,
+                                                                }}
+                                                                animate={{
+                                                                    opacity: 1,
+                                                                    y: 0,
+                                                                }}
+                                                                exit={{
+                                                                    opacity: 0,
+                                                                    y: -10,
+                                                                }}
                                                                 className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto"
-                                                                style={{ zIndex: 9999 }}
+                                                                style={{
+                                                                    zIndex: 9999,
+                                                                }}
                                                             >
-                                                                <div
+                                                                <button
+                                                                    type="button"
                                                                     onClick={() => {
-                                                                        handleInputChange("posyandu_id", "");
-                                                                        setIsPosyanduDropdownOpen(false);
+                                                                        handleInputChange(
+                                                                            "posyandu_id",
+                                                                            "",
+                                                                        );
+                                                                        setIsPosyanduDropdownOpen(
+                                                                            false,
+                                                                        );
                                                                     }}
-                                                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
                                                                 >
-                                                                    <span className="text-sm text-gray-500">Tidak memilih</span>
-                                                                </div>
-                                                                {posyandus.map((posyandu) => (
-                                                                    <div
-                                                                        key={posyandu.id}
-                                                                        onClick={() => {
-                                                                            handleInputChange("posyandu_id", posyandu.id);
-                                                                            setIsPosyanduDropdownOpen(false);
-                                                                        }}
-                                                                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
-                                                                    >
-                                                                        <span className={`text-sm ${parseInt(profileData.posyandu_id) === posyandu.id ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                                                                            {posyandu.name}
-                                                                        </span>
-                                                                        {parseInt(profileData.posyandu_id) === posyandu.id && (
-                                                                            <Check className="w-4 h-4 text-blue-600" />
-                                                                        )}
-                                                                    </div>
-                                                                ))}
+                                                                    <span className="text-sm text-gray-500">
+                                                                        Tidak
+                                                                        memilih
+                                                                    </span>
+                                                                </button>
+                                                                {posyandus.map(
+                                                                    (
+                                                                        posyandu,
+                                                                    ) => (
+                                                                        <button
+                                                                            type="button"
+                                                                            key={
+                                                                                posyandu.id
+                                                                            }
+                                                                            onClick={() => {
+                                                                                handleInputChange(
+                                                                                    "posyandu_id",
+                                                                                    posyandu.id,
+                                                                                );
+                                                                                setIsPosyanduDropdownOpen(
+                                                                                    false,
+                                                                                );
+                                                                            }}
+                                                                            className="w-full text-left px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                                                        >
+                                                                            <span
+                                                                                className={`text-sm ${parseInt(profileData.posyandu_id) === posyandu.id ? "text-blue-600 font-medium" : "text-gray-700"}`}
+                                                                            >
+                                                                                {
+                                                                                    posyandu.name
+                                                                                }
+                                                                            </span>
+                                                                            {parseInt(
+                                                                                profileData.posyandu_id,
+                                                                            ) ===
+                                                                                posyandu.id && (
+                                                                                <Check className="w-4 h-4 text-blue-600" />
+                                                                            )}
+                                                                        </button>
+                                                                    ),
+                                                                )}
                                                             </motion.div>
                                                         </>
                                                     )}
@@ -388,9 +543,12 @@ export default function ProfileModal({ isOpen, onClose }) {
                                 >
                                     {saving ? (
                                         <span className="flex items-center justify-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...
+                                            <Loader2 className="w-4 h-4 animate-spin" />{" "}
+                                            Menyimpan...
                                         </span>
-                                    ) : "Simpan Perubahan"}
+                                    ) : (
+                                        "Simpan Perubahan"
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -400,4 +558,3 @@ export default function ProfileModal({ isOpen, onClose }) {
         </Dialog>
     );
 }
-

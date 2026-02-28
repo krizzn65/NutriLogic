@@ -2,24 +2,15 @@ import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import {
     Home,
-    User,
-    Settings,
-    Users,
     Building2,
     UserCog,
     BarChart3,
-    Shield,
     Database,
-    LogOut,
     Activity,
-    ArrowLeft,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
-import { logoutWithApi } from "../../lib/auth";
 
 export default function SidebarSuperAdmin() {
-    const navigate = useNavigate();
     const [open, setOpen] = useState(false);
 
     const links = [
@@ -65,7 +56,6 @@ export default function SidebarSuperAdmin() {
                 <Activity className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
             ),
         },
-
     ];
 
     return (
@@ -77,11 +67,9 @@ export default function SidebarSuperAdmin() {
                         {links.map((link, idx) => (
                             <SidebarLink key={idx} link={link} />
                         ))}
-
                     </div>
                 </div>
-                <div>
-                </div>
+                <div></div>
             </SidebarBody>
         </Sidebar>
     );
@@ -94,7 +82,11 @@ const Logo = () => {
             className="font-normal flex flex-col space-y-1 items-start text-sm text-white py-1 relative z-20"
         >
             <div className="flex space-x-2 items-center">
-                <img src={assets.logo_das} alt="NutriLogic" className="h-8 w-8 shrink-0" />
+                <img
+                    src={assets.logo_das}
+                    alt="NutriLogic"
+                    className="h-8 w-8 shrink-0"
+                />
                 <span className="font-bold text-white whitespace-pre">
                     NutriLogic
                 </span>
@@ -112,7 +104,11 @@ const LogoIcon = () => {
             href="#"
             className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
         >
-            <img src={assets.logo_das} alt="NutriLogic" className="h-8 w-8 shrink-0" />
+            <img
+                src={assets.logo_das}
+                alt="NutriLogic"
+                className="h-8 w-8 shrink-0"
+            />
         </a>
     );
 };

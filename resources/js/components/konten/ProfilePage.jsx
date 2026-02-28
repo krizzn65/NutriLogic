@@ -37,7 +37,7 @@ export default function ProfilePage() {
             setSuccessMessage(null);
 
             // Check cache first
-            const cachedData = getCachedData('profile');
+            const cachedData = getCachedData("profile");
             if (cachedData) {
                 setProfileData(cachedData);
                 setLoading(false);
@@ -52,7 +52,7 @@ export default function ProfilePage() {
                 phone: user.phone || "",
             };
             setProfileData(data);
-            setCachedData('profile', data);
+            setCachedData("profile", data);
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
@@ -82,7 +82,7 @@ export default function ProfilePage() {
             setProfileData(response.data.data);
 
             // Update cache and localStorage
-            invalidateCache('profile');
+            invalidateCache("profile");
             await fetchMe();
         } catch (err) {
             const errorMessage =
@@ -106,7 +106,8 @@ export default function ProfilePage() {
             await api.put("/parent/profile/password", {
                 current_password: passwordForm.current_password,
                 new_password: passwordForm.new_password,
-                new_password_confirmation: passwordForm.new_password_confirmation,
+                new_password_confirmation:
+                    passwordForm.new_password_confirmation,
             });
 
             setPasswordSuccess("Password berhasil diubah!");
@@ -204,39 +205,66 @@ export default function ProfilePage() {
                     <form onSubmit={handleProfileSubmit}>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label
+                                    htmlFor="profile-name"
+                                    className="block text-sm font-medium text-gray-700 mb-1"
+                                >
                                     Nama Lengkap
                                 </label>
                                 <input
+                                    id="profile-name"
                                     type="text"
                                     value={profileData.name}
-                                    onChange={(e) => handleInputChange("name", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            "name",
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label
+                                    htmlFor="profile-email"
+                                    className="block text-sm font-medium text-gray-700 mb-1"
+                                >
                                     Email
                                 </label>
                                 <input
+                                    id="profile-email"
                                     type="email"
                                     value={profileData.email}
-                                    onChange={(e) => handleInputChange("email", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            "email",
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label
+                                    htmlFor="profile-phone"
+                                    className="block text-sm font-medium text-gray-700 mb-1"
+                                >
                                     Nomor Telepon
                                 </label>
                                 <input
+                                    id="profile-phone"
                                     type="text"
                                     value={profileData.phone || ""}
-                                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange(
+                                            "phone",
+                                            e.target.value,
+                                        )
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Opsional"
                                 />
@@ -273,7 +301,10 @@ export default function ProfilePage() {
 
                 {/* Password Change Modal */}
                 {showPasswordModal && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}>
+                    <div
+                        className="fixed inset-0 flex items-center justify-center z-50"
+                        style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+                    >
                         <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">
                                 Ganti Password
@@ -282,30 +313,40 @@ export default function ProfilePage() {
                             {/* Password Success Message */}
                             {passwordSuccess && (
                                 <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                                    <p className="text-green-800 text-sm">{passwordSuccess}</p>
+                                    <p className="text-green-800 text-sm">
+                                        {passwordSuccess}
+                                    </p>
                                 </div>
                             )}
 
                             {/* Password Error Message */}
                             {passwordError && (
                                 <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                                    <p className="text-red-800 text-sm">{passwordError}</p>
+                                    <p className="text-red-800 text-sm">
+                                        {passwordError}
+                                    </p>
                                 </div>
                             )}
 
                             <form onSubmit={handlePasswordSubmit}>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label
+                                            htmlFor="profile-current-password"
+                                            className="block text-sm font-medium text-gray-700 mb-1"
+                                        >
                                             Password Saat Ini
                                         </label>
                                         <input
+                                            id="profile-current-password"
                                             type="password"
-                                            value={passwordForm.current_password}
+                                            value={
+                                                passwordForm.current_password
+                                            }
                                             onChange={(e) =>
                                                 handlePasswordInputChange(
                                                     "current_password",
-                                                    e.target.value
+                                                    e.target.value,
                                                 )
                                             }
                                             required
@@ -314,14 +355,21 @@ export default function ProfilePage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label
+                                            htmlFor="profile-new-password"
+                                            className="block text-sm font-medium text-gray-700 mb-1"
+                                        >
                                             Password Baru
                                         </label>
                                         <input
+                                            id="profile-new-password"
                                             type="password"
                                             value={passwordForm.new_password}
                                             onChange={(e) =>
-                                                handlePasswordInputChange("new_password", e.target.value)
+                                                handlePasswordInputChange(
+                                                    "new_password",
+                                                    e.target.value,
+                                                )
                                             }
                                             required
                                             minLength={8}
@@ -333,16 +381,22 @@ export default function ProfilePage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label
+                                            htmlFor="profile-new-password-confirmation"
+                                            className="block text-sm font-medium text-gray-700 mb-1"
+                                        >
                                             Konfirmasi Password Baru
                                         </label>
                                         <input
+                                            id="profile-new-password-confirmation"
                                             type="password"
-                                            value={passwordForm.new_password_confirmation}
+                                            value={
+                                                passwordForm.new_password_confirmation
+                                            }
                                             onChange={(e) =>
                                                 handlePasswordInputChange(
                                                     "new_password_confirmation",
-                                                    e.target.value
+                                                    e.target.value,
                                                 )
                                             }
                                             required
@@ -366,7 +420,9 @@ export default function ProfilePage() {
                                         disabled={passwordSaving}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        {passwordSaving ? "Menyimpan..." : "Simpan"}
+                                        {passwordSaving
+                                            ? "Menyimpan..."
+                                            : "Simpan"}
                                     </button>
                                 </div>
                             </form>
@@ -377,4 +433,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-

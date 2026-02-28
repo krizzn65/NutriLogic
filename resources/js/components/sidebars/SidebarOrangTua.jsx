@@ -8,7 +8,6 @@ import {
     Utensils,
     MessageCircle,
     Award,
-    ArrowLeft,
 } from "lucide-react";
 import { assets } from "../../assets/assets";
 
@@ -19,51 +18,37 @@ export default function SidebarOrangTua() {
         {
             label: "Dashboard",
             href: "/dashboard",
-            icon: (
-                <Home className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <Home className="text-white h-5 w-5 shrink-0" />,
         },
         {
             label: "Data Anak",
             href: "/dashboard/anak",
-            icon: (
-                <Baby className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <Baby className="text-white h-5 w-5 shrink-0" />,
         },
         {
             label: "Nutri-Assist",
             href: "/dashboard/nutri-assist",
-            icon: (
-                <UtensilsCrossed className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <UtensilsCrossed className="text-white h-5 w-5 shrink-0" />,
         },
         {
             label: "Jurnal Makan",
             href: "/dashboard/jurnal-makan",
-            icon: (
-                <Utensils className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <Utensils className="text-white h-5 w-5 shrink-0" />,
         },
         {
             label: "Konsultasi",
             href: "/dashboard/konsultasi",
-            icon: (
-                <MessageCircle className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <MessageCircle className="text-white h-5 w-5 shrink-0" />,
         },
         {
             label: "Poin & Badge",
             href: "/dashboard/gamification",
-            icon: (
-                <Award className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <Award className="text-white h-5 w-5 shrink-0" />,
         },
         {
             label: "Riwayat",
             href: "/dashboard/riwayat",
-            icon: (
-                <FileText className="text-white h-5 w-5 shrink-0" />
-            ),
+            icon: <FileText className="text-white h-5 w-5 shrink-0" />,
         },
     ];
 
@@ -92,7 +77,11 @@ const Logo = () => {
             className="font-normal flex flex-col space-y-1 items-start text-sm text-white py-1 relative z-20"
         >
             <div className="flex space-x-2 items-center">
-                <img src={assets.logo_das} alt="NutriLogic" className="h-8 w-8 shrink-0" />
+                <img
+                    src={assets.logo_das}
+                    alt="NutriLogic"
+                    className="h-8 w-8 shrink-0"
+                />
                 <span className="font-bold text-white whitespace-pre">
                     NutriLogic
                 </span>
@@ -110,7 +99,11 @@ const LogoIcon = () => {
             href="#"
             className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
         >
-            <img src={assets.logo_das} alt="NutriLogic" className="h-8 w-8 shrink-0" />
+            <img
+                src={assets.logo_das}
+                alt="NutriLogic"
+                className="h-8 w-8 shrink-0"
+            />
         </a>
     );
 };
