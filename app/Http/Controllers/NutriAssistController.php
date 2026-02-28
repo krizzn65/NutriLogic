@@ -45,6 +45,16 @@ class NutriAssistController extends Controller
             ], 403);
         }
 
+        // Check if child has at least one weighing record
+        if ($child->weighingLogs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anak belum memiliki data penimbangan. Silakan kunjungi Posyandu untuk penimbangan pertama agar dapat menggunakan fitur Nutri-Assist.',
+                'requires_weighing' => true,
+            ], 422);
+        }
+
+
         // Check if n8n is enabled
         if (!config('services.n8n.enabled')) {
             return $this->getFallbackRecommendations($child, $validated['ingredients']);

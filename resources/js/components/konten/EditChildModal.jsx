@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, Check, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronDown, Check, Calendar, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import api from "../../lib/api";
 
 export default function EditChildModal({ isOpen, onClose, onSuccess, childId }) {
@@ -29,6 +29,10 @@ export default function EditChildModal({ isOpen, onClose, onSuccess, childId }) 
     const [pickerDate, setPickerDate] = useState(new Date());
     const dateButtonRef = useRef(null);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+
+    // Deactivate modal state
+    const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
 
     useEffect(() => {
         if (isOpen && childId) {
@@ -157,18 +161,34 @@ export default function EditChildModal({ isOpen, onClose, onSuccess, childId }) 
         }
     };
 
-    const handleDelete = async () => {
-        if (!confirm('Apakah Anda yakin ingin menonaktifkan data anak ini?')) {
-            return;
-        }
+    const handleDelete = () => {
+        setShowDeactivateModal(true);
+    };
 
+    const confirmToggleActive = async () => {
         try {
-            await api.delete(`/kader/children/${childId}`);
-            onSuccess('Data anak berhasil dinonaktifkan!');
+            setDeactivating(true);
+            const isCurrentlyActive = childData?.is_active;
+
+            if (isCurrentlyActive) {
+                // Deactivate
+                await api.delete(`/kader/children/${childId}`);
+                onSuccess('Data anak berhasil dinonaktifkan!');
+            } else {
+                // Activate - use PUT to update is_active to true
+                await api.put(`/kader/children/${childId}`, { ...formData, is_active: true });
+                onSuccess('Data anak berhasil diaktifkan!');
+            }
+
+            setShowDeactivateModal(false);
             onClose();
         } catch (err) {
-            console.error('Delete error:', err);
-            setError(err.response?.data?.message || 'Gagal menonaktifkan data anak');
+            console.error('Toggle active error:', err);
+            const action = childData?.is_active ? 'menonaktifkan' : 'mengaktifkan';
+            setError(err.response?.data?.message || `Gagal ${action} data anak`);
+            setShowDeactivateModal(false);
+        } finally {
+            setDeactivating(false);
         }
     };
 
@@ -563,23 +583,6 @@ export default function EditChildModal({ isOpen, onClose, onSuccess, childId }) 
                                                 />
                                             </div>
 
-                                            {/* Status Aktif */}
-                                            <div className="pt-4 border-t border-gray-100">
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        id="is_active"
-                                                        name="is_active"
-                                                        checked={formData.is_active}
-                                                        onChange={handleChange}
-                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                                    />
-                                                    <label htmlFor="is_active" className="text-sm font-medium text-gray-700 cursor-pointer">
-                                                        Data anak aktif
-                                                    </label>
-                                                </div>
-                                                <p className="mt-1 text-xs text-gray-500 ml-6">Nonaktifkan jika anak sudah tidak terdaftar di posyandu</p>
-                                            </div>
                                         </form>
                                     </>
                                 )}
@@ -590,10 +593,13 @@ export default function EditChildModal({ isOpen, onClose, onSuccess, childId }) 
                                 <button
                                     type="button"
                                     onClick={handleDelete}
-                                    className="px-4 py-2 text-red-600 font-medium hover:bg-red-50 rounded-lg transition-colors text-sm"
+                                    className={`px-4 py-2 font-medium rounded-lg transition-colors text-sm ${childData?.is_active
+                                            ? 'text-red-600 hover:bg-red-50'
+                                            : 'text-emerald-600 hover:bg-emerald-50'
+                                        }`}
                                     disabled={submitting || loading}
                                 >
-                                    Hapus Data
+                                    {childData?.is_active ? 'Nonaktifkan Data Anak' : 'Aktifkan Data Anak'}
                                 </button>
                                 <div className="flex gap-3">
                                     <button
@@ -627,6 +633,72 @@ export default function EditChildModal({ isOpen, onClose, onSuccess, childId }) 
                         </motion.div>
                     </div>
                 </>
+            )}
+
+            {/* Toggle Active Confirmation Modal */}
+            {showDeactivateModal && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => !deactivating && setShowDeactivateModal(false)}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="bg-white rounded-2xl shadow-xl w-full max-w-sm relative z-10 overflow-hidden"
+                    >
+                        <div className="p-6 text-center">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${childData?.is_active ? 'bg-amber-100' : 'bg-emerald-100'
+                                }`}>
+                                {childData?.is_active ? (
+                                    <AlertTriangle className="w-8 h-8 text-amber-600" />
+                                ) : (
+                                    <Check className="w-8 h-8 text-emerald-600" />
+                                )}
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                {childData?.is_active ? 'Nonaktifkan Data Anak?' : 'Aktifkan Data Anak?'}
+                            </h3>
+                            <p className="text-gray-500 text-sm mb-6">
+                                {childData?.is_active ? (
+                                    <>Data anak <span className="font-semibold text-gray-700">{formData.full_name}</span> akan dinonaktifkan dan tidak akan muncul dalam daftar anak aktif. Anda dapat mengaktifkannya kembali nanti.</>
+                                ) : (
+                                    <>Data anak <span className="font-semibold text-gray-700">{formData.full_name}</span> akan diaktifkan kembali dan akan muncul dalam daftar anak aktif.</>
+                                )}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowDeactivateModal(false)}
+                                    disabled={deactivating}
+                                    className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={confirmToggleActive}
+                                    disabled={deactivating}
+                                    className={`flex-1 px-4 py-2.5 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${childData?.is_active
+                                            ? 'bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-200'
+                                            : 'bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200'
+                                        }`}
+                                >
+                                    {deactivating ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>Memproses...</span>
+                                        </>
+                                    ) : (
+                                        <span>{childData?.is_active ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan'}</span>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
             )}
         </AnimatePresence>,
         document.body

@@ -59,10 +59,25 @@ export function DataCacheProvider({ children }) {
         }
     }, []);
 
+    // Invalidate all cache entries that start with the given prefix
+    const invalidateCacheByPrefix = useCallback((prefix) => {
+        setCache(prev => {
+            const newCache = { ...prev };
+            Object.keys(newCache).forEach(key => {
+                if (key.startsWith(prefix)) {
+                    delete newCache[key];
+                }
+            });
+            cacheRef.current = newCache;
+            return newCache;
+        });
+    }, []);
+
     const value = {
         getCachedData,
         setCachedData,
         invalidateCache,
+        invalidateCacheByPrefix,
     };
 
     return (

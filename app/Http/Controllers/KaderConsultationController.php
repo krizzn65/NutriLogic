@@ -55,8 +55,8 @@ class KaderConsultationController extends Controller
 
         $consultations = $query->orderBy('updated_at', 'desc')->get();
 
-        // Transform latest message (already eager loaded)
-        $consultations->each(function ($consultation) {
+        // Transform latest message and calculate unread count
+        $consultations->each(function ($consultation) use ($user) {
             $lastMessage = $consultation->latestMessage;
             $consultation->last_message = $lastMessage ? [
                 'message' => $lastMessage->message,
@@ -64,6 +64,28 @@ class KaderConsultationController extends Controller
                 'sender_name' => $lastMessage->sender->name ?? 'Unknown',
                 'attachment_type' => $lastMessage->attachment_type,
             ] : null;
+
+            // Calculate unread count: messages from parent that came after kader's last message
+            // Only count unread for open consultations
+            if ($consultation->status === 'closed') {
+                $consultation->unread_count = 0;
+            } else {
+                $kaderLastMessage = $consultation->messages()
+                    ->where('sender_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $unreadQuery = $consultation->messages()
+                    ->where('sender_id', $consultation->parent_id);
+
+                // If kader has sent a message, only count parent messages after that
+                if ($kaderLastMessage) {
+                    $unreadQuery->where('created_at', '>', $kaderLastMessage->created_at);
+                }
+
+                $consultation->unread_count = $unreadQuery->count();
+            }
+
             // Remove the relation from response to avoid duplication
             unset($consultation->latestMessage);
         });
@@ -249,6 +271,15 @@ class KaderConsultationController extends Controller
 
         $consultation->update(['status' => 'closed']);
 
+        // Log activity
+        $parentName = $consultation->parent ? $consultation->parent->name : 'Unknown';
+        AdminActivityLogController::log(
+            'update',
+            "Kader {$user->name} menutup konsultasi dengan {$parentName}: {$consultation->title}",
+            'Consultation',
+            $consultation->id
+        );
+
         return response()->json([
             'data' => $consultation,
             'message' => 'Konsultasi berhasil ditutup.',
@@ -274,7 +305,17 @@ class KaderConsultationController extends Controller
             ], 403);
         }
 
+        $title = $consultation->title;
+        $parentName = $consultation->parent ? $consultation->parent->name : 'Unknown';
         $consultation->delete();
+
+        // Log activity
+        AdminActivityLogController::log(
+            'delete',
+            "Kader {$user->name} menghapus konsultasi dengan {$parentName}: {$title}",
+            'Consultation',
+            $id
+        );
 
         return response()->json([
             'message' => 'Consultation deleted successfully.',

@@ -46,7 +46,7 @@ export default function NoChildrenEmptyState({ onAddChild }) {
             {/* Additional Info */}
             <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-100 max-w-md">
                 <p className="text-sm text-blue-800 text-center">
-                    💡 <span className="font-semibold">Tips:</span> Anda dapat menambahkan data anak melalui menu Profil atau Dashboard
+                    💡 <span className="font-semibold">Tips:</span> Anda dapat menambahkan data anak di posyandu terdekat.
                 </p>
             </div>
         </motion.div>

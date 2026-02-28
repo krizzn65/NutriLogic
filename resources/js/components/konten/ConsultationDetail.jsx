@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
-import { ArrowLeft, Send, CheckCircle, Clock, User, MoreVertical, Phone, Video, Trash2, AlertTriangle, Paperclip, Image as ImageIcon, FileText, X } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle, Clock, User, MoreVertical, Phone, Video, Trash2, AlertTriangle, Paperclip, Image as ImageIcon, FileText, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge } from "../../lib/utils";
 
-export default function ConsultationDetail({ selectedId, onBack, onDeleteSuccess, className = "" }) {
+export default function ConsultationDetail({ selectedId, onBack, onDeleteSuccess, onConsultationViewed, className = "" }) {
   const { id: paramId } = useParams();
   const id = selectedId || paramId;
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function ConsultationDetail({ selectedId, onBack, onDeleteSuccess
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [viewingImage, setViewingImage] = useState(null);
   const messagesEndRef = useRef(null);
   const menuRef = useRef(null);
   const attachMenuRef = useRef(null);
@@ -139,6 +141,10 @@ Catatan: ${data.notes || '-'}`;
     } finally {
       if (!silent) {
         setLoading(false);
+        // Notify parent that consultation was viewed (to update unread count)
+        if (onConsultationViewed) {
+          onConsultationViewed();
+        }
       }
     }
   };
@@ -175,6 +181,11 @@ Catatan: ${data.notes || '-'}`;
 
       setNewMessage("");
       removeFile();
+
+      // Refresh consultation list to update unread counts
+      if (onConsultationViewed) {
+        onConsultationViewed();
+      }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Gagal mengirim pesan. Silakan coba lagi.';
       setError(errorMessage);
@@ -371,7 +382,10 @@ Catatan: ${data.notes || '-'}`;
                     )}
 
                     {message.attachment_path && message.attachment_type === 'image' && (
-                      <div className={`${message.message && message.message.trim() ? 'mt-2' : ''} rounded-xl overflow-hidden border border-slate-200 max-w-xs ${isParent ? 'ml-auto' : 'mr-auto'}`}>
+                      <div
+                        className={`${message.message && message.message.trim() ? 'mt-2' : ''} rounded-xl overflow-hidden border border-slate-200 max-w-xs ${isParent ? 'ml-auto' : 'mr-auto'} cursor-pointer hover:opacity-90 transition-opacity`}
+                        onClick={() => setViewingImage(message.attachment_path)}
+                      >
                         <img
                           src={message.attachment_path}
                           alt="Attachment"
@@ -624,6 +638,55 @@ Catatan: ${data.notes || '-'}`;
           </div>
         )}
       </AnimatePresence>
+
+      {/* Image Preview Modal - Using Portal to escape z-index stacking */}
+      {viewingImage && ReactDOM.createPortal(
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+            onClick={() => setViewingImage(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className="relative max-w-4xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Action Buttons */}
+              <div className="absolute -top-14 right-0 flex items-center gap-2">
+                <a
+                  href={viewingImage}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2.5 text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10 flex items-center gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Download className="w-6 h-6" />
+                  <span className="text-sm font-medium">Download</span>
+                </a>
+                <button
+                  onClick={() => setViewingImage(null)}
+                  className="p-2.5 text-white/80 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                >
+                  <X className="w-7 h-7" />
+                </button>
+              </div>
+              <img
+                src={viewingImage}
+                alt="Preview"
+                className="w-full h-auto max-h-[85vh] object-contain rounded-xl shadow-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
     </div >
   );
 }

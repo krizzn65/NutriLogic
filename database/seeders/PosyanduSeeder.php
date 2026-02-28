@@ -2,52 +2,41 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Posyandu;
+use Illuminate\Database\Seeder;
 
 class PosyanduSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Creates 2 Posyandus for testing multi-posyandu features.
      */
     public function run(): void
     {
-        $posyandus = [
-            [
-                'name'    => 'Posyandu Bougenville 1',
-                'village' => 'Desa Kaliwining',
-                'address' => 'RT 01 RW 02, Desa Kaliwining',
-                'city'    => 'Kabupaten Jember',
-            ],
-            [
-                'name'    => 'Posyandu Bougenville 2',
-                'village' => 'Desa Kaliwining',
-                'address' => 'RT 03 RW 04, Desa Kaliwining',
-                'city'    => 'Kabupaten Jember',
-            ],
-            [
-                'name'    => 'Posyandu Melati',
-                'village' => 'Desa Sukowiryo',
-                'address' => 'RT 05 RW 06, Desa Sukowiryo',
-                'city'    => 'Kabupaten Jember',
-            ],
-            [
-                'name'    => 'Posyandu Mawar',
-                'village' => 'Desa Tegalsari',
-                'address' => 'RT 02 RW 03, Desa Tegalsari',
-                'city'    => 'Kabupaten Jember',
-            ],
-            [
-                'name'    => 'Posyandu Anggrek',
-                'village' => 'Desa Sumberbaru',
-                'address' => 'RT 04 RW 05, Desa Sumberbaru',
-                'city'    => 'Kabupaten Jember',
-            ],
-        ];
+        $this->command->info('Creating Posyandus...');
 
-        foreach ($posyandus as $data) {
-            Posyandu::create($data);
-        }
+        Posyandu::create([
+            'name' => 'Posyandu Mawar Sehat',
+            'village' => 'Desa Sukamaju',
+            'address' => 'Jl. Kesehatan No. 123, RT 01/RW 02',
+            'rt_rw' => '01/02',
+            'city' => 'Jember',
+            'latitude' => -8.1656,
+            'longitude' => 113.7028,
+            'is_active' => true,
+        ]);
+
+        Posyandu::create([
+            'name' => 'Posyandu Melati Indah',
+            'village' => 'Desa Sejahtera',
+            'address' => 'Jl. Melati No. 45, RT 03/RW 01',
+            'rt_rw' => '03/01',
+            'city' => 'Jember',
+            'latitude' => -8.1700,
+            'longitude' => 113.7100,
+            'is_active' => true,
+        ]);
+
+        $this->command->info('✓ Created 2 Posyandus');
     }
 }

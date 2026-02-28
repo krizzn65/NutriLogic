@@ -23,13 +23,15 @@ class KaderWeighingController extends Controller
             ], 400);
         }
 
+        $today = now()->toDateString();
+
         $children = Child::with(['parent'])
             ->where('posyandu_id', $user->posyandu_id)
             ->where('is_active', true)
             ->get();
 
-        // Add latest weighing data for each child
-        $children->each(function ($child) {
+        // Add latest weighing data and today's weighing for each child
+        $children->each(function ($child) use ($today) {
             $latestWeighing = $child->weighingLogs()
                 ->orderBy('measured_at', 'desc')
                 ->first();
@@ -40,6 +42,22 @@ class KaderWeighingController extends Controller
                 'height_cm' => $latestWeighing->height_cm,
                 'muac_cm' => $latestWeighing->muac_cm,
                 'nutritional_status' => $latestWeighing->nutritional_status,
+                'head_circumference_cm' => $latestWeighing->head_circumference_cm,
+                'notes' => $latestWeighing->notes,
+            ] : null;
+
+            // Check if child has been weighed today
+            $todayWeighing = $child->weighingLogs()
+                ->whereDate('measured_at', $today)
+                ->first();
+
+            $child->today_weighing = $todayWeighing ? [
+                'id' => $todayWeighing->id,
+                'weight_kg' => $todayWeighing->weight_kg,
+                'height_cm' => $todayWeighing->height_cm,
+                'muac_cm' => $todayWeighing->muac_cm,
+                'head_circumference_cm' => $todayWeighing->head_circumference_cm,
+                'notes' => $todayWeighing->notes,
             ] : null;
         });
 
@@ -78,6 +96,8 @@ class KaderWeighingController extends Controller
             'weighings.*.height_cm.max' => 'Tinggi badan maksimal 130 cm (untuk anak 0-5 tahun).',
             'weighings.*.muac_cm.min' => 'Lingkar lengan minimal 8 cm.',
             'weighings.*.muac_cm.max' => 'Lingkar lengan maksimal 25 cm.',
+            'weighings.*.head_circumference_cm.min' => 'Lingkar kepala minimal 30 cm (sesuai standar WHO).',
+            'weighings.*.head_circumference_cm.max' => 'Lingkar kepala maksimal 60 cm (sesuai standar WHO).',
         ]);
 
         // Validate all children belong to kader's posyandu
@@ -152,6 +172,17 @@ class KaderWeighingController extends Controller
 
             DB::commit();
 
+            // Log activity for each saved weighing
+            foreach ($savedWeighings as $weighing) {
+                $child = Child::find($weighing->child_id);
+                AdminActivityLogController::log(
+                    'create',
+                    "Kader {$user->name} menimbang anak: {$child->full_name} (BB: {$weighing->weight_kg}kg, TB: {$weighing->height_cm}cm, Status: {$weighing->nutritional_status})",
+                    'WeighingLog',
+                    $weighing->id
+                );
+            }
+
             $message = count($savedWeighings) . ' data penimbangan berhasil disimpan.';
             if (count($errors) > 0) {
                 $message .= ' ' . count($errors) . ' data dilewati karena error.';
@@ -201,6 +232,45 @@ class KaderWeighingController extends Controller
                 ],
                 'weighings' => $weighings,
             ],
+        ], 200);
+    }
+
+    /**
+     * Update a weighing record
+     */
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user();
+
+        $weighing = WeighingLog::with('child')->findOrFail($id);
+
+        // Authorization: weighing must be for a child in kader's posyandu
+        if ($user->posyandu_id && $weighing->child->posyandu_id !== $user->posyandu_id) {
+            return response()->json([
+                'message' => 'Unauthorized access.',
+            ], 403);
+        }
+
+        // Only allow editing weighings from today
+        if ($weighing->measured_at->toDateString() !== now()->toDateString()) {
+            return response()->json([
+                'message' => 'Hanya dapat mengedit data penimbangan hari ini.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'weight_kg' => ['nullable', 'numeric', 'min:1', 'max:30'],
+            'height_cm' => ['nullable', 'numeric', 'min:40', 'max:130'],
+            'muac_cm' => ['nullable', 'numeric', 'min:8', 'max:25'],
+            'head_circumference_cm' => ['nullable', 'numeric', 'min:30', 'max:60'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $weighing->update($validated);
+
+        return response()->json([
+            'message' => 'Data penimbangan berhasil diperbarui.',
+            'data' => $weighing->fresh(),
         ], 200);
     }
 }

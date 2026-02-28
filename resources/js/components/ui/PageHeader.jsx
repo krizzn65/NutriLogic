@@ -267,7 +267,7 @@ export default function PageHeader({ title, subtitle, children, showProfile = tr
                                 </button>
 
                                 {isNotificationOpen && (
-                                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
+                                    <div className="fixed sm:absolute left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 sm:right-0 top-16 sm:top-auto mt-0 sm:mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-96 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200" style={{ zIndex: 100 }}>
                                         <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
                                             <h3 className="font-semibold text-gray-800">Notifikasi</h3>
                                             <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">{notifications.filter(n => !n.is_read).length} Baru</span>

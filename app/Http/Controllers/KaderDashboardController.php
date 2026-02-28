@@ -90,6 +90,35 @@ class KaderDashboardController extends Controller
             ->where('status', 'open')
             ->count();
 
+        // Get unread consultations count (consultations with unread messages from parent)
+        $unreadConsultations = 0;
+        $consultations = Consultation::with(['messages'])
+            ->whereHas('parent.children', function ($query) use ($posyandu) {
+                $query->where('posyandu_id', $posyandu->id);
+            })
+            ->where('status', 'open')
+            ->get();
+
+        foreach ($consultations as $consultation) {
+            // Get kader's last message in this consultation
+            $kaderLastMessage = $consultation->messages()
+                ->where('sender_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Count parent messages after kader's last message
+            $unreadQuery = $consultation->messages()
+                ->where('sender_id', $consultation->parent_id);
+
+            if ($kaderLastMessage) {
+                $unreadQuery->where('created_at', '>', $kaderLastMessage->created_at);
+            }
+
+            if ($unreadQuery->count() > 0) {
+                $unreadConsultations++;
+            }
+        }
+
         return response()->json([
             'data' => [
                 'posyandu' => [
@@ -125,6 +154,7 @@ class KaderDashboardController extends Controller
                         'child_name' => $nextSchedule->child->full_name ?? null,
                     ] : null,
                     'open_consultations' => $openConsultations,
+                    'unread_consultations' => $unreadConsultations,
                 ],
             ],
         ], 200);

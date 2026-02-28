@@ -121,7 +121,7 @@ class AdminPosyanduController extends Controller
         $posyandu->save();
 
         // Log activity
-        $status = $posyandu->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        $status = $posyandu->is_active ? 'mengaktifkan' : 'menonaktifkan';
         AdminActivityLogController::log('update', "Admin {$status} posyandu: {$posyandu->name}", 'Posyandu', $posyandu->id);
 
         return response()->json([

@@ -174,10 +174,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('children')->group(function () {
             Route::get('/', [App\Http\Controllers\KaderChildController::class, 'index']);
             Route::post('/', [App\Http\Controllers\KaderChildController::class, 'store']);
-            
+
             // Priority Children - must be before {id} routes
             Route::get('/priorities', [App\Http\Controllers\KaderPriorityController::class, 'index']);
-            
+
+            // At-Risk Children (nutritional concerns)
+            Route::get('/at-risk', [App\Http\Controllers\AtRiskController::class, 'index']);
+
             Route::get('/{id}', [App\Http\Controllers\KaderChildController::class, 'show']);
             Route::put('/{id}', [App\Http\Controllers\KaderChildController::class, 'update']);
             Route::delete('/{id}', [App\Http\Controllers\KaderChildController::class, 'destroy']);
@@ -188,6 +191,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('weighings')->group(function () {
             Route::get('/today', [App\Http\Controllers\KaderWeighingController::class, 'todayList']);
             Route::post('/bulk', [App\Http\Controllers\KaderWeighingController::class, 'bulkStore']);
+            Route::put('/{id}', [App\Http\Controllers\KaderWeighingController::class, 'update']);
         });
 
         // Vitamin Distribution Management
@@ -195,6 +199,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/children', [App\Http\Controllers\KaderVitaminController::class, 'getChildren']);
             Route::post('/bulk', [App\Http\Controllers\KaderVitaminController::class, 'storeBulk']);
             Route::get('/', [App\Http\Controllers\KaderVitaminController::class, 'index']);
+            Route::put('/{id}', [App\Http\Controllers\KaderVitaminController::class, 'update']);
             Route::delete('/{id}', [App\Http\Controllers\KaderVitaminController::class, 'destroy']);
         });
 
@@ -203,6 +208,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/children', [App\Http\Controllers\KaderImmunizationController::class, 'getChildren']);
             Route::post('/bulk', [App\Http\Controllers\KaderImmunizationController::class, 'storeBulk']);
             Route::get('/', [App\Http\Controllers\KaderImmunizationController::class, 'index']);
+            Route::put('/{id}', [App\Http\Controllers\KaderImmunizationController::class, 'update']);
             Route::delete('/{id}', [App\Http\Controllers\KaderImmunizationController::class, 'destroy']);
         });
 
@@ -265,7 +271,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->middleware('admin')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\AdminDashboardController::class, 'index']);
-        
+
         // Posyandu Management
         Route::prefix('posyandus')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminPosyanduController::class, 'index']);
@@ -273,7 +279,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/{id}', [App\Http\Controllers\AdminPosyanduController::class, 'update']);
             Route::patch('/{id}/toggle-active', [App\Http\Controllers\AdminPosyanduController::class, 'toggleActive']);
         });
-        
+
         // User Management
         Route::prefix('users')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminUserController::class, 'index']);
@@ -282,42 +288,32 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{id}/toggle-active', [App\Http\Controllers\AdminUserController::class, 'toggleActive']);
             Route::post('/{id}/reset-password', [App\Http\Controllers\AdminUserController::class, 'resetPassword']);
         });
-        
+
         // Children Monitoring (Read-Only)
         Route::prefix('children')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminChildrenController::class, 'index']);
             Route::get('/{id}', [App\Http\Controllers\AdminChildrenController::class, 'show']);
         });
-        
+
         // Weighing Logs (Read-Only)
         Route::prefix('weighings')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminWeighingController::class, 'index']);
             Route::get('/{id}', [App\Http\Controllers\AdminWeighingController::class, 'show']);
         });
-        
+
         // System Reports
         Route::prefix('reports')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminReportController::class, 'index']);
             Route::get('/export', [App\Http\Controllers\AdminReportController::class, 'export']);
         });
-        
-        // Content Management (Articles)
-        Route::prefix('articles')->group(function () {
-            Route::get('/', [App\Http\Controllers\AdminArticleController::class, 'index']);
-            Route::post('/', [App\Http\Controllers\AdminArticleController::class, 'store']);
-            Route::get('/{id}', [App\Http\Controllers\AdminArticleController::class, 'show']);
-            Route::put('/{id}', [App\Http\Controllers\AdminArticleController::class, 'update']);
-            Route::delete('/{id}', [App\Http\Controllers\AdminArticleController::class, 'destroy']);
-            Route::patch('/{id}/toggle-publish', [App\Http\Controllers\AdminArticleController::class, 'togglePublish']);
-        });
-        
+
         // System Settings
         Route::prefix('settings')->group(function () {
             Route::get('/', [App\Http\Controllers\AdminSettingsController::class, 'index']);
             Route::put('/', [App\Http\Controllers\AdminSettingsController::class, 'update']);
             Route::get('/{key}', [App\Http\Controllers\AdminSettingsController::class, 'show']);
         });
-        
+
         // Activity Logs
         Route::get('/activity-logs', [App\Http\Controllers\AdminActivityLogController::class, 'index']);
 

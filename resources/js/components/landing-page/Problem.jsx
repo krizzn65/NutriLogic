@@ -229,11 +229,11 @@ const Problem = () => {
 
         {/* Chart Cards */}
         {/* Chart Cards - Bento Grid on Mobile */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 xl:gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xl:gap-4 mb-6">
           {stuntingData.map((stat, index) => (
             <div
               key={index}
-              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'} ${index === 0 ? 'col-span-2 md:col-span-1' : 'col-span-1'}`}
+              className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
               style={{ animationDelay: `${200 + index * 100}ms` }}
             >
               <ActivityChartCard
@@ -301,8 +301,8 @@ const Problem = () => {
             />
           </div>
 
-          {/* CTA Box - 40% - Bento Grid (Side-by-side) on Mobile */}
-          <div className="w-full lg:w-[40%] h-auto md:h-[450px] lg:h-[500px] grid grid-cols-2 md:flex md:flex-col gap-3">
+          {/* CTA Box - 40% - Stacked on Mobile */}
+          <div className="w-full lg:w-[40%] h-auto md:h-[450px] lg:h-[500px] grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-col gap-3">
             {/* Card 1: Data Sebagai Bukti */}
             <div className="flex-1 bg-gradient-to-br from-[#00BFEF] to-[#0088c2] rounded-2xl shadow-lg p-5 md:p-6 flex flex-col justify-center">
               <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight mb-3">
@@ -342,14 +342,14 @@ const Problem = () => {
                     {
                       quarter: "2025",
                       title: "16%",
-                      description: "Progress",
-                      status: "in-progress"
+                      description: "Selesai",
+                      status: "done"
                     },
                     {
                       quarter: "2026",
                       title: "14%",
-                      description: "Goal",
-                      status: "upcoming"
+                      description: "Progress",
+                      status: "in-progress"
                     }
                   ]}
                 />

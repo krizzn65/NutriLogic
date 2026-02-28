@@ -5,7 +5,7 @@ import { useDataCache } from "../../contexts/DataCacheContext";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import PageHeader from "../ui/PageHeader";
 import { assets } from "../../assets/assets";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import DetailAnakKaderSkeleton from "../loading/DetailAnakKaderSkeleton";
 
 export default function DetailAnakKader() {
@@ -107,15 +107,6 @@ export default function DetailAnakKader() {
                 >
                     <div className="hidden md:flex gap-3">
                         <button
-                            onClick={() => navigate(`/dashboard/data-anak/edit/${id}`)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit
-                        </button>
-                        <button
                             onClick={() => navigate('/dashboard/data-anak')}
                             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                         >
@@ -129,14 +120,6 @@ export default function DetailAnakKader() {
                     <div className="lg:col-span-2 space-y-6">
                         {/* Child Info Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 relative">
-                            {/* Mobile Edit Button */}
-                            <button
-                                onClick={() => navigate(`/dashboard/data-anak/edit/${id}`)}
-                                className="md:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-blue-600 transition-colors bg-gray-50 rounded-full border border-gray-100"
-                            >
-                                <Pencil className="w-4 h-4" />
-                            </button>
-
                             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-6 text-center sm:text-left">
                                 <div className="shrink-0 h-24 w-24 sm:h-20 sm:w-20 bg-blue-50 rounded-full flex items-center justify-center overflow-hidden border-4 sm:border-2 border-white shadow-sm mx-auto sm:mx-0">
                                     <img
@@ -149,7 +132,7 @@ export default function DetailAnakKader() {
                                     <h2 className="text-xl md:text-2xl font-bold text-gray-800">{childData.full_name}</h2>
                                     <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 mt-2 text-gray-600 text-sm md:text-base">
                                         <span>{childData.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
-                                        <span className="hidden sm:inline">•</span>
+                                        <span className="hidden sm:inline">|</span>
                                         <span>{formatAge(childData.age_in_months)}</span>
                                     </div>
                                 </div>
@@ -242,11 +225,11 @@ export default function DetailAnakKader() {
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1">
                             <div className="grid grid-cols-2 md:flex gap-1 md:gap-2 p-1 bg-gray-100/80 rounded-xl w-full md:w-fit overflow-x-auto no-scrollbar">
                                 {[
-                                    { id: 'weighing', label: 'Penimbangan', icon: '⚖️' },
-                                    { id: 'vitamin', label: 'Vitamin', icon: '💊' },
-                                    { id: 'immunization', label: 'Imunisasi', icon: '💉' },
-                                    { id: 'meals', label: 'Makanan', icon: '🍽️' },
-                                    { id: 'pmt', label: 'PMT', icon: '📦' },
+                                    { id: 'weighing', label: 'Penimbangan', icon: 'W' },
+                                    { id: 'vitamin', label: 'Vitamin', icon: 'V' },
+                                    { id: 'immunization', label: 'Imunisasi', icon: 'I' },
+                                    { id: 'meals', label: 'Makanan', icon: 'M' },
+                                    { id: 'pmt', label: 'PMT', icon: 'P' },
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -367,9 +350,9 @@ export default function DetailAnakKader() {
                                                         {new Date(vitamin.distribution_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </p>
                                                     <p className="text-xs text-gray-600 mt-1">
-                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? '🔵 Vitamin A Biru (100.000 IU)' :
-                                                            vitamin.vitamin_type === 'vitamin_a_red' ? '🔴 Vitamin A Merah (200.000 IU)' :
-                                                                '📦 Lainnya'}
+                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? 'Vitamin A Biru (100.000 IU)' :
+                                                            vitamin.vitamin_type === 'vitamin_a_red' ? 'Vitamin A Merah (200.000 IU)' :
+                                                                'Lainnya'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -407,9 +390,9 @@ export default function DetailAnakKader() {
                                                         {new Date(vitamin.distribution_date).toLocaleDateString('id-ID')}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-900">
-                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? '🔵 Vitamin A Biru (100.000 IU)' :
-                                                            vitamin.vitamin_type === 'vitamin_a_red' ? '🔴 Vitamin A Merah (200.000 IU)' :
-                                                                '📦 Lainnya'}
+                                                        {vitamin.vitamin_type === 'vitamin_a_blue' ? 'Vitamin A Biru (100.000 IU)' :
+                                                            vitamin.vitamin_type === 'vitamin_a_red' ? 'Vitamin A Merah (200.000 IU)' :
+                                                                'Lainnya'}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{vitamin.dosage || '-'}</td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{vitamin.notes || '-'}</td>
@@ -451,7 +434,7 @@ export default function DetailAnakKader() {
                         {activeTab === 'immunization' && childData.immunization_records && childData.immunization_records.length > 0 && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
                                     Riwayat Imunisasi
@@ -460,28 +443,28 @@ export default function DetailAnakKader() {
                                 {/* Mobile View (Cards) */}
                                 <div className="md:hidden flex flex-col gap-3">
                                     {childData.immunization_records.slice(0, showAllImmunization ? undefined : 5).map((record) => (
-                                        <div key={record.id} className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                                        <div key={record.id} className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <p className="text-sm font-bold text-gray-900">
                                                         {new Date(record.immunization_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </p>
                                                     <p className="text-xs text-gray-600 mt-1 font-medium">
-                                                        {record.vaccine_type === 'bcg' ? '💉 BCG - Tuberkulosis' :
-                                                            record.vaccine_type.startsWith('hepatitis_b') ? `💉 Hepatitis B ${record.vaccine_type.split('_').pop()}` :
-                                                                record.vaccine_type.startsWith('polio') ? `💉 Polio ${record.vaccine_type.split('_').pop()}` :
-                                                                    record.vaccine_type.startsWith('dpt') ? `💉 DPT-HiB-HepB ${record.vaccine_type.split('_').pop()}` :
-                                                                        record.vaccine_type.startsWith('ipv') ? `💉 IPV ${record.vaccine_type.split('_').pop()} (Polio Suntik)` :
-                                                                            record.vaccine_type.startsWith('campak') ? `💉 Campak-Rubella ${record.vaccine_type.split('_').pop()}` :
-                                                                                '💉 Vaksin Lainnya'}
+                                                        {record.vaccine_type === 'bcg' ? 'BCG - Tuberkulosis' :
+                                                            record.vaccine_type.startsWith('hepatitis_b') ? `Hepatitis B ${record.vaccine_type.split('_').pop()}` :
+                                                                record.vaccine_type.startsWith('polio') ? `Polio ${record.vaccine_type.split('_').pop()}` :
+                                                                    record.vaccine_type.startsWith('dpt') ? `DPT-HiB-HepB ${record.vaccine_type.split('_').pop()}` :
+                                                                        record.vaccine_type.startsWith('ipv') ? `IPV ${record.vaccine_type.split('_').pop()} (Polio Suntik)` :
+                                                                            record.vaccine_type.startsWith('campak') ? `Campak-Rubella ${record.vaccine_type.split('_').pop()}` :
+                                                                                'Vaksin Lainnya'}
                                                     </p>
                                                 </div>
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
-                                                    ✓ Selesai
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                     Selesai
                                                 </span>
                                             </div>
                                             {record.notes && (
-                                                <div className="bg-white p-2 rounded border border-purple-100">
+                                                <div className="bg-white p-2 rounded border border-blue-100">
                                                     <p className="text-[10px] text-gray-500 uppercase mb-1">Catatan</p>
                                                     <p className="text-gray-700 text-xs">{record.notes}</p>
                                                 </div>
@@ -508,17 +491,17 @@ export default function DetailAnakKader() {
                                                         {new Date(record.immunization_date).toLocaleDateString('id-ID')}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-900">
-                                                        {record.vaccine_type === 'bcg' ? '💉 BCG - Tuberkulosis' :
-                                                            record.vaccine_type.startsWith('hepatitis_b') ? `💉 Hepatitis B ${record.vaccine_type.split('_').pop()}` :
-                                                                record.vaccine_type.startsWith('polio') ? `💉 Polio ${record.vaccine_type.split('_').pop()}` :
-                                                                    record.vaccine_type.startsWith('dpt') ? `💉 DPT-HiB-HepB ${record.vaccine_type.split('_').pop()}` :
-                                                                        record.vaccine_type.startsWith('ipv') ? `💉 IPV ${record.vaccine_type.split('_').pop()} (Polio Suntik)` :
-                                                                            record.vaccine_type.startsWith('campak') ? `💉 Campak-Rubella ${record.vaccine_type.split('_').pop()}` :
-                                                                                '💉 Vaksin Lainnya'}
+                                                        {record.vaccine_type === 'bcg' ? 'BCG - Tuberkulosis' :
+                                                            record.vaccine_type.startsWith('hepatitis_b') ? `Hepatitis B ${record.vaccine_type.split('_').pop()}` :
+                                                                record.vaccine_type.startsWith('polio') ? `Polio ${record.vaccine_type.split('_').pop()}` :
+                                                                    record.vaccine_type.startsWith('dpt') ? `DPT-HiB-HepB ${record.vaccine_type.split('_').pop()}` :
+                                                                        record.vaccine_type.startsWith('ipv') ? `IPV ${record.vaccine_type.split('_').pop()} (Polio Suntik)` :
+                                                                            record.vaccine_type.startsWith('campak') ? `Campak-Rubella ${record.vaccine_type.split('_').pop()}` :
+                                                                                'Vaksin Lainnya'}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm">
-                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
-                                                            ✓ Selesai
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                             Selesai
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">{record.notes || '-'}</td>
@@ -533,7 +516,7 @@ export default function DetailAnakKader() {
                                     <div className="mt-4 text-center">
                                         <button
                                             onClick={() => setShowAllImmunization(!showAllImmunization)}
-                                            className="px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors inline-flex items-center gap-2"
+                                            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center gap-2"
                                         >
                                             {showAllImmunization ? (
                                                 <>
@@ -677,7 +660,7 @@ export default function DetailAnakKader() {
                         {activeTab === 'pmt' && childData.pmt_logs && childData.pmt_logs.length > 0 && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                     </svg>
                                     Riwayat PMT dari Orang Tua
@@ -740,7 +723,7 @@ export default function DetailAnakKader() {
                                                                 ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
                                                                 : 'bg-red-50 text-red-700 border-red-200'
                                                             }`}>
-                                                            {pmt.status === 'consumed' ? '✓ Habis' : pmt.status === 'partial' ? '◐ Sebagian' : '✗ Ditolak'}
+                                                            {pmt.status === 'consumed' ? 'Habis' : pmt.status === 'partial' ? 'Sebagian' : 'Ditolak'}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-600">
@@ -872,3 +855,4 @@ export default function DetailAnakKader() {
         </div>
     );
 }
+

@@ -193,8 +193,8 @@ class AuthController extends Controller
         // Generate Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Log successful login
-        AdminActivityLogController::log('login', "User login: {$user->name} ({$user->role})", 'User', $user->id);
+        // Log successful login (pass user ID explicitly since auth() is not set yet)
+        AdminActivityLogController::log('login', "User login: {$user->name} ({$user->role})", 'User', $user->id, [], $user->id);
 
         // Add points and check badges for login (only for ibu role)
         if ($user->isIbu()) {

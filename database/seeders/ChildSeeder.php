@@ -2,198 +2,131 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Child;
 use App\Models\User;
 use App\Models\Posyandu;
+use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class ChildSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Creates children for 3 parents with various PMT compliance levels.
+     * 
+     * PMT Compliance Types:
+     * - full (100%) -> ELIGIBLE for PMT rewards
+     * - high (85-95%) -> ELIGIBLE for PMT rewards
+     * - medium (70-79%) -> NOT eligible
+     * - low (50-69%) -> NOT eligible
+     * - very_low (30-49%) -> NOT eligible
      */
     public function run(): void
     {
-        $parents = User::where('role', 'ibu')->get();
-        $posyandus = Posyandu::all();
+        $this->command->info('Creating Children...');
 
-        $childNames = [
-            // Laki-laki
-            'Ahmad Rizki',
-            'Budi Santoso',
-            'Cahya Permana',
-            'Dani Pratama',
-            'Eko Saputra',
-            'Fajar Nugraha',
-            'Galih Ramadan',
-            'Hadi Wijaya',
-            'Irfan Hakim',
-            'Joko Susilo',
-            'Kiki Amalia',
-            'Lukman Hakim',
-            'Made Sudarsana',
-            'Nanda Pratama',
-            'Omar Bakri',
-            'Putra Mandiri',
-            'Qori Sandioriva',
-            'Rangga Sasana',
-            'Satria Baja',
-            'Teguh Santoso',
-            'Umar Khalid',
-            'Vino Bastian',
-            'Wahyu Nugroho',
-            'Yoga Pratama',
-            'Zaki Abdullah',
-            // Perempuan
-            'Aisha Putri',
-            'Bella Saphira',
-            'Cinta Kuya',
-            'Dewi Persik',
-            'Elsa Frozen',
-            'Fitria Rasyidi',
-            'Gita Gutawa',
-            'Hana Madness',
-            'Intan Nuraini',
-            'Jasmine Villegas',
-            'Kiara Putri',
-            'Lala Karmela',
-            'Mawar Melati',
-            'Nina Zatulini',
-            'Olivia Zalianty',
-            'Prita Mulyasari',
-            'Qonita Ginting',
-            'Rossa Roslaina',
-            'Siti Badriah',
-            'Tasya Kamila',
-            'Ussy Sulistiawaty',
-            'Vanesha Prescilla',
-            'Widya Saputra',
-            'Yuki Kato',
-            'Zara Adhisty',
-            // Tambahan
-            'Aldi Taher',
-            'Bagas Ran',
-            'Cakra Khan',
-            'Desta Vincent',
-            'Erick Estrada',
-            'Fadli Zon',
-            'Gilang Dirga',
-            'Hamish Daud',
-            'Ifan Seventeen',
-            'Judika Sihotang',
-            'Keanu Agl',
-            'Lesti Kejora',
-            'Momo Geisha',
-            'Naysilla Mirdad',
-            'Oka Antara',
-            'Pevita Pearce',
-            'Raline Shah',
-            'Syahrini Princess',
-            'Tara Basro',
-            'Vidi Aldiano',
-            'Wendy Cagur',
-            'Yura Yunita',
-            'Aurel Hermansyah',
-            'Billar Qhia',
-            'Celine Evangelista',
-            'Dinda Hauw',
-            'Erika Carlina',
-            'Febby Rastanty',
-            'Gading Marten',
-            'Happy Salma',
-            'Indah Permatasari',
-            'Jessica Mila',
-            'Kevin Julio',
-            'Lucinta Luna',
-            'Michelle Ziudith',
-            'Natasha Wilona',
-            'Amanda Manopo',
-            'Brisia Jodie',
-            'Chelsea Islan',
-            'Dian Sastro',
-            'Enzy Storia',
-            'Faradina Mufti',
-            'Gritte Agatha',
-            'Hanggini Purinda',
-            'Irish Bella',
+        $posyandu1 = Posyandu::where('name', 'Posyandu Mawar Sehat')->first();
+        $posyandu2 = Posyandu::where('name', 'Posyandu Melati Indah')->first();
+        
+        $ratna = User::where('email', 'ratna@gmail.com')->first();
+        $wulan = User::where('email', 'wulan@gmail.com')->first();
+        $ani = User::where('email', 'ani@gmail.com')->first();
+
+        $childrenData = [
+            // ============ RATNA's Children (2) - ALL PMT ELIGIBLE ============
+            // Both children have >=80% PMT compliance -> Mom qualifies for rewards
+            [
+                'parent' => $ratna,
+                'posyandu' => $posyandu1,
+                'name' => 'Ahmad Rizki',
+                'nik' => '3509010101200001',
+                'months' => 24, // 2 years old - good for weighing/immunization history
+                'gender' => 'L',
+                'bw' => 3.2,
+                'bh' => 50.0,
+                'pmt_type' => 'full', // 100% compliance - ELIGIBLE
+            ],
+            [
+                'parent' => $ratna,
+                'posyandu' => $posyandu1,
+                'name' => 'Siti Aisyah',
+                'nik' => '3509010101200002',
+                'months' => 10, // 10 months - good for MPASI
+                'gender' => 'P',
+                'bw' => 3.0,
+                'bh' => 48.5,
+                'pmt_type' => 'high', // 90% compliance - ELIGIBLE
+            ],
+
+            // ============ WULAN's Children (2) - MIXED COMPLIANCE ============
+            // One eligible, one not - shows mixed scenario
+            [
+                'parent' => $wulan,
+                'posyandu' => $posyandu1,
+                'name' => 'Budi Santoso',
+                'nik' => '3509010101200003',
+                'months' => 18, // 1.5 years
+                'gender' => 'L',
+                'bw' => 3.3,
+                'bh' => 50.5,
+                'pmt_type' => 'high', // 85% compliance - ELIGIBLE
+            ],
+            [
+                'parent' => $wulan,
+                'posyandu' => $posyandu1,
+                'name' => 'Citra Ayu',
+                'nik' => '3509010101200004',
+                'months' => 8, // 8 months
+                'gender' => 'P',
+                'bw' => 2.9,
+                'bh' => 47.5,
+                'pmt_type' => 'low', // 60% compliance - NOT ELIGIBLE
+            ],
+
+            // ============ ANI's Children (2) - NOT ELIGIBLE ============
+            // Both children have <80% PMT compliance
+            [
+                'parent' => $ani,
+                'posyandu' => $posyandu2,
+                'name' => 'Dimas Pratama',
+                'nik' => '3509010101200005',
+                'months' => 30, // 2.5 years
+                'gender' => 'L',
+                'bw' => 3.4,
+                'bh' => 51.5,
+                'pmt_type' => 'medium', // 75% compliance - NOT ELIGIBLE
+            ],
+            [
+                'parent' => $ani,
+                'posyandu' => $posyandu2,
+                'name' => 'Eka Safitri',
+                'nik' => '3509010101200006',
+                'months' => 5, // 5 months - too young for MPASI
+                'gender' => 'P',
+                'bw' => 3.0,
+                'bh' => 49.0,
+                'pmt_type' => 'very_low', // 40% compliance - NOT ELIGIBLE
+            ],
         ];
 
-        $genders = ['L', 'P'];
-        $statuses = [true, true, true, true, false]; // 80% aktif
-
-        foreach ($parents as $index => $parent) {
-            // Setiap parent punya 1-3 anak
-            $childCount = rand(1, 3);
-
-            for ($i = 0; $i < $childCount; $i++) {
-                $childIndex = ($index * 3) + $i;
-                if ($childIndex >= count($childNames)) break;
-
-                $gender = $genders[array_rand($genders)];
-                $birthDate = now()->subMonths(rand(6, 60))->format('Y-m-d'); // 6-60 bulan
-
-                Child::create([
-                    'parent_id'       => $parent->id,
-                    'posyandu_id'     => $parent->posyandu_id,
-                    'full_name'       => $childNames[$childIndex],
-                    'birth_date'      => $birthDate,
-                    'gender'          => $gender,
-                    'birth_weight_kg' => rand(25, 40) / 10, // 2.5 - 4.0 kg
-                    'birth_height_cm' => rand(45, 53), // 45 - 53 cm
-                    'is_active'       => $statuses[array_rand($statuses)],
-                ]);
-            }
+        foreach ($childrenData as $data) {
+            Child::create([
+                'parent_id' => $data['parent']->id,
+                'posyandu_id' => $data['posyandu']->id,
+                'full_name' => $data['name'],
+                'nik' => $data['nik'],
+                'birth_date' => Carbon::now()->subMonths($data['months']),
+                'gender' => $data['gender'],
+                'birth_weight_kg' => $data['bw'],
+                'birth_height_cm' => $data['bh'],
+                'notes' => 'PMT type: ' . $data['pmt_type'],
+                'is_active' => true,
+            ]);
         }
 
-        // Pastikan user test punya 30 anak untuk testing pagination
-        $testParent = User::where('email', 'ibu@ibu.com')->first();
-        if ($testParent) {
-            $testChildNames = [
-                'Budi Setiawan',
-                'Siti Nurhaliza',
-                'Agus Salim',
-                'Mega Putri',
-                'Riko Pratama',
-                'Lina Marlina',
-                'Doni Saputra',
-                'Nina Agustina',
-                'Rudi Hermawan',
-                'Dewi Sartika',
-                'Bayu Anggara',
-                'Citra Kirana',
-                'Eko Prasetyo',
-                'Fitri Handayani',
-                'Gani Wijaya',
-                'Hana Pertiwi',
-                'Irfan Maulana',
-                'Juwita Rahayu',
-                'Krisna Mukti',
-                'Laila Sari',
-                'Made Wirawan',
-                'Nita Puspita',
-                'Omar Abdullah',
-                'Putri Ayu',
-                'Qori Maheswara',
-                'Rani Mulyani',
-                'Satria Baja',
-                'Tuti Suryani',
-                'Udin Petot',
-                'Vina Safitri',
-            ];
-
-            foreach ($testChildNames as $index => $childName) {
-                Child::create([
-                    'parent_id'       => $testParent->id,
-                    'posyandu_id'     => $testParent->posyandu_id,
-                    'full_name'       => $childName,
-                    'birth_date'      => now()->subMonths(rand(6, 60))->format('Y-m-d'),
-                    'gender'          => $genders[array_rand($genders)],
-                    'birth_weight_kg' => rand(25, 40) / 10,
-                    'birth_height_cm' => rand(45, 53),
-                    'is_active'       => $statuses[array_rand($statuses)],
-                ]);
-            }
-        }
+        $this->command->info('✓ Created 6 Children (2 per parent)');
+        $this->command->info('  - Ratna: 2 children (ALL PMT eligible)');
+        $this->command->info('  - Wulan: 2 children (1 eligible, 1 not)');
+        $this->command->info('  - Ani: 2 children (NONE PMT eligible)');
     }
 }

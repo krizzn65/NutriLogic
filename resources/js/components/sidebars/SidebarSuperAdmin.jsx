@@ -38,7 +38,7 @@ export default function SidebarSuperAdmin() {
             ),
         },
         {
-            label: "Manajemen Pengguna",
+            label: "Manajemen Kader",
             href: "/dashboard/kader",
             icon: (
                 <UserCog className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />

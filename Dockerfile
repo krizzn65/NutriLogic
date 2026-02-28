@@ -9,15 +9,15 @@ COPY vite.config.js ./
 COPY postcss.config.js ./
 COPY tailwind.config.js ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with reduced memory
+RUN npm install --maxsockets 1
 
 # Copy source files
 COPY resources ./resources
 COPY public ./public
 
-# Build assets
-RUN npm run build
+# Build assets with increased memory limit
+RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
 
 # PHP Application stage
 FROM php:8.2-fpm-alpine

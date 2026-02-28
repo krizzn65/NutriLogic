@@ -340,7 +340,10 @@ export default function ChildrenMonitoring() {
                             </div>
                         </div>
 
-                        <div className="col-span-2 md:col-span-1 flex items-end">
+                        <div className="col-span-2 md:col-span-1">
+                            <label className="hidden md:block text-sm font-medium text-transparent mb-1 select-none">
+                                Filter
+                            </label>
                             <button
                                 onClick={handleClearFilters}
                                 className="w-full md:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"

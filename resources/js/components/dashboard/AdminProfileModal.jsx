@@ -62,11 +62,12 @@ export default function AdminProfileModal({ isOpen, onClose }) {
         try {
             setLoading(true);
             const response = await api.get('/me');
-            setUser(response.data.data);
+            const userData = response.data.user;
+            setUser(userData);
             setFormData({
-                name: response.data.data.name,
-                email: response.data.data.email,
-                phone: response.data.data.phone || '',
+                name: userData.name || '',
+                email: userData.email || '',
+                phone: userData.phone || '',
             });
         } catch (err) {
             console.error('Profile fetch error:', err);

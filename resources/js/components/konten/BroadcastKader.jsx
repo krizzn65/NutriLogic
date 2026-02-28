@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../ui/PageHeader";
 import DashboardLayout from "../dashboard/DashboardLayout";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const COOLDOWN_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+const COOLDOWN_STORAGE_KEY = 'broadcast_last_sent';
 
 export default function BroadcastKader() {
     const [loading, setLoading] = useState(false);
@@ -14,6 +17,9 @@ export default function BroadcastKader() {
     const [broadcasts, setBroadcasts] = useState([]);
     const [expandedId, setExpandedId] = useState(null);
 
+    // Cooldown state
+    const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
     const [formData, setFormData] = useState({
         type: "pengumuman_umum",
         message: "",
@@ -21,6 +27,42 @@ export default function BroadcastKader() {
 
     // Data caching
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+
+    // Calculate remaining cooldown
+    const calculateCooldownRemaining = useCallback(() => {
+        const lastSent = localStorage.getItem(COOLDOWN_STORAGE_KEY);
+        if (!lastSent) return 0;
+
+        const lastSentTime = parseInt(lastSent, 10);
+        const now = Date.now();
+        const elapsed = now - lastSentTime;
+        const remaining = COOLDOWN_DURATION - elapsed;
+
+        return remaining > 0 ? remaining : 0;
+    }, []);
+
+    // Format cooldown time to MM:SS
+    const formatCooldown = (ms) => {
+        const totalSeconds = Math.ceil(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    // Check and update cooldown on mount and periodically
+    useEffect(() => {
+        const updateCooldown = () => {
+            const remaining = calculateCooldownRemaining();
+            setCooldownRemaining(remaining);
+        };
+
+        updateCooldown();
+
+        // Update every second while cooldown is active
+        const interval = setInterval(updateCooldown, 1000);
+
+        return () => clearInterval(interval);
+    }, [calculateCooldownRemaining]);
 
     useEffect(() => {
         fetchBroadcasts();
@@ -58,12 +100,24 @@ export default function BroadcastKader() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Check cooldown before submitting
+        if (cooldownRemaining > 0) {
+            setError(`Harap tunggu ${formatCooldown(cooldownRemaining)} sebelum mengirim broadcast berikutnya.`);
+            return;
+        }
+
         setSending(true);
         setError(null);
         setSuccess(null);
 
         try {
             await api.post('/kader/broadcast', formData);
+
+            // Set cooldown timestamp
+            localStorage.setItem(COOLDOWN_STORAGE_KEY, Date.now().toString());
+            setCooldownRemaining(COOLDOWN_DURATION);
+
             setSuccess('Broadcast berhasil dikirim!');
             setFormData({ type: "pengumuman_umum", message: "" });
             invalidateCache('kader_broadcasts');
@@ -117,7 +171,7 @@ export default function BroadcastKader() {
         const colors = {
             jadwal_posyandu: 'bg-blue-50 text-blue-600 border-blue-200',
             info_gizi: 'bg-green-50 text-green-600 border-green-200',
-            pengumuman_umum: 'bg-purple-50 text-purple-600 border-purple-200',
+            pengumuman_umum: 'bg-indigo-50 text-indigo-600 border-indigo-200',
             lainnya: 'bg-gray-50 text-gray-600 border-gray-200',
         };
         return colors[type] || colors.lainnya;
@@ -247,13 +301,18 @@ export default function BroadcastKader() {
                                 <div className="pt-2">
                                     <button
                                         type="submit"
-                                        disabled={sending || !formData.message.trim()}
+                                        disabled={sending || !formData.message.trim() || cooldownRemaining > 0}
                                         className="w-full md:w-auto md:px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
                                     >
                                         {sending ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                                 <span>Mengirim...</span>
+                                            </>
+                                        ) : cooldownRemaining > 0 ? (
+                                            <>
+                                                <Icon icon="lucide:timer" className="w-4 h-4" />
+                                                <span>Tunggu {formatCooldown(cooldownRemaining)}</span>
                                             </>
                                         ) : (
                                             <>
@@ -262,6 +321,12 @@ export default function BroadcastKader() {
                                             </>
                                         )}
                                     </button>
+                                    {cooldownRemaining > 0 && (
+                                        <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                                            <Icon icon="lucide:info" className="w-3 h-3" />
+                                            Anda dapat mengirim broadcast lagi dalam {formatCooldown(cooldownRemaining)}
+                                        </p>
+                                    )}
                                 </div>
                             </form>
                         </div>
@@ -293,7 +358,7 @@ export default function BroadcastKader() {
                         <div className="mt-6 space-y-3">
                             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Distribusi Tipe</div>
                             {[
-                                { label: 'Umum', count: broadcasts.filter(b => b.type === 'pengumuman_umum').length, color: 'bg-purple-500' },
+                                { label: 'Umum', count: broadcasts.filter(b => b.type === 'pengumuman_umum').length, color: 'bg-indigo-500' },
                                 { label: 'Jadwal', count: broadcasts.filter(b => b.type === 'jadwal_posyandu').length, color: 'bg-blue-500' },
                                 { label: 'Info Gizi', count: broadcasts.filter(b => b.type === 'info_gizi').length, color: 'bg-green-500' },
                             ].map((stat, idx) => (
@@ -488,3 +553,4 @@ export default function BroadcastKader() {
         </DashboardLayout>
     );
 }
+

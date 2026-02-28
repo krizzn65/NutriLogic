@@ -55,7 +55,7 @@ export function Footer() {
           {/* Branding Section */}
           <AnimatedContainer className="space-y-6 lg:col-span-1">
             <div className="flex items-center">
-              <img src={assets.logo} alt="NutriLogic Logo" className="h-8 w-auto" />
+              <img src={assets.logo} alt="NutriLogic Logo" className="h-8 w-auto" loading="lazy" />
             </div>
             <p className="text-gray-600 text-sm leading-relaxed max-w-sm">
               Sistem Pemantauan Gizi Balita Berbasis AI untuk Indonesia yang lebih sehat dan bebas stunting.

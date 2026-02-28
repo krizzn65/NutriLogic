@@ -3,7 +3,7 @@ import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
     FileText, Download, Calendar, TrendingUp,
-    Activity, ChevronDown, Check
+    Activity, ChevronDown, Check, Users, Home, Baby, Scale
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PageHeader from "../ui/PageHeader";
@@ -105,6 +105,7 @@ export default function SystemReports() {
         fetchPosyandus();
     }, []);
 
+    // Initial load effect
     useEffect(() => {
         if (hasHydratedReports.current) return;
         hasHydratedReports.current = true;
@@ -119,6 +120,12 @@ export default function SystemReports() {
             fetchReportData({ forceRefresh: false, showLoader: true });
         }
     }, [fetchReportData, getCachedData, selectedPosyandu]);
+
+    // Effect to re-fetch data when posyandu filter changes
+    useEffect(() => {
+        if (!hasHydratedReports.current) return; // Skip if not hydrated yet
+        fetchReportData({ forceRefresh: true, showLoader: true });
+    }, [selectedPosyandu]);
 
     const handleExport = (type) => {
         const params = new URLSearchParams();
@@ -443,65 +450,77 @@ export default function SystemReports() {
                         animate="visible"
                         className="space-y-8"
                     >
-                        {/* Summary Section */}
-                        <div>
-                            {/* Mobile View: Cards */}
-                            <div className="grid grid-cols-2 gap-3 md:hidden">
-                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Posyandu</span>
-                                    <span className="text-2xl font-bold text-blue-600">{reportData?.summary?.total_posyandu ?? 0}</span>
+                        {/* Summary Stats - Sleek Stat Cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {/* Total Posyandu */}
+                            <motion.div
+                                variants={itemVariants}
+                                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group"
+                            >
+                                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-100 transition-colors">
+                                    <Home className="w-6 h-6" />
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Kader</span>
-                                    <span className="text-2xl font-bold text-emerald-600">{reportData?.summary?.total_kader ?? 0}</span>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Posyandu</p>
+                                    <p className="text-2xl font-bold text-gray-800">{reportData?.summary?.total_posyandu ?? 0}</p>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Orang Tua</span>
-                                    <span className="text-2xl font-bold text-purple-600">{reportData?.summary?.total_ibu ?? 0}</span>
-                                </div>
-                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Anak</span>
-                                    <span className="text-2xl font-bold text-orange-600">{reportData?.summary?.total_anak ?? 0}</span>
-                                </div>
-                                <div className="col-span-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Total Penimbangan</span>
-                                    <span className="text-3xl font-bold text-pink-600">{reportData?.summary?.total_weighings ?? 0}</span>
-                                </div>
-                            </div>
+                            </motion.div>
 
-                            {/* Desktop View: Table */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Keterangan</th>
-                                            <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Jumlah</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 text-sm">
-                                        <tr className="hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-800">Total Posyandu</td>
-                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_posyandu ?? 0}</td>
-                                        </tr>
-                                        <tr className="hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-800">Total Kader</td>
-                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_kader ?? 0}</td>
-                                        </tr>
-                                        <tr className="hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-800">Total Orang Tua</td>
-                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_ibu ?? 0}</td>
-                                        </tr>
-                                        <tr className="hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-800">Total Anak</td>
-                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_anak ?? 0}</td>
-                                        </tr>
-                                        <tr className="hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-800">Total Penimbangan</td>
-                                            <td className="py-3 px-4 text-gray-700">{reportData?.summary?.total_weighings ?? 0}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                            {/* Total Kader */}
+                            <motion.div
+                                variants={itemVariants}
+                                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group"
+                            >
+                                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                                    <Users className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Kader</p>
+                                    <p className="text-2xl font-bold text-gray-800">{reportData?.summary?.total_kader ?? 0}</p>
+                                </div>
+                            </motion.div>
+
+                            {/* Total Orang Tua */}
+                            <motion.div
+                                variants={itemVariants}
+                                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group"
+                            >
+                                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:bg-purple-100 transition-colors">
+                                    <Users className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Orang Tua</p>
+                                    <p className="text-2xl font-bold text-gray-800">{reportData?.summary?.total_ibu ?? 0}</p>
+                                </div>
+                            </motion.div>
+
+                            {/* Total Anak */}
+                            <motion.div
+                                variants={itemVariants}
+                                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group"
+                            >
+                                <div className="p-3 bg-orange-50 text-orange-600 rounded-xl group-hover:bg-orange-100 transition-colors">
+                                    <Baby className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Anak</p>
+                                    <p className="text-2xl font-bold text-gray-800">{reportData?.summary?.total_anak ?? 0}</p>
+                                </div>
+                            </motion.div>
+
+                            {/* Total Penimbangan */}
+                            <motion.div
+                                variants={itemVariants}
+                                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow group col-span-2 md:col-span-1"
+                            >
+                                <div className="p-3 bg-pink-50 text-pink-600 rounded-xl group-hover:bg-pink-100 transition-colors">
+                                    <Scale className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Penimbangan</p>
+                                    <p className="text-2xl font-bold text-gray-800">{reportData?.summary?.total_weighings ?? 0}</p>
+                                </div>
+                            </motion.div>
                         </div>
 
                         {/* Mobile Tab Navigation */}

@@ -53,6 +53,13 @@ export default function SidebarKader() {
       ),
     },
     {
+      label: "Antrian Prioritas",
+      href: "/dashboard/antrian-prioritas",
+      icon: (
+        <ClipboardList className="text-white h-5 w-5 shrink-0" />
+      ),
+    },
+    {
       label: "Jadwal",
       href: "/dashboard/jadwal",
       icon: (

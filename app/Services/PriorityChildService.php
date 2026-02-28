@@ -63,6 +63,50 @@ class PriorityChildService
             }
         }
 
+        // Sort priority children by:
+        // 1. Nutritional status priority (gizi kurang/buruk first - they need PMT most)
+        // 2. PMT compliance percentage (highest first - reward for consistency)
+        // 3. Age in months (youngest first - golden age priority)
+        usort($priorityChildren, function ($a, $b) {
+            // Define nutritional status priority (lower = higher priority)
+            $statusPriority = [
+                'sangat_kurang' => 1,
+                'sangat_kurus' => 1,
+                'sangat_pendek' => 1,
+                'kurang' => 2,
+                'kurus' => 2,
+                'pendek' => 2,
+                'normal' => 3,
+                'baik' => 3,
+                'gizi baik' => 3,
+                'gemuk' => 4,
+            ];
+
+            $statusA = strtolower($a['latest_weighing']['nutritional_status'] ?? 'normal');
+            $statusB = strtolower($b['latest_weighing']['nutritional_status'] ?? 'normal');
+            
+            $priorityA = $statusPriority[$statusA] ?? 3;
+            $priorityB = $statusPriority[$statusB] ?? 3;
+
+            // 1. Compare by nutritional status priority
+            if ($priorityA !== $priorityB) {
+                return $priorityA - $priorityB; // Lower priority value = comes first
+            }
+
+            // 2. Compare by PMT compliance (descending - higher % first)
+            if ($a['pmt_compliance_percentage'] !== $b['pmt_compliance_percentage']) {
+                return $b['pmt_compliance_percentage'] - $a['pmt_compliance_percentage'];
+            }
+
+            // 3. Compare by age (ascending - younger first)
+            return ($a['age_in_months'] ?? 99) - ($b['age_in_months'] ?? 99);
+        });
+
+        // Add queue position to each child
+        foreach ($priorityChildren as $index => &$child) {
+            $child['queue_position'] = $index + 1;
+        }
+
         return [
             'children' => $priorityChildren,
             'summary' => $summary,

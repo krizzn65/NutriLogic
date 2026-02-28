@@ -70,8 +70,35 @@ class ParentConsultationController extends Controller
 
         $consultations = $query->get();
 
-        $consultationsData = $consultations->map(function ($consultation) {
+        $consultationsData = $consultations->map(function ($consultation) use ($user) {
             $lastMessage = $consultation->messages->first();
+
+            // Calculate unread count: messages from kader that came after parent's last message
+            // Only count unread for open consultations
+            $unreadCount = 0;
+            if ($consultation->status !== 'closed') {
+                $parentLastMessage = $consultation->messages()
+                    ->where('sender_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $unreadQuery = $consultation->messages();
+                
+                // Only count messages from kader (not from parent)
+                if ($consultation->kader_id) {
+                    $unreadQuery->where('sender_id', $consultation->kader_id);
+                } else {
+                    // If no kader assigned yet, count any message not from parent
+                    $unreadQuery->where('sender_id', '!=', $user->id);
+                }
+
+                // If parent has sent a message, only count kader messages after that
+                if ($parentLastMessage) {
+                    $unreadQuery->where('created_at', '>', $parentLastMessage->created_at);
+                }
+
+                $unreadCount = $unreadQuery->count();
+            }
             
             return [
                 'id' => $consultation->id,
@@ -92,6 +119,7 @@ class ParentConsultationController extends Controller
                     'created_at' => $lastMessage->created_at,
                     'attachment_type' => $lastMessage->attachment_type,
                 ] : null,
+                'unread_count' => $unreadCount,
                 'created_at' => $consultation->created_at,
                 'updated_at' => $consultation->updated_at,
             ];
@@ -177,6 +205,15 @@ class ParentConsultationController extends Controller
                 ],
             ]);
         }
+
+        // Log activity
+        $childInfo = $consultation->child ? " tentang anak: {$consultation->child->full_name}" : '';
+        AdminActivityLogController::log(
+            'create',
+            "Orang tua {$user->name} memulai konsultasi baru: {$validated['title']}{$childInfo}",
+            'Consultation',
+            $consultation->id
+        );
 
         return response()->json([
             'data' => $consultation,
@@ -384,7 +421,16 @@ class ParentConsultationController extends Controller
             ], 403);
         }
 
+        $title = $consultation->title;
         $consultation->delete();
+
+        // Log activity
+        AdminActivityLogController::log(
+            'delete',
+            "Orang tua {$user->name} menghapus konsultasi: {$title}",
+            'Consultation',
+            $id
+        );
 
         return response()->json([
             'message' => 'Consultation deleted successfully.',

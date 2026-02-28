@@ -2,142 +2,116 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Posyandu;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Creates 1 Admin, 2 Kaders, and 3 Parents for testing.
      */
     public function run(): void
     {
-        $posyandus = Posyandu::all();
+        $this->command->info('Creating Users...');
+
+        $posyandu1 = Posyandu::where('name', 'Posyandu Mawar Sehat')->first();
+        $posyandu2 = Posyandu::where('name', 'Posyandu Melati Indah')->first();
 
         // Admin
         User::create([
-            'name'     => 'Admin NutriLogic',
-            'email'    => 'admin@admin.com',
-            'password' => Hash::make('admin'),
-            'role'     => 'admin',
+            'name' => 'Admin NutriLogic',
+            'email' => 'admin@nutrilogic.com',
+            'phone' => '081234567890',
+            'password' => 'Admin123',
+            'role' => 'admin',
+            'posyandu_id' => null,
+            'is_active' => true,
+            'points' => 0,
+            'last_seen_at' => now(),
         ]);
 
-        // Kader untuk setiap posyandu
-        $kaderNames = [
-            'Kader Siti Nurhaliza',
-            'Kader Dewi Sartika',
-            'Kader Sri Mulyani',
-            'Kader Rina Wijaya',
-            'Kader Ani Yudhoyono',
-        ];
-
-        foreach ($posyandus as $index => $posyandu) {
-            User::create([
-                'name'        => $kaderNames[$index] ?? "Kader Posyandu {$posyandu->id}",
-                'email'       => "kader{$posyandu->id}@kader.com",
-                'password'    => Hash::make('kader'),
-                'role'        => 'kader',
-                'posyandu_id' => $posyandu->id,
-                'phone'       => '08123456' . str_pad($posyandu->id, 4, '0', STR_PAD_LEFT),
-            ]);
-        }
-
-        // Orang tua (parent) - buat 50 orang tua
-        $parentNames = [
-            'Ibu Ani Susanti',
-            'Ibu Budi Lestari',
-            'Ibu Citra Dewi',
-            'Ibu Diah Permata',
-            'Ibu Eka Wulandari',
-            'Ibu Fitri Handayani',
-            'Ibu Gita Savitri',
-            'Ibu Hana Pertiwi',
-            'Ibu Indah Sari',
-            'Ibu Juwita Rahayu',
-            'Ibu Kartini Putri',
-            'Ibu Lina Marlina',
-            'Ibu Maya Anggraini',
-            'Ibu Nita Puspita',
-            'Ibu Okta Wijayanti',
-            'Ibu Putri Ayu',
-            'Ibu Rani Mulyani',
-            'Ibu Sari Rahmawati',
-            'Ibu Tuti Suryani',
-            'Ibu Umi Kalsum',
-            'Ibu Vina Safitri',
-            'Ibu Wati Nurjanah',
-            'Ibu Yanti Kusuma',
-            'Ibu Zahra Amelia',
-            'Ibu Ayu Ting Ting',
-            'Ibu Bunga Citra',
-            'Ibu Cinta Laura',
-            'Ibu Dewi Sandra',
-            'Ibu Erna Kamelia',
-            'Ibu Feby Febiola',
-            'Ibu Gisella Anastasia',
-            'Ibu Hesti Purwadinata',
-            'Ibu Inul Daratista',
-            'Ibu Julia Perez',
-            'Ibu Krisdayanti',
-            'Ibu Luna Maya',
-            'Ibu Maia Estianty',
-            'Ibu Nagita Slavina',
-            'Ibu Olla Ramlan',
-            'Ibu Prilly Latuconsina',
-            'Ibu Raisa Andriana',
-            'Ibu Sandra Dewi',
-            'Ibu Titi DJ',
-            'Ibu Ucie Sucita',
-            'Ibu Vanessa Angel',
-            'Ibu Wulan Guritno',
-            'Ibu Yuni Shara',
-            'Ibu Zaskia Adya Mecca',
-            'Ibu Ashanty Hermansyah',
-            'Ibu Butet Kartaredjasa',
-        ];
-
-        foreach ($parentNames as $index => $name) {
-            $posyandu = $posyandus[$index % $posyandus->count()];
-            User::create([
-                'name'        => $name,
-                'email'       => 'parent' . ($index + 1) . '@parent.com',
-                'password'    => Hash::make('parent'),
-                'role'        => 'ibu',
-                'posyandu_id' => $posyandu->id,
-                'phone'       => '0812' . str_pad($index + 1, 8, '0', STR_PAD_LEFT),
-            ]);
-        }
-
-        // Default test account
+        // Kader 1 - Posyandu Mawar
         User::create([
-            'name'        => 'Ibu Test',
-            'email'       => 'ibu@ibu.com',
-            'password'    => Hash::make('ibu'),
-            'role'        => 'ibu',
-            'posyandu_id' => $posyandus->first()->id,
-            'phone'       => '081234567890',
+            'name' => 'Siti Kader',
+            'email' => 'kader@nutrilogic.com',
+            'phone' => '081234567891',
+            'password' => 'Kader123',
+            'role' => 'kader',
+            'posyandu_id' => $posyandu1->id,
+            'is_active' => true,
+            'points' => 500,
+            'address' => 'Jl. Posyandu No. 1',
+            'rt' => '01',
+            'rw' => '02',
+            'last_seen_at' => now()->subMinutes(2),
         ]);
 
-        // Default kader account
+        // Kader 2 - Posyandu Melati
         User::create([
-            'name'        => 'Kader Test',
-            'email'       => 'kader@kader.com',
-            'password'    => Hash::make('kader'),
-            'role'        => 'kader',
-            'posyandu_id' => $posyandus->first()->id,
-            'phone'       => '081234567891',
+            'name' => 'Dewi Kader',
+            'email' => 'kader2@nutrilogic.com',
+            'phone' => '081234567894',
+            'password' => 'Kader123',
+            'role' => 'kader',
+            'posyandu_id' => $posyandu2->id,
+            'is_active' => true,
+            'points' => 300,
+            'address' => 'Jl. Melati No. 5',
+            'rt' => '03',
+            'rw' => '01',
+            'last_seen_at' => now()->subHours(1),
         ]);
-        // Default admin account
+
+        // Parent 1 - Ratna: Active user, high points, PMT compliant children (ELIGIBLE for rewards)
         User::create([
-            'name'     => 'Admin Test',
-            'email'    => 'admin@admin.com',
-            'password' => Hash::make('admin'),
-            'role'     => 'admin',
-            'posyandu_id' => $posyandus->first()->id,
-            'phone'    => '081234567892',
+            'name' => 'Ratna Dewi',
+            'email' => 'ratna@gmail.com',
+            'phone' => '081234567892',
+            'password' => 'Parent123',
+            'role' => 'ibu',
+            'posyandu_id' => $posyandu1->id,
+            'is_active' => true,
+            'points' => 5500, // High points - qualifies for points_5000 badge
+            'address' => 'Jl. Mawar No. 10',
+            'rt' => '01',
+            'rw' => '02',
+            'last_seen_at' => now()->subMinutes(5),
         ]);
+
+        // Parent 2 - Wulan: Medium activity, some non-compliant children
+        User::create([
+            'name' => 'Wulan Sari',
+            'email' => 'wulan@gmail.com',
+            'phone' => '081234567893',
+            'password' => 'Parent123',
+            'role' => 'ibu',
+            'posyandu_id' => $posyandu1->id,
+            'is_active' => true,
+            'points' => 1200, // Medium points - qualifies for points_1000 badge
+            'address' => 'Jl. Mawar No. 15',
+            'rt' => '02',
+            'rw' => '02',
+            'last_seen_at' => now()->subHours(2),
+        ]);
+
+        // Parent 3 - Ani: Posyandu 2, mixed compliance
+        User::create([
+            'name' => 'Ani Susanti',
+            'email' => 'ani@gmail.com',
+            'phone' => '081234567895',
+            'password' => 'Parent123',
+            'role' => 'ibu',
+            'posyandu_id' => $posyandu2->id,
+            'is_active' => true,
+            'points' => 350, // Lower points - no points badge yet
+            'address' => 'Jl. Melati No. 20',
+            'rt' => '03',
+            'rw' => '01',
+            'last_seen_at' => now()->subDays(1),
+        ]);
+
+        $this->command->info('✓ Created 6 Users (1 Admin, 2 Kaders, 3 Parents)');
     }
 }

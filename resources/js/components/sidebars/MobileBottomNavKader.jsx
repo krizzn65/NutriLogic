@@ -24,10 +24,11 @@ const MobileBottomNavKader = () => {
 
     // More submenu items
     const moreItems = [
-        { id: 5, icon: "lucide:calendar", label: "Jadwal", href: "/dashboard/jadwal" },
-        { id: 6, icon: "lucide:message-square", label: "Chat", href: "/dashboard/konsultasi" },
-        { id: 7, icon: "lucide:megaphone", label: "Broadcast", href: "/dashboard/broadcast" },
-        { id: 8, icon: "lucide:file-text", label: "Laporan", href: "/dashboard/laporan" },
+        { id: 5, icon: "lucide:clipboard-list", label: "Antrian", href: "/dashboard/antrian-prioritas" },
+        { id: 6, icon: "lucide:calendar", label: "Jadwal", href: "/dashboard/jadwal" },
+        { id: 7, icon: "lucide:message-square", label: "Chat", href: "/dashboard/konsultasi" },
+        { id: 8, icon: "lucide:megaphone", label: "Broadcast", href: "/dashboard/broadcast" },
+        { id: 9, icon: "lucide:file-text", label: "Laporan", href: "/dashboard/laporan" },
     ];
 
     useEffect(() => {

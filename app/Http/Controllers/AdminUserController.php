@@ -71,7 +71,7 @@ class AdminUserController extends Controller
             'address' => ['nullable', 'string', 'max:500'],
             'rt' => ['nullable', 'string', 'max:10'],
             'rw' => ['nullable', 'string', 'max:10'],
-            'role' => ['required', Rule::in(['kader', 'ibu', 'admin'])],
+            'role' => ['required', Rule::in(['kader', 'admin'])], // ibu removed - parents register via self-registration or kader
             'posyandu_id' => ['nullable', 'exists:posyandus,id'],
         ]);
 
@@ -171,7 +171,7 @@ class AdminUserController extends Controller
         $user->save();
 
         // Log activity
-        $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        $status = $user->is_active ? 'mengaktifkan' : 'menonaktifkan';
         AdminActivityLogController::log('update', "Admin {$status} user: {$user->name}", 'User', $user->id);
 
         return response()->json([
