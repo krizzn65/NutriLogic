@@ -4,9 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpFoundation\Response;
 
 class UpdateUserActivity
 {
@@ -19,11 +18,28 @@ class UpdateUserActivity
     {
         if (Auth::check()) {
             $user = Auth::user();
-            
+            $idleTimeoutMinutes = (int) config('sanctum.idle_timeout', 30);
+
+            if (
+                $user->last_seen_at &&
+                $user->last_seen_at->diffInMinutes(now()) >= $idleTimeoutMinutes
+            ) {
+                $token = $user->currentAccessToken();
+                if ($token) {
+                    $token->delete();
+                }
+
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'message' => "Sesi berakhir karena tidak aktif selama {$idleTimeoutMinutes} menit. Silakan login ulang.",
+                    ], 401);
+                }
+            }
+
             // Only update if last_seen_at is null or older than 1 minute
             // This reduces database writes while maintaining accurate online status
             if (
-                is_null($user->last_seen_at) || 
+                is_null($user->last_seen_at) ||
                 $user->last_seen_at->diffInMinutes(now()) >= 1
             ) {
                 $user->last_seen_at = now();

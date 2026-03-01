@@ -24,7 +24,15 @@ class ParentConsultationController extends Controller
      */
     public function getKaders(Request $request): JsonResponse
     {
-        $kaders = User::where('role', 'kader')
+        $user = $request->user();
+
+        $query = User::where('role', 'kader');
+
+        if ($user && $user->posyandu_id) {
+            $query->where('posyandu_id', $user->posyandu_id);
+        }
+
+        $kaders = $query
             ->select('id', 'name', 'posyandu_id', 'last_seen_at')
             ->with('posyandu:id,name')
             ->get()
@@ -83,7 +91,7 @@ class ParentConsultationController extends Controller
                     ->first();
 
                 $unreadQuery = $consultation->messages();
-                
+
                 // Only count messages from kader (not from parent)
                 if ($consultation->kader_id) {
                     $unreadQuery->where('sender_id', $consultation->kader_id);
@@ -99,7 +107,7 @@ class ParentConsultationController extends Controller
 
                 $unreadCount = $unreadQuery->count();
             }
-            
+
             return [
                 'id' => $consultation->id,
                 'title' => $consultation->title,
@@ -135,6 +143,11 @@ class ParentConsultationController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $duplicateSubmission = $this->rejectDuplicateSubmission($request, 'parent-consultation-store');
+        if ($duplicateSubmission) {
+            return $duplicateSubmission;
+        }
+
         $user = $request->user();
 
         // Authorization: only for ibu role
@@ -164,7 +177,7 @@ class ParentConsultationController extends Controller
                 $kader = User::where('posyandu_id', $child->posyandu_id)
                     ->where('role', 'kader')
                     ->first();
-                
+
                 if ($kader) {
                     $validated['kader_id'] = $kader->id;
                 }
@@ -299,6 +312,11 @@ class ParentConsultationController extends Controller
      */
     public function sendMessage(Request $request, $id): JsonResponse
     {
+        $duplicateSubmission = $this->rejectDuplicateSubmission($request, 'parent-consultation-message');
+        if ($duplicateSubmission) {
+            return $duplicateSubmission;
+        }
+
         $user = $request->user();
 
         // Authorization: only for ibu role
@@ -325,7 +343,7 @@ class ParentConsultationController extends Controller
 
         $validated = $request->validate([
             'message' => ['nullable', 'string', 'max:2000'],
-            'attachment' => ['nullable', 'file', 'image', 'max:5120'], // Max 5MB
+            'attachment' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'], // Max 5MB
         ]);
 
         if (empty($validated['message']) && empty($request->file('attachment'))) {
@@ -337,6 +355,11 @@ class ParentConsultationController extends Controller
 
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
+            if (!@getimagesize($file->getRealPath())) {
+                return response()->json([
+                    'message' => 'File attachment bukan gambar yang valid.',
+                ], 422);
+            }
             $path = $file->store('consultation-attachments', 'public');
             $attachmentPath = $path;
             $attachmentType = 'image'; // For now only images
@@ -371,8 +394,9 @@ class ParentConsultationController extends Controller
         }
 
         // Add points and check badges for ibu role only
+        $pointsAwarded = false;
         if ($user->isIbu()) {
-            $this->pointsService->addPoints($user, 3, 'consultation_message');
+            $pointsAwarded = $this->pointsService->addPointsWithDailyLimit($user, 3, 'consultation_message', 20);
         }
 
         $message->load('sender');
@@ -389,6 +413,7 @@ class ParentConsultationController extends Controller
                 'created_at' => $message->created_at,
             ],
             'message' => 'Message sent successfully.',
+            'points_awarded' => $pointsAwarded,
         ], 201);
     }
 
@@ -490,4 +515,3 @@ class ParentConsultationController extends Controller
         ], 200);
     }
 }
-

@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 
 class KaderChildController extends Controller
 {
@@ -92,13 +91,13 @@ class KaderChildController extends Controller
     public function show(Request $request, string $id): JsonResponse
     {
         $user = $request->user();
-        
+
         $child = Child::with([
-            'parent', 
-            'posyandu', 
-            'weighingLogs', 
-            'mealLogs', 
-            'pmtLogs', 
+            'parent',
+            'posyandu',
+            'weighingLogs',
+            'mealLogs',
+            'pmtLogs',
             'vitaminDistributions' => function ($query) {
                 $query->orderBy('distribution_date', 'desc');
             },
@@ -144,7 +143,18 @@ class KaderChildController extends Controller
             'parent_rt' => ['nullable', 'string', 'max:10'],
             'parent_rw' => ['nullable', 'string', 'max:10'],
             'full_name' => ['required', 'string', 'max:150'],
-            'nik' => ['nullable', 'string', 'size:16', 'regex:/^\d{16}$/', 'unique:children,nik'],
+            'nik' => [
+                'nullable',
+                'string',
+                'size:16',
+                'regex:/^\d{16}$/',
+                'unique:children,nik',
+                function ($attribute, $value, $fail) {
+                    if ($value && !$this->isValidIndonesianNik($value)) {
+                        $fail('NIK tidak valid berdasarkan format wilayah/tanggal lahir.');
+                    }
+                },
+            ],
             'birth_date' => ['required', 'date', 'before_or_equal:today', 'after:' . now()->subYears(5)->format('Y-m-d')],
             'gender' => ['required', 'string', 'in:L,P'],
             'birth_weight_kg' => ['nullable', 'numeric', 'min:0.5', 'max:6'],
@@ -159,11 +169,14 @@ class KaderChildController extends Controller
             'birth_height_cm.max' => 'Tinggi lahir maksimal 60 cm (sesuai standar WHO).',
         ]);
 
+        $createdNewParent = false;
+
         // Handle parent creation or use existing
         if (!isset($validated['parent_id'])) {
+            $createdNewParent = true;
             // Generate random secure password
             $randomPassword = bin2hex(random_bytes(4)); // 8 character random password
-            
+
             // Create new parent user
             $parent = User::create([
                 'name' => $validated['parent_name'],
@@ -177,10 +190,6 @@ class KaderChildController extends Controller
                 'posyandu_id' => $user->posyandu_id,
             ]);
             $validated['parent_id'] = $parent->id;
-            
-            // Store generated password in response for Kader to inform parent
-            $validated['generated_password'] = $randomPassword;
-            $validated['parent_email_or_phone'] = $validated['parent_email'] ?? $validated['parent_phone'] ?? null;
         }
 
         // Create child
@@ -204,14 +213,13 @@ class KaderChildController extends Controller
             'message' => 'Data anak berhasil ditambahkan.',
         ];
 
-        // Add password info if new parent was created
-        if (isset($validated['generated_password'])) {
+        // Add non-sensitive parent info if new parent was created
+        if ($createdNewParent) {
             $response['parent_info'] = [
-                'name' => $validated['parent_name'],
-                'password' => $validated['generated_password'],
-                'contact' => $validated['parent_email_or_phone'],
+                'name' => $validated['parent_name'] ?? null,
+                'contact' => $validated['parent_email'] ?? $validated['parent_phone'] ?? null,
             ];
-            $response['message'] = 'Data anak dan orang tua berhasil ditambahkan. Segera informasikan password kepada orang tua.';
+            $response['message'] = 'Data anak dan orang tua berhasil ditambahkan. Password tidak dikirim melalui API.';
         }
 
         return response()->json($response, 201);
@@ -234,7 +242,18 @@ class KaderChildController extends Controller
 
         $validated = $request->validate([
             'full_name' => ['sometimes', 'string', 'max:150'],
-            'nik' => ['nullable', 'string', 'size:16', 'regex:/^\d{16}$/', 'unique:children,nik,' . $id],
+            'nik' => [
+                'nullable',
+                'string',
+                'size:16',
+                'regex:/^\d{16}$/',
+                'unique:children,nik,' . $id,
+                function ($attribute, $value, $fail) {
+                    if ($value && !$this->isValidIndonesianNik($value)) {
+                        $fail('NIK tidak valid berdasarkan format wilayah/tanggal lahir.');
+                    }
+                },
+            ],
             'birth_date' => ['sometimes', 'date', 'before_or_equal:today', 'after:' . now()->subYears(5)->format('Y-m-d')],
             'gender' => ['sometimes', 'string', 'in:L,P'],
             'birth_weight_kg' => ['nullable', 'numeric', 'min:0.5', 'max:6'],
@@ -286,5 +305,44 @@ class KaderChildController extends Controller
         return response()->json([
             'message' => 'Data anak berhasil dinonaktifkan.',
         ], 200);
+    }
+
+    private function isValidIndonesianNik(string $nik): bool
+    {
+        if (!preg_match('/^\d{16}$/', $nik)) {
+            return false;
+        }
+
+        $provinceCode = (int) substr($nik, 0, 2);
+        $cityCode = (int) substr($nik, 2, 2);
+        $districtCode = (int) substr($nik, 4, 2);
+        $dayPart = (int) substr($nik, 6, 2);
+        $monthPart = (int) substr($nik, 8, 2);
+        $yearPart = (int) substr($nik, 10, 2);
+        $sequence = substr($nik, 12, 4);
+
+        if ($provinceCode < 11 || $provinceCode > 95) {
+            return false;
+        }
+
+        if ($cityCode === 0 || $districtCode === 0) {
+            return false;
+        }
+
+        if ($dayPart > 40) {
+            $dayPart -= 40;
+        }
+
+        if ($dayPart < 1 || $dayPart > 31 || $monthPart < 1 || $monthPart > 12) {
+            return false;
+        }
+
+        $currentYear2Digit = (int) now()->format('y');
+        $fullYear = $yearPart <= $currentYear2Digit ? 2000 + $yearPart : 1900 + $yearPart;
+        if (!checkdate($monthPart, $dayPart, $fullYear)) {
+            return false;
+        }
+
+        return $sequence !== '0000';
     }
 }

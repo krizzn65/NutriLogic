@@ -25,7 +25,7 @@ class MealLogController extends Controller
 
         if ($childId) {
             $child = Child::findOrFail($childId);
-            
+
             // Authorization check
             if ($user->isIbu() && $child->parent_id !== $user->id) {
                 return response()->json([
@@ -79,6 +79,11 @@ class MealLogController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $duplicateSubmission = $this->rejectDuplicateSubmission($request, 'meal-log-store');
+        if ($duplicateSubmission) {
+            return $duplicateSubmission;
+        }
+
         $validated = $request->validate([
             'child_id' => ['required', 'integer', 'exists:children,id'],
             'eaten_at' => ['required', 'date'],
@@ -108,8 +113,9 @@ class MealLogController extends Controller
         $log = MealLog::create($validated);
 
         // Add points and check badges for ibu role only
+        $pointsAwarded = false;
         if ($user->isIbu()) {
-            $this->pointsService->addPoints($user, 5, 'meal_log');
+            $pointsAwarded = $this->pointsService->addPointsWithDailyLimit($user, 5, 'meal_log', 3);
         }
 
         // Log activity
@@ -124,6 +130,7 @@ class MealLogController extends Controller
         return response()->json([
             'data' => $log->load('child'),
             'message' => 'Meal log created successfully.',
+            'points_awarded' => $pointsAwarded,
         ], 201);
     }
 
@@ -201,4 +208,3 @@ class MealLogController extends Controller
         ], 200);
     }
 }
-

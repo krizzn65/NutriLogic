@@ -1010,7 +1010,7 @@ export default function UserManagement() {
                         role={activeTab}
                         posyandus={posyandus}
                         onClose={() => setShowModal(false)}
-                        onSuccess={(password) => {
+                        onSuccess={() => {
                             setShowModal(false);
                             fetchUsers(activeTab, { forceRefresh: true });
                             setSuccessModal({
@@ -1018,9 +1018,8 @@ export default function UserManagement() {
                                 title: editingUser
                                     ? "Data Kader Diperbarui"
                                     : "Kader Berhasil Ditambahkan",
-                                message: password
-                                    ? `Akun berhasil dibuat. Password sementara: ${password}`
-                                    : "Perubahan data kader berhasil disimpan.",
+                                message:
+                                    "Perubahan data kader berhasil disimpan. Password tidak ditampilkan di aplikasi.",
                             });
                         }}
                     />
@@ -1076,4 +1075,3 @@ export default function UserManagement() {
         </div>
     );
 }
-

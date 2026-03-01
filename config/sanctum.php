@@ -50,6 +50,17 @@ return [
     'expiration' => 120,
 
     /*
+    |----------------------------------------------------------------------
+    | Idle Timeout Minutes
+    |----------------------------------------------------------------------
+    |
+    | Additional inactivity timeout checked by middleware. If no activity
+    | is detected within this window, token/session must re-authenticate.
+    |
+    */
+    'idle_timeout' => env('SANCTUM_IDLE_TIMEOUT', 30),
+
+    /*
     |--------------------------------------------------------------------------
     | Token Prefix
     |--------------------------------------------------------------------------

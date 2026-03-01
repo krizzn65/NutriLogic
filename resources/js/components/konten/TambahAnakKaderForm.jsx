@@ -280,32 +280,13 @@ export default function TambahAnakKaderForm() {
             }
 
             const response = await api.post("/kader/children", dataToSubmit);
+            const successMessage = response.data?.parent_info
+                ? "Data anak dan orang tua berhasil ditambahkan. Password awal tidak ditampilkan di aplikasi."
+                : "Data anak berhasil ditambahkan!";
 
-            // Check if new parent was created and password was generated
-            if (response.data.parent_info) {
-                setGeneratedPasswordInfo(response.data.parent_info);
-                setShowPasswordModal(true);
-
-                // Clear form
-                setFormData({
-                    parent_id: "",
-                    parent_name: "",
-                    parent_email: "",
-                    parent_phone: "",
-                    full_name: "",
-                    nik: "",
-                    birth_date: "",
-                    gender: "",
-                    birth_weight_kg: "",
-                    birth_height_cm: "",
-                    notes: "",
-                });
-            } else {
-                // Navigate immediately if no password to show
-                navigate("/dashboard/data-anak", {
-                    state: { message: "Data anak berhasil ditambahkan!" },
-                });
-            }
+            navigate("/dashboard/data-anak", {
+                state: { message: successMessage },
+            });
         } catch (err) {
             logger.error("Submit error:", err);
 
@@ -1171,4 +1152,3 @@ export default function TambahAnakKaderForm() {
         </div>
     );
 }
-

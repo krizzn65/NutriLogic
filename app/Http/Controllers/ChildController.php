@@ -44,8 +44,8 @@ class ChildController extends Controller
     {
         $user = $request->user();
         $child = Child::with([
-            'parent', 
-            'posyandu', 
+            'parent',
+            'posyandu',
             'weighingLogs' => function ($query) {
                 $query->orderBy('measured_at', 'desc');
             },
@@ -160,8 +160,6 @@ class ChildController extends Controller
             'notes' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
-
-        $child->update($validated);
 
         $child->update($validated);
 

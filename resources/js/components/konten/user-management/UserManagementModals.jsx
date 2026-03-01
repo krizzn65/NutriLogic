@@ -29,10 +29,10 @@ export function UserModal({ user, role, posyandus, onClose, onSuccess }) {
             let response;
             if (user) {
                 response = await api.put(`/admin/users/${user.id}`, formData);
-                onSuccess(null);
+                onSuccess();
             } else {
                 response = await api.post("/admin/users", formData);
-                onSuccess(response.data.password);
+                onSuccess();
             }
         } catch (err) {
             setError(

@@ -51,6 +51,7 @@ return [
         'api_key' => env('N8N_API_KEY'),
         'timeout' => env('N8N_TIMEOUT', 60),
         'enabled' => env('N8N_ENABLED', false),
+        'daily_limit' => env('N8N_DAILY_LIMIT', 10),
     ],
 
     /*

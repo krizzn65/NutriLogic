@@ -98,6 +98,11 @@ class WeighingLogController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $duplicateSubmission = $this->rejectDuplicateSubmission($request, 'weighing-log-store');
+        if ($duplicateSubmission) {
+            return $duplicateSubmission;
+        }
+
         $validated = $request->validate([
             'child_id' => ['required', 'integer', 'exists:children,id'],
             'measured_at' => ['required', 'date'],
@@ -166,8 +171,9 @@ class WeighingLogController extends Controller
         ]);
 
         // Add points and check badges for ibu role only
+        $pointsAwarded = false;
         if ($user->isIbu()) {
-            $this->pointsService->addPoints($user, 10, 'weighing_log');
+            $pointsAwarded = $this->pointsService->addPointsWithDailyLimit($user, 10, 'weighing_log', 2);
         }
 
         // Log activity
@@ -182,6 +188,7 @@ class WeighingLogController extends Controller
         return response()->json([
             'data' => $log->load('child'),
             'message' => 'Weighing log created successfully.',
+            'points_awarded' => $pointsAwarded,
         ], 201);
     }
 

@@ -26,6 +26,29 @@ class PointsService
     }
 
     /**
+     * Add points with daily cap per activity.
+     * Returns true when points are awarded, false when limit is reached.
+     */
+    public function addPointsWithDailyLimit(User $user, int $points, string $activity, int $dailyLimit): bool
+    {
+        if ($points <= 0 || $dailyLimit <= 0) {
+            return false;
+        }
+
+        $key = $this->dailyActivityLimitKey($user->id, $activity);
+        $currentCount = (int) Cache::get($key, 0);
+
+        if ($currentCount >= $dailyLimit) {
+            return false;
+        }
+
+        Cache::put($key, $currentCount + 1, now()->endOfDay());
+        $this->addPoints($user, $points, $activity);
+
+        return true;
+    }
+
+    /**
      * Check and award badge if user doesn't have it yet
      */
     public function checkAndAwardBadge(User $user, string $badgeCode, string $badgeName, string $badgeDescription): bool
@@ -215,22 +238,24 @@ class PointsService
         // Check other time based badges
         $this->checkTimeBasedBadges($user);
 
-        // Daily login points (only once per day)
-        $lastLoginDate = Cache::get("user_last_login_{$user->id}");
+        // Daily login points (only once per day), persisted in database.
         $today = Carbon::today()->toDateString();
+        $lastLoginDate = $user->last_login_date?->toDateString();
 
         if ($lastLoginDate !== $today) {
             // Add 2 points for daily login
             $user->increment('points', 2);
-            Cache::put("user_last_login_{$user->id}", $today, now()->addDay());
 
             // Check consecutive login badges
             $this->checkConsecutiveLoginBadges($user, $lastLoginDate);
+
+            $user->last_login_date = $today;
+            $user->save();
         }
     }
 
     /**
-     * Update consecutive login streak cache and award related badges
+     * Update consecutive login streak and award related badges
      */
     private function checkConsecutiveLoginBadges(User $user, ?string $previousLoginDate = null): void
     {
@@ -250,8 +275,7 @@ class PointsService
      */
     private function updateConsecutiveLoginDays(User $user, ?string $previousLoginDate = null): int
     {
-        $streakKey = "user_login_streak_{$user->id}";
-        $currentStreak = Cache::get($streakKey, 0);
+        $currentStreak = (int) ($user->login_streak ?? 0);
         $today = Carbon::today();
 
         if (empty($previousLoginDate)) {
@@ -268,7 +292,8 @@ class PointsService
             }
         }
 
-        Cache::put($streakKey, $newStreak, now()->addDays(40));
+        $user->login_streak = $newStreak;
+        $user->save();
 
         return $newStreak;
     }
@@ -278,7 +303,7 @@ class PointsService
      */
     public function getConsecutiveLoginDays(User $user): int
     {
-        return Cache::get("user_login_streak_{$user->id}", 0);
+        return (int) ($user->login_streak ?? 0);
     }
 
     /**
@@ -376,5 +401,10 @@ class PointsService
         $messageCount = $user->consultationMessages()->count();
 
         return $mealLogCount + $weighingLogCount + $messageCount;
+    }
+
+    private function dailyActivityLimitKey(int $userId, string $activity): string
+    {
+        return "points_daily_limit:{$activity}:{$userId}:" . now()->toDateString();
     }
 }

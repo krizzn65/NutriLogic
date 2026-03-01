@@ -31,6 +31,8 @@ class User extends Authenticatable
         'role',
         'posyandu_id',
         'points',
+        'login_streak',
+        'last_login_date',
         'notification_channel',
         'last_seen_at',
     ];
@@ -56,6 +58,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'points' => 'integer',
+            'login_streak' => 'integer',
+            'last_login_date' => 'date',
             'last_seen_at' => 'datetime',
         ];
     }
