@@ -831,7 +831,7 @@ export default function DashboardAdmin() {
 
                         <div className="relative z-10">
                             <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
-                                Halo, Administrator! ðŸ‘‹
+                                Halo, Administrator!
                             </h2>
                             <p className="text-blue-100 text-lg max-w-2xl leading-relaxed">
                                 Selamat datang kembali di panel kontrol utama.
@@ -1514,4 +1514,3 @@ export default function DashboardAdmin() {
         </div>
     );
 }
-

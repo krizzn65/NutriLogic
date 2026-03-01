@@ -1,6 +1,15 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Check, Clock, AlertTriangle, X, Shield, ChevronRight, Award } from "lucide-react";
+import {
+    Search,
+    Check,
+    Clock,
+    AlertTriangle,
+    X,
+    Shield,
+    ChevronRight,
+    Award,
+} from "lucide-react";
 import PageHeader from "../ui/PageHeader";
 import DashboardLayout from "../dashboard/DashboardLayout";
 import api from "../../lib/api";
@@ -29,7 +38,7 @@ export default function AntrianPrioritas() {
     const fetchPriorityChildren = async (forceRefresh = false) => {
         // Check cache first (skip if forceRefresh)
         if (!forceRefresh) {
-            const cachedData = getCachedData('kader_priority_queue');
+            const cachedData = getCachedData("kader_priority_queue");
             if (cachedData) {
                 setPriorityChildren(cachedData.children);
                 setSummary(cachedData.summary);
@@ -44,25 +53,29 @@ export default function AntrianPrioritas() {
             }
             setError(null);
 
-            const response = await api.get('/kader/children/priorities');
+            const response = await api.get("/kader/children/priorities");
             setPriorityChildren(response.data.data);
             setSummary(response.data.summary);
 
-            setCachedData('kader_priority_queue', {
+            setCachedData("kader_priority_queue", {
                 children: response.data.data,
-                summary: response.data.summary
+                summary: response.data.summary,
             });
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Gagal memuat data antrian prioritas. Silakan coba lagi.';
+            const errorMessage =
+                err.response?.data?.message ||
+                "Gagal memuat data antrian prioritas. Silakan coba lagi.";
             setError(errorMessage);
-            logger.error('Priority queue fetch error:', err);
+            logger.error("Priority queue fetch error:", err);
         } finally {
             setLoading(false);
         }
     };
 
-    const filteredChildren = priorityChildren.filter(child => {
-        const matchesSearch = child.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredChildren = priorityChildren.filter((child) => {
+        const matchesSearch = child.full_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
         return matchesSearch;
     });
 
@@ -82,7 +95,6 @@ export default function AntrianPrioritas() {
             }
         >
             <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto mb-10">
-
                 {/* Error Alert â€” Admin style centered */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center max-w-md mx-auto">
@@ -112,7 +124,9 @@ export default function AntrianPrioritas() {
                             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-1">
                                 {summary.total_priority}
                             </h3>
-                            <p className="text-sm font-medium text-gray-500">Total Anak Berhak Antrian Prioritas</p>
+                            <p className="text-sm font-medium text-gray-500">
+                                Total Anak Berhak Antrian Prioritas
+                            </p>
                         </div>
                     </div>
                 )}
@@ -145,7 +159,9 @@ export default function AntrianPrioritas() {
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Search className="w-10 h-10 text-gray-300" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">Tidak ada data ditemukan</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                            Tidak ada data ditemukan
+                        </h3>
                         <p className="text-gray-500 text-sm">
                             {searchQuery
                                 ? "Coba ubah kata kunci pencarian."
@@ -155,28 +171,45 @@ export default function AntrianPrioritas() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {filteredChildren.map((child) => {
-                            const pmtCompliance = child.pmt_compliance_percentage || 0;
-                            const isEligible = child.is_eligible_priority || false;
+                            const pmtCompliance =
+                                child.pmt_compliance_percentage || 0;
+                            const isEligible =
+                                child.is_eligible_priority || false;
 
                             return (
                                 <div
                                     key={child.id}
-                                    onClick={() => navigate(`/dashboard/data-anak/${child.id}`)}
+                                    onClick={() =>
+                                        navigate(
+                                            `/dashboard/data-anak/${child.id}`,
+                                        )
+                                    }
                                     className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 transition-all cursor-pointer group"
                                 >
                                     {/* Header */}
                                     <div className="flex items-start justify-between mb-5">
                                         <div className="flex items-center gap-3">
                                             {/* Queue Position Badge */}
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md shrink-0 ${isEligible
-                                                    ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-200'
-                                                    : 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-200'
-                                                }`}>
-                                                <span className="text-white font-bold text-sm">#{child.queue_position || '?'}</span>
+                                            <div
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md shrink-0 ${
+                                                    isEligible
+                                                        ? "bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-200"
+                                                        : "bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-200"
+                                                }`}
+                                            >
+                                                <span className="text-white font-bold text-sm">
+                                                    #
+                                                    {child.queue_position ||
+                                                        "?"}
+                                                </span>
                                             </div>
                                             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md shrink-0 ring-2 ring-gray-100">
                                                 <img
-                                                    src={child.gender === 'L' ? kepalaBayi : kepalaBayiCewe}
+                                                    src={
+                                                        child.gender === "L"
+                                                            ? kepalaBayi
+                                                            : kepalaBayiCewe
+                                                    }
                                                     alt={child.full_name}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -186,7 +219,13 @@ export default function AntrianPrioritas() {
                                                     {child.full_name}
                                                 </h3>
                                                 <p className="text-xs text-gray-500 mt-0.5">
-                                                    {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} â€¢ {formatAge(child.age_in_months)}
+                                                    {child.gender === "L"
+                                                        ? "Laki-laki"
+                                                        : "Perempuan"}{" "}
+                                                    •{" "}
+                                                    {formatAge(
+                                                        child.age_in_months,
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
@@ -198,10 +237,13 @@ export default function AntrianPrioritas() {
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                                                 Konsumsi PMT Bulan Lalu
                                             </span>
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isEligible
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-gray-200 text-gray-600'
-                                                }`}>
+                                            <span
+                                                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                                    isEligible
+                                                        ? "bg-emerald-100 text-emerald-700"
+                                                        : "bg-gray-200 text-gray-600"
+                                                }`}
+                                            >
                                                 {pmtCompliance}%
                                             </span>
                                         </div>
@@ -209,26 +251,38 @@ export default function AntrianPrioritas() {
                                         {/* Progress Bar */}
                                         <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
                                             <div
-                                                className={`h-full rounded-full transition-all duration-500 ${isEligible ? 'bg-emerald-500' : 'bg-gray-400'
-                                                    }`}
-                                                style={{ width: `${pmtCompliance}%` }}
+                                                className={`h-full rounded-full transition-all duration-500 ${
+                                                    isEligible
+                                                        ? "bg-emerald-500"
+                                                        : "bg-gray-400"
+                                                }`}
+                                                style={{
+                                                    width: `${pmtCompliance}%`,
+                                                }}
                                             ></div>
                                         </div>
 
                                         {/* Status Badge */}
-                                        <div className={`flex items-center gap-2 justify-center py-2 rounded-lg ${isEligible
-                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                                : 'bg-gray-100 text-gray-500 border border-gray-200'
-                                            }`}>
+                                        <div
+                                            className={`flex items-center gap-2 justify-center py-2 rounded-lg ${
+                                                isEligible
+                                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                    : "bg-gray-100 text-gray-500 border border-gray-200"
+                                            }`}
+                                        >
                                             {isEligible ? (
                                                 <>
                                                     <Check className="w-4 h-4" />
-                                                    <span className="text-xs font-bold">BERHAK ANTRIAN PRIORITAS</span>
+                                                    <span className="text-xs font-bold">
+                                                        BERHAK ANTRIAN PRIORITAS
+                                                    </span>
                                                 </>
                                             ) : (
                                                 <>
                                                     <Clock className="w-4 h-4" />
-                                                    <span className="text-xs font-bold">BELUM MEMENUHI SYARAT</span>
+                                                    <span className="text-xs font-bold">
+                                                        BELUM MEMENUHI SYARAT
+                                                    </span>
                                                 </>
                                             )}
                                         </div>
@@ -237,44 +291,91 @@ export default function AntrianPrioritas() {
                                     {/* Latest Data â€” Clean data grid */}
                                     <div className="bg-gray-50/60 rounded-xl p-4 border border-gray-100">
                                         <div className="flex justify-between items-center mb-3">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data Terakhir</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                                Data Terakhir
+                                            </span>
                                             <span className="text-[10px] text-gray-400 font-medium">
                                                 {child.latest_weighing
-                                                    ? new Date(child.latest_weighing.measured_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-                                                    : '-'}
+                                                    ? new Date(
+                                                          child.latest_weighing
+                                                              .measured_at,
+                                                      ).toLocaleDateString(
+                                                          "id-ID",
+                                                          {
+                                                              day: "numeric",
+                                                              month: "short",
+                                                          },
+                                                      )
+                                                    : "-"}
                                             </span>
                                         </div>
 
                                         {child.latest_weighing ? (
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                 <div>
-                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">Berat</p>
-                                                    <p className="text-sm font-bold text-gray-900">{child.latest_weighing.weight_kg} kg</p>
+                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">
+                                                        Berat
+                                                    </p>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {
+                                                            child
+                                                                .latest_weighing
+                                                                .weight_kg
+                                                        }{" "}
+                                                        kg
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">Tinggi</p>
-                                                    <p className="text-sm font-bold text-gray-900">{child.latest_weighing.height_cm} cm</p>
+                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">
+                                                        Tinggi
+                                                    </p>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {
+                                                            child
+                                                                .latest_weighing
+                                                                .height_cm
+                                                        }{" "}
+                                                        cm
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">Lengan</p>
-                                                    <p className="text-sm font-bold text-gray-900">{child.latest_weighing.muac_cm ? `${child.latest_weighing.muac_cm} cm` : '-'}</p>
+                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">
+                                                        Lengan
+                                                    </p>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {child.latest_weighing
+                                                            .muac_cm
+                                                            ? `${child.latest_weighing.muac_cm} cm`
+                                                            : "-"}
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">Kepala</p>
-                                                    <p className="text-sm font-bold text-gray-900">{child.latest_weighing.head_circumference_cm ? `${child.latest_weighing.head_circumference_cm} cm` : '-'}</p>
+                                                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">
+                                                        Kepala
+                                                    </p>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {child.latest_weighing
+                                                            .head_circumference_cm
+                                                            ? `${child.latest_weighing.head_circumference_cm} cm`
+                                                            : "-"}
+                                                    </p>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-gray-400 italic text-center py-1">Belum ada data penimbangan</p>
+                                            <p className="text-xs text-gray-400 italic text-center py-1">
+                                                Belum ada data penimbangan
+                                            </p>
                                         )}
                                     </div>
 
                                     {/* Footer â€” Clean with consistent button */}
                                     <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] text-gray-400 font-medium">Orang Tua</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">
+                                                Orang Tua
+                                            </span>
                                             <span className="text-xs font-semibold text-gray-700 truncate max-w-[120px]">
-                                                {child.parent?.name || '-'}
+                                                {child.parent?.name || "-"}
                                             </span>
                                         </div>
                                         <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center gap-1">
@@ -291,4 +392,3 @@ export default function AntrianPrioritas() {
         </DashboardLayout>
     );
 }
-

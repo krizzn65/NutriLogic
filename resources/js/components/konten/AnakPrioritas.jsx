@@ -520,7 +520,7 @@ export default function AnakPrioritas() {
                                                     {child.gender === "L"
                                                         ? "Laki-laki"
                                                         : "Perempuan"}{" "}
-                                                    â€¢{" "}
+                                                    •{" "}
                                                     {formatAge(
                                                         child.age_in_months,
                                                     )}
@@ -698,4 +698,3 @@ export default function AnakPrioritas() {
         </DashboardLayout>
     );
 }
-

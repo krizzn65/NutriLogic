@@ -577,7 +577,7 @@ export default function ActivityLogs() {
                                             {log.model || "-"}
                                         </span>
                                         <span className="text-gray-400 text-xs">
-                                            â€¢
+                                            •
                                         </span>
                                         <span className="text-xs text-gray-500">
                                             {log.ip_address || "-"}
@@ -771,7 +771,7 @@ function PaginationUI({ currentPage, totalPages, total, onPageChange, label }) {
                 </div>
             )}
             <div className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
-                Halaman {currentPage} dari {totalPages || 1} â€¢ Total:{" "}
+                Halaman {currentPage} dari {totalPages || 1} • Total:{" "}
                 <span className="font-bold text-gray-700">{total}</span> {label}
             </div>
         </div>
@@ -1127,4 +1127,3 @@ function CustomDatePicker({ label, value, onChange }) {
         </div>
     );
 }
-

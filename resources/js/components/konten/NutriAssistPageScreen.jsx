@@ -1443,7 +1443,7 @@ export default function NutriAssistPage() {
                                                                                                                 className="text-sm text-gray-600 flex items-start gap-2"
                                                                                                             >
                                                                                                                 <span className="text-blue-500 mt-1">
-                                                                                                                    â€¢
+                                                                                                                    •
                                                                                                                 </span>
                                                                                                                 <span>
                                                                                                                     {
@@ -1631,4 +1631,3 @@ export default function NutriAssistPage() {
         </div>
     );
 }
-

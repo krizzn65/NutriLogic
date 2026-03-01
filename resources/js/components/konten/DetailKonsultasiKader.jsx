@@ -379,7 +379,7 @@ Catatan: ${data.notes || "-"}`;
                                             "Orang Tua"}
                                         {consultation.parent?.is_online && (
                                             <span className="text-green-600 font-medium ml-1">
-                                                â€¢ Online
+                                                • Online
                                             </span>
                                         )}
                                     </span>
@@ -530,7 +530,7 @@ Catatan: ${data.notes || "-"}`;
                                                     }
                                                 </span>
                                             )}
-                                            <span>â€¢</span>
+                                            <span>•</span>
                                             <span>
                                                 {new Date(
                                                     message.created_at,
@@ -965,4 +965,3 @@ Catatan: ${data.notes || "-"}`;
         </div>
     );
 }
-

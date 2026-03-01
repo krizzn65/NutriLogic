@@ -12,6 +12,11 @@ import {
     Ruler,
     ChevronDown,
     Check,
+    Scale,
+    Pill,
+    Syringe,
+    UtensilsCrossed,
+    Package,
 } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { formatAge } from "../../lib/utils";
@@ -512,7 +517,7 @@ export default function ChildrenMonitoring() {
                                                 {child.gender === "L"
                                                     ? "Laki-laki"
                                                     : "Perempuan"}{" "}
-                                                â€¢{" "}
+                                                •{" "}
                                                 {child.age_months
                                                     ? formatAge(
                                                           child.age_months,
@@ -726,11 +731,11 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
     };
 
     const tabs = [
-        { id: "weighing", label: "Penimbangan", icon: "âš–ï¸" },
-        { id: "vitamin", label: "Vitamin", icon: "ðŸ’Š" },
-        { id: "immunization", label: "Imunisasi", icon: "ðŸ’‰" },
-        { id: "meal", label: "Makanan", icon: "ðŸ½ï¸" },
-        { id: "pmt", label: "PMT", icon: "ðŸ¥›" },
+        { id: "weighing", label: "Penimbangan", icon: Scale },
+        { id: "vitamin", label: "Vitamin", icon: Pill },
+        { id: "immunization", label: "Imunisasi", icon: Syringe },
+        { id: "meal", label: "Makanan", icon: UtensilsCrossed },
+        { id: "pmt", label: "PMT", icon: Package },
     ];
 
     // Get PMT status color
@@ -925,20 +930,23 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                         </h3>
 
                         <div className="flex gap-1 overflow-x-auto pb-2 mb-4">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                                        activeTab === tab.id
-                                            ? "bg-blue-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    }`}
-                                >
-                                    <span>{tab.icon}</span>
-                                    <span>{tab.label}</span>
-                                </button>
-                            ))}
+                            {tabs.map((tab) => {
+                                const TabIcon = tab.icon;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                                            activeTab === tab.id
+                                                ? "bg-blue-600 text-white shadow-md"
+                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        <TabIcon className="w-4 h-4" />
+                                        <span>{tab.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* Tab Content */}
@@ -1069,8 +1077,8 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">
-                                                ðŸ’Š
+                                            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                                <Pill className="w-7 h-7 text-gray-400" />
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat vitamin
@@ -1131,8 +1139,8 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">
-                                                ðŸ’‰
+                                            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                                <Syringe className="w-7 h-7 text-gray-400" />
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat imunisasi
@@ -1200,8 +1208,8 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">
-                                                ðŸ½ï¸
+                                            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                                <UtensilsCrossed className="w-7 h-7 text-gray-400" />
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat jurnal makan
@@ -1264,8 +1272,8 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                         </div>
                                     ) : (
                                         <div className="p-8 text-center">
-                                            <div className="text-4xl mb-3">
-                                                ðŸ¥›
+                                            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                                <Package className="w-7 h-7 text-gray-400" />
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat PMT
@@ -1291,4 +1299,3 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
         </div>
     );
 }
-

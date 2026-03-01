@@ -5,6 +5,7 @@ import PageHeader from "../ui/PageHeader";
 import ProfilKaderSkeleton from "../loading/ProfilKaderSkeleton";
 import SuccessModal from "../ui/SuccessModal";
 import { useToast } from "../../contexts/ToastContext";
+import { MapPin } from "lucide-react";
 import logger from "../../lib/logger";
 
 export default function ProfilKader() {
@@ -204,7 +205,10 @@ export default function ProfilKader() {
                                 </p>
                                 {profile?.posyandu && (
                                     <p className="text-sm text-gray-500 mt-1">
-                                        ðŸ“ {profile.posyandu.name}
+                                        <span className="inline-flex items-center gap-1">
+                                            <MapPin className="w-3.5 h-3.5" />
+                                            {profile.posyandu.name}
+                                        </span>
                                     </p>
                                 )}
                             </div>

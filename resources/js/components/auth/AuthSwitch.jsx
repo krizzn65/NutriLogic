@@ -279,7 +279,7 @@ export default function AuthSwitch() {
             const statusCode = err.response?.status;
 
             if (statusCode === 429) {
-                setError(`ðŸ”’ ${errorMessage}`);
+                setError(errorMessage);
             } else {
                 setError(errorMessage);
             }
@@ -1245,4 +1245,3 @@ export default function AuthSwitch() {
         </motion.div>
     );
 }
-
