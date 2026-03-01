@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import DashboardOrangTuaSkeleton from "../loading/DashboardOrangTuaSkeleton";
@@ -19,6 +19,7 @@ import { Icon } from "@iconify/react";
 import { useIsDesktop } from "../../hooks/useMediaQuery";
 
 import { useProfileModal } from "../../contexts/ProfileModalContext";
+import logger from "../../lib/logger";
 
 export default function DashboardOrangTuaContent() {
     const [loading, setLoading] = useState(true);
@@ -81,7 +82,7 @@ export default function DashboardOrangTuaContent() {
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data dashboard. Silakan coba lagi.';
             setError(errorMessage);
-            console.error('Dashboard fetch error:', err);
+            logger.error('Dashboard fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -306,3 +307,4 @@ export default function DashboardOrangTuaContent() {
         </DashboardLayout >
     );
 }
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -13,6 +13,7 @@ import {
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import logger from "../lib/logger";
 
 // Fix for default markers in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -66,7 +67,7 @@ const CustomControls = ({ onLocate, onToggleLayer, layers }) => {
       const div = L.DomUtil.create('div', 'custom-controls');
       div.innerHTML = `
         <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-          <button id="satellite-btn" style="margin: 2px; padding: 8px; border: none; border-radius: 3px; cursor: pointer;">🛰️ Satellite</button>
+          <button id="satellite-btn" style="margin: 2px; padding: 8px; border: none; border-radius: 3px; cursor: pointer;">ðŸ›°ï¸ Satellite</button>
         </div>
       `;
       
@@ -111,7 +112,7 @@ const SearchControl = ({ onSearch }) => {
         onSearch && onSearch({ latLng, name: display_name });
       }
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error:', error);
     }
   };
 
@@ -132,7 +133,7 @@ const SearchControl = ({ onSearch }) => {
             id="search-btn" 
             style="padding: 8px 12px; border: none; border-radius: 3px; cursor: pointer; background: #007bff; color: white;"
           >
-            🔍
+            ðŸ”
           </button>
         </div>
       `;
@@ -203,7 +204,7 @@ export const AdvancedMap = ({
         const { latitude, longitude } = position.coords;
         setUserLocation([latitude, longitude]);
       }, (error) => {
-        console.error('Geolocation error:', error);
+        logger.error('Geolocation error:', error);
       });
     }
   }, []);
@@ -345,3 +346,4 @@ export const AdvancedMap = ({
     </div>
   );
 };
+

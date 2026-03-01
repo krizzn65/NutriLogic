@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { User, Mail, Phone, Shield, Save, Key } from "lucide-react";
 import PageHeader from "../ui/PageHeader";
+import GenericFormSkeleton from "../loading/GenericFormSkeleton";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 export default function AdminProfile() {
     const [loading, setLoading] = useState(true);
@@ -19,6 +22,7 @@ export default function AdminProfile() {
     });
     const [saving, setSaving] = useState(false);
     const [changingPassword, setChangingPassword] = useState(false);
+    const toast = useToast();
 
     // Data caching
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
@@ -44,15 +48,17 @@ export default function AdminProfile() {
         try {
             setLoading(true);
             const response = await api.get("/me");
-            setUser(response.data.data);
+            const userData = response.data.user;
+            setUser(userData);
             setFormData({
-                name: response.data.data.name,
-                email: response.data.data.email,
-                phone: response.data.data.phone || "",
+                name: userData.name || "",
+                email: userData.email || "",
+                phone: userData.phone || "",
             });
-            setCachedData("admin_profile", response.data.data);
+            setCachedData("admin_profile", userData);
         } catch (err) {
-            console.error("Profile fetch error:", err);
+            logger.error("Profile fetch error:", err);
+            toast.error("Gagal memuat profil admin.");
         } finally {
             setLoading(false);
         }
@@ -61,45 +67,75 @@ export default function AdminProfile() {
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         setSaving(true);
-        // Simulate save
-        setTimeout(() => {
-            setSaving(false);
+
+        try {
+            const response = await api.put("/admin/profile", {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone || null,
+            });
+
+            const updatedUser = response.data?.data || {};
+            setUser((prev) => ({ ...prev, ...updatedUser }));
+            setFormData((prev) => ({
+                ...prev,
+                name: updatedUser.name ?? prev.name,
+                email: updatedUser.email ?? prev.email,
+                phone: updatedUser.phone ?? prev.phone,
+            }));
+
             invalidateCache("admin_profile");
             invalidateCache("admin_user_profile");
-            alert("Profil berhasil diperbarui!");
-        }, 1000);
+            setCachedData("admin_profile", {
+                ...(user || {}),
+                ...updatedUser,
+            });
+            toast.success("Profil berhasil diperbarui!");
+        } catch (err) {
+            logger.error("Profile update error:", err);
+            toast.error(
+                err.response?.data?.message || "Gagal memperbarui profil.",
+            );
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleChangePassword = async (e) => {
         e.preventDefault();
 
         if (passwordData.new_password !== passwordData.confirm_password) {
-            alert("Password baru dan konfirmasi tidak cocok!");
+            toast.error("Password baru dan konfirmasi tidak cocok!");
             return;
         }
 
         setChangingPassword(true);
-        // Simulate password change
-        setTimeout(() => {
-            setChangingPassword(false);
+
+        try {
+            await api.put("/admin/profile/password", {
+                current_password: passwordData.current_password,
+                new_password: passwordData.new_password,
+                new_password_confirmation: passwordData.confirm_password,
+            });
+
             setPasswordData({
                 current_password: "",
                 new_password: "",
                 confirm_password: "",
             });
-            alert("Password berhasil diubah!");
-        }, 1000);
+            toast.success("Password berhasil diubah!");
+        } catch (err) {
+            logger.error("Password update error:", err);
+            toast.error(
+                err.response?.data?.message || "Gagal mengubah password.",
+            );
+        } finally {
+            setChangingPassword(false);
+        }
     };
 
     if (loading) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <GenericFormSkeleton fieldCount={6} />;
     }
 
     return (

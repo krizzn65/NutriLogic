@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+﻿import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { exportActivityLogsToExcel } from "../../utils/excelExportActivityLogs";
 import EmptyState from "../ui/EmptyState";
 import ErrorState from "../ui/ErrorState";
+import logger from "../../lib/logger";
 
 export default function ActivityLogs() {
     const [loading, setLoading] = useState(true);
@@ -136,7 +137,7 @@ export default function ActivityLogs() {
             const response = await api.get("/admin/users");
             setAllUsers(response.data?.data || []);
         } catch (err) {
-            console.error("Failed to fetch users:", err);
+            logger.error("Failed to fetch users:", err);
         }
     }, []);
 
@@ -227,7 +228,7 @@ export default function ActivityLogs() {
                 throw new Error("Export gagal tanpa pesan error");
             }
         } catch (error) {
-            console.error("Error exporting to Excel:", error);
+            logger.error("Error exporting to Excel:", error);
 
             // User-friendly error message
             const errorMessage =
@@ -292,14 +293,7 @@ export default function ActivityLogs() {
     ];
 
     if (loading && logs.length === 0) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <GenericListSkeleton itemCount={8} />;
     }
 
     return (
@@ -583,7 +577,7 @@ export default function ActivityLogs() {
                                             {log.model || "-"}
                                         </span>
                                         <span className="text-gray-400 text-xs">
-                                            •
+                                            â€¢
                                         </span>
                                         <span className="text-xs text-gray-500">
                                             {log.ip_address || "-"}
@@ -777,7 +771,7 @@ function PaginationUI({ currentPage, totalPages, total, onPageChange, label }) {
                 </div>
             )}
             <div className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
-                Halaman {currentPage} dari {totalPages || 1} • Total:{" "}
+                Halaman {currentPage} dari {totalPages || 1} â€¢ Total:{" "}
                 <span className="font-bold text-gray-700">{total}</span> {label}
             </div>
         </div>
@@ -1133,3 +1127,4 @@ function CustomDatePicker({ label, value, onChange }) {
         </div>
     );
 }
+

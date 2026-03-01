@@ -12,57 +12,31 @@ import {
     Megaphone,
 } from "lucide-react";
 import { assets } from "../../assets/assets";
+import { KADER_SIDEBAR_NAV } from "../../constants/navigationConfigs";
+
+const KADER_ICON_MAP = {
+    home: Home,
+    "file-text": FileText,
+    users: Users,
+    "clipboard-list": ClipboardList,
+    scale: Scale,
+    "alert-triangle": AlertTriangle,
+    calendar: Calendar,
+    "message-square": MessageSquare,
+    megaphone: Megaphone,
+};
 
 export default function SidebarKader() {
     const [open, setOpen] = useState(false);
 
-    const links = [
-        {
-            label: "Dashboard",
-            href: "/dashboard",
-            icon: <Home className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Data Anak",
-            href: "/dashboard/data-anak",
-            icon: <Users className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Kegiatan",
-            href: "/dashboard/kegiatan",
-            icon: <Scale className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Anak Prioritas",
-            href: "/dashboard/anak-prioritas",
-            icon: <AlertTriangle className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Antrian Prioritas",
-            href: "/dashboard/antrian-prioritas",
-            icon: <ClipboardList className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Jadwal",
-            href: "/dashboard/jadwal",
-            icon: <Calendar className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Konsultasi",
-            href: "/dashboard/konsultasi",
-            icon: <MessageSquare className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Broadcast",
-            href: "/dashboard/broadcast",
-            icon: <Megaphone className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Laporan",
-            href: "/dashboard/laporan",
-            icon: <FileText className="text-white h-5 w-5 shrink-0" />,
-        },
-    ];
+    const links = KADER_SIDEBAR_NAV.map((item) => {
+        const IconComponent = KADER_ICON_MAP[item.icon];
+        return {
+            label: item.label,
+            href: item.href,
+            icon: <IconComponent className="text-white h-5 w-5 shrink-0" />,
+        };
+    });
 
     return (
         <Sidebar open={open} setOpen={setOpen}>

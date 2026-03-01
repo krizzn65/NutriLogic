@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
+import logger from "../../lib/logger";
 
 export default function EditAnakForm() {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function EditAnakForm() {
             const response = await api.get("/posyandus");
             setPosyandus(response.data.data || response.data);
         } catch (err) {
-            console.error("Failed to fetch posyandus:", err);
+            logger.error("Failed to fetch posyandus:", err);
         }
     };
 
@@ -54,7 +55,7 @@ export default function EditAnakForm() {
                 is_active: child.is_active ?? true,
             });
         } catch (err) {
-            console.error("Failed to fetch child data:", err);
+            logger.error("Failed to fetch child data:", err);
             setError(err.response?.data?.message || "Gagal memuat data anak");
         } finally {
             setLoading(false);
@@ -171,7 +172,7 @@ export default function EditAnakForm() {
                 state: { message: "Data anak berhasil diperbarui!" },
             });
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 // Validation errors from backend
@@ -198,7 +199,7 @@ export default function EditAnakForm() {
                 state: { message: "Data anak berhasil dinonaktifkan!" },
             });
         } catch (err) {
-            console.error("Delete error:", err);
+            logger.error("Delete error:", err);
             setError(
                 err.response?.data?.message || "Gagal menonaktifkan data anak",
             );
@@ -592,3 +593,4 @@ export default function EditAnakForm() {
         </div>
     );
 }
+

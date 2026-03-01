@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
 import PageHeader from "../ui/PageHeader";
 import api from "../../lib/api";
+import SystemSettingsSkeleton from "../loading/SystemSettingsSkeleton";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 export default function SystemSettings() {
     const [settings, setSettings] = useState({
@@ -13,6 +16,7 @@ export default function SystemSettings() {
     });
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
 
     useEffect(() => {
         fetchSettings();
@@ -31,7 +35,7 @@ export default function SystemSettings() {
                 max_file_size: (data.max_file_size || 5).toString(),
             });
         } catch (err) {
-            console.error("Failed to load settings:", err);
+            logger.error("Failed to load settings:", err);
         } finally {
             setLoading(false);
         }
@@ -47,23 +51,26 @@ export default function SystemSettings() {
                 session_timeout: parseInt(settings.session_timeout, 10),
                 max_file_size: parseInt(settings.max_file_size, 10),
             });
-            alert("Pengaturan berhasil disimpan!");
+
+            // Keep client-side session timeout in sync with latest admin setting.
+            localStorage.setItem(
+                "nutrilogic_session_timeout",
+                settings.session_timeout,
+            );
+            window.dispatchEvent(new Event("storage"));
+
+            toast.success("Pengaturan berhasil disimpan!");
         } catch (err) {
-            alert(err.response?.data?.message || "Gagal menyimpan pengaturan.");
+            toast.error(
+                err.response?.data?.message || "Gagal menyimpan pengaturan.",
+            );
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <SystemSettingsSkeleton />;
     }
 
     return (

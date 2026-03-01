@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+﻿import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
@@ -19,6 +19,8 @@ import PageHeader from "../ui/PageHeader";
 import { exportSystemReportsToExcel } from "../../utils/excelExport";
 import { exportChildrenToExcel } from "../../utils/excelExportChildren";
 import { exportWeighingsToExcel } from "../../utils/excelExportWeighings";
+import TableSkeleton from "../loading/TableSkeleton";
+import logger from "../../lib/logger";
 // Charts removed in favor of table-centric layout
 
 export default function SystemReports() {
@@ -100,7 +102,7 @@ export default function SystemReports() {
                 const errorMessage =
                     err.response?.data?.message || "Gagal memuat data laporan.";
                 setError(errorMessage);
-                console.error("Report fetch error:", err);
+                logger.error("Report fetch error:", err);
             } finally {
                 if (activeReportRequestId.current === requestId) {
                     setLoading(false);
@@ -117,7 +119,7 @@ export default function SystemReports() {
                 const response = await api.get("/admin/posyandus");
                 setPosyandus(response.data.data || []);
             } catch (err) {
-                console.error("Failed to fetch posyandus:", err);
+                logger.error("Failed to fetch posyandus:", err);
             }
         };
         fetchPosyandus();
@@ -181,7 +183,7 @@ export default function SystemReports() {
                 setIsExporting(false);
             }, 1000);
         } catch (error) {
-            console.error("Error exporting to Excel:", error);
+            logger.error("Error exporting to Excel:", error);
             setExportError("Gagal mengexport data: " + error.message);
             setIsExporting(false);
             setTimeout(() => setExportError(null), 5000);
@@ -224,7 +226,7 @@ export default function SystemReports() {
                 setIsExportingChildren(false);
             }, 1000);
         } catch (error) {
-            console.error("Error exporting children to Excel:", error);
+            logger.error("Error exporting children to Excel:", error);
             setExportError(
                 "Gagal mengexport data anak: " +
                     (error.message || "Terjadi kesalahan"),
@@ -273,7 +275,7 @@ export default function SystemReports() {
                 setIsExportingWeighings(false);
             }, 1000);
         } catch (error) {
-            console.error("Error exporting weighings to Excel:", error);
+            logger.error("Error exporting weighings to Excel:", error);
             setExportError(
                 "Gagal mengexport data penimbangan: " +
                     (error.message || "Terjadi kesalahan"),
@@ -322,22 +324,7 @@ export default function SystemReports() {
     };
 
     if (loading) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-6">
-                    <div className="h-10 bg-gray-200 rounded w-1/3"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        {[...Array(5)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="h-32 bg-gray-200 rounded-xl"
-                            ></div>
-                        ))}
-                    </div>
-                    <div className="h-64 bg-gray-200 rounded-xl"></div>
-                </div>
-            </div>
-        );
+        return <TableSkeleton itemCount={5} />;
     }
 
     return (
@@ -948,3 +935,4 @@ function ExportButton({
         </button>
     );
 }
+

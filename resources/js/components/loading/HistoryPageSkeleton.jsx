@@ -1,6 +1,6 @@
 import React from "react";
 import Shimmer from "../ui/Shimmer";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
 
 export default function HistoryPageSkeleton() {
     return (

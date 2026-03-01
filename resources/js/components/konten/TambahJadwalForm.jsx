@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
@@ -12,6 +12,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import api from "../../lib/api";
+import logger from "../../lib/logger";
 
 export default function TambahJadwalForm() {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function TambahJadwalForm() {
     const [childrenLoading, setChildrenLoading] = useState(true);
     const [error, setError] = useState(null);
     const [children, setChildren] = useState([]);
+    const [existingSchedules, setExistingSchedules] = useState([]);
 
     const [formData, setFormData] = useState({
         child_id: "",
@@ -32,6 +34,7 @@ export default function TambahJadwalForm() {
 
     useEffect(() => {
         fetchChildren();
+        fetchSchedules();
     }, []);
 
     const fetchChildren = async () => {
@@ -40,23 +43,57 @@ export default function TambahJadwalForm() {
             const response = await api.get("/kader/children?is_active=1");
             setChildren(response.data.data);
         } catch (err) {
-            console.error("Failed to fetch children:", err);
+            logger.error("Failed to fetch children:", err);
             setError("Gagal memuat data anak.");
         } finally {
             setChildrenLoading(false);
         }
     };
 
+    const fetchSchedules = async () => {
+        try {
+            const response = await api.get("/kader/schedules");
+            setExistingSchedules(response.data.data || []);
+        } catch (err) {
+            logger.error("Failed to fetch schedules:", err);
+            setExistingSchedules([]);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (error) {
+            setError(null);
+        }
         setFormData((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
 
+    const conflictingSchedules = useMemo(() => {
+        if (!formData.scheduled_for || !formData.scheduled_time) {
+            return [];
+        }
+
+        const selectedTime = formData.scheduled_time.slice(0, 5);
+        return existingSchedules.filter((schedule) => {
+            if (schedule.status === "completed") return false;
+            if (schedule.scheduled_for !== formData.scheduled_for) return false;
+            const scheduleTime = (schedule.scheduled_time || "").slice(0, 5);
+            return scheduleTime === selectedTime;
+        });
+    }, [existingSchedules, formData.scheduled_for, formData.scheduled_time]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (conflictingSchedules.length > 0) {
+            setError(
+                "Jadwal bentrok dengan kegiatan lain di tanggal dan jam yang sama. Silakan pilih waktu berbeda.",
+            );
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -284,6 +321,22 @@ export default function TambahJadwalForm() {
                                     </div>
                                 </div>
 
+                                {conflictingSchedules.length > 0 && (
+                                    <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl flex items-start gap-3">
+                                        <AlertCircle className="w-5 h-5 mt-0.5" />
+                                        <div>
+                                            <p className="font-medium">
+                                                Peringatan jadwal bentrok
+                                            </p>
+                                            <p className="text-sm">
+                                                Sudah ada{" "}
+                                                {conflictingSchedules.length}{" "}
+                                                jadwal pada waktu yang sama.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
                                     <label
                                         htmlFor="jadwal-location"
@@ -359,3 +412,4 @@ export default function TambahJadwalForm() {
         </div>
     );
 }
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
 import PageHeader from "../ui/PageHeader";
+import logger from "../../lib/logger";
 
 export default function PosyanduManagement() {
     const [loading, setLoading] = useState(true);
@@ -69,7 +70,7 @@ export default function PosyanduManagement() {
                     setCachedData("admin_posyandus", response.data.data);
                 }
             } catch (err) {
-                console.error(`Preload ${filter} error:`, err);
+                logger.error(`Preload ${filter} error:`, err);
             }
         }
     }, [getCachedData, setCachedData]);
@@ -122,7 +123,7 @@ export default function PosyanduManagement() {
                     err.response?.data?.message ||
                     "Gagal memuat data posyandu.";
                 setError(errorMessage);
-                console.error("Posyandus fetch error:", err);
+                logger.error("Posyandus fetch error:", err);
             } finally {
                 if (activeRequestId.current === requestId) {
                     setLoading(false);
@@ -232,14 +233,7 @@ export default function PosyanduManagement() {
     };
 
     if (loading) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <GenericListSkeleton itemCount={6} />;
     }
 
     return (
@@ -1073,3 +1067,4 @@ function ConfirmationModal({ isOpen, action, posyandu, onConfirm, onCancel }) {
         </AnimatePresence>
     );
 }
+

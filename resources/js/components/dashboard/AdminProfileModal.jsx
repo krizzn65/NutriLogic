@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import {
     User,
@@ -12,14 +12,22 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
-import { Dialog, DialogContent } from "../ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+} from "../ui/dialog";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
 import SuccessModal from "../ui/SuccessModal";
+import logger from "../../lib/logger";
 
 export default function AdminProfileModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [profileError, setProfileError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -58,6 +66,8 @@ export default function AdminProfileModal({ isOpen, onClose }) {
         if (isOpen) {
             fetchProfile();
             setActiveTab("profile");
+            setProfileError("");
+            setPasswordError("");
             setPasswordData({
                 current_password: "",
                 new_password: "",
@@ -78,7 +88,7 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                 phone: userData.phone || "",
             });
         } catch (err) {
-            console.error("Profile fetch error:", err);
+            logger.error("Profile fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -86,6 +96,7 @@ export default function AdminProfileModal({ isOpen, onClose }) {
 
     const handleUpdateProfile = (e) => {
         e.preventDefault();
+        setProfileError("");
         setConfirmConfig({
             title: "Simpan Perubahan Profil?",
             description:
@@ -99,29 +110,46 @@ export default function AdminProfileModal({ isOpen, onClose }) {
 
     const executeUpdateProfile = async () => {
         setSaving(true);
-        setConfirmOpen(false); // Close confirmation immediately or keep it open with loading?
-        // Better to close confirmation and show loading on the main modal button or keep confirmation open with loading.
-        // The user wants "pop up konfirmasi". Usually it closes then action happens.
-        // But if I want to show success *without* native alert, I might need a success modal.
-        // For now, let's simulate the save.
+        setConfirmOpen(false);
 
-        setTimeout(() => {
+        try {
+            const response = await api.put("/admin/profile", {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone || null,
+            });
+
+            const updated = response.data?.data || {};
+            setUser((prev) => ({ ...prev, ...updated }));
+            setFormData((prev) => ({
+                ...prev,
+                name: updated.name ?? prev.name,
+                email: updated.email ?? prev.email,
+                phone: updated.phone ?? prev.phone,
+            }));
+
+            setSuccessModal({
+                isOpen: true,
+                title: "Profil Berhasil Diperbarui",
+                message: "Perubahan profil admin telah disimpan.",
+            });
+        } catch (err) {
+            const errorMessage =
+                err.response?.data?.message ||
+                "Gagal menyimpan perubahan profil.";
+            setProfileError(errorMessage);
+            logger.error("Profile update error:", err);
+        } finally {
             setSaving(false);
-            // Instead of alert, we could show a success toast or just close.
-            // For now, let's just close the main modal to indicate success, or maybe show a small "Saved" text.
-            // Given the user's request to *replace* the alert, simply removing it and closing the modal is a valid "fix" if the UX is clear.
-            onClose();
-        }, 1000);
+        }
     };
 
     const handleChangePassword = (e) => {
         e.preventDefault();
+        setPasswordError("");
 
         if (passwordData.new_password !== passwordData.confirm_password) {
-            // This is a validation error, not a confirmation. I'll keep it as alert or maybe use a custom modal for error too?
-            // The user specifically mentioned "konfirmasi iya dan tidak".
-            // For validation error, a simple alert is okay-ish, or better, set an error state and show it in UI.
-            alert("Password baru dan konfirmasi tidak cocok!");
+            setPasswordError("Password baru dan konfirmasi tidak cocok.");
             return;
         }
 
@@ -139,9 +167,15 @@ export default function AdminProfileModal({ isOpen, onClose }) {
     const executeChangePassword = async () => {
         setChangingPassword(true);
         setConfirmOpen(false);
+        setPasswordError("");
 
-        setTimeout(() => {
-            setChangingPassword(false);
+        try {
+            await api.put("/admin/profile/password", {
+                current_password: passwordData.current_password,
+                new_password: passwordData.new_password,
+                new_password_confirmation: passwordData.confirm_password,
+            });
+
             setPasswordData({
                 current_password: "",
                 new_password: "",
@@ -152,7 +186,15 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                 title: "Password Berhasil Diubah",
                 message: "Password Anda telah berhasil diperbarui.",
             });
-        }, 1000);
+        } catch (err) {
+            const errorMessage =
+                err.response?.data?.message ||
+                "Gagal mengubah password. Silakan coba lagi.";
+            setPasswordError(errorMessage);
+            logger.error("Password update error:", err);
+        } finally {
+            setChangingPassword(false);
+        }
     };
 
     return (
@@ -163,6 +205,12 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                     hideClose={true}
                     className="w-[90%] md:w-full p-0 bg-white border-none shadow-2xl rounded-2xl overflow-hidden"
                 >
+                    <DialogTitle className="sr-only">
+                        Profil SuperAdmin
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Kelola informasi profil dan keamanan akun super admin.
+                    </DialogDescription>
                     {/* Header */}
                     <div className="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -223,6 +271,11 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                                         onSubmit={handleUpdateProfile}
                                         className="space-y-4"
                                     >
+                                        {profileError && (
+                                            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                                                {profileError}
+                                            </div>
+                                        )}
                                         <div className="flex items-center gap-4 mb-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                                             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-full flex items-center justify-center text-white shadow-md">
                                                 <Shield className="w-8 h-8" />
@@ -315,6 +368,11 @@ export default function AdminProfileModal({ isOpen, onClose }) {
                                         onSubmit={handleChangePassword}
                                         className="space-y-4"
                                     >
+                                        {passwordError && (
+                                            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                                                {passwordError}
+                                            </div>
+                                        )}
                                         <div>
                                             <label
                                                 htmlFor="admin-current-password"

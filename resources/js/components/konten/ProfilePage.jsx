@@ -3,13 +3,14 @@ import api from "../../lib/api";
 import { fetchMe } from "../../lib/auth";
 import GenericFormSkeleton from "../loading/GenericFormSkeleton";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
-    const [successMessage, setSuccessMessage] = useState(null);
     const [profileData, setProfileData] = useState({
         name: "",
         email: "",
@@ -23,8 +24,8 @@ export default function ProfilePage() {
     });
     const [passwordError, setPasswordError] = useState(null);
     const [passwordSaving, setPasswordSaving] = useState(false);
-    const [passwordSuccess, setPasswordSuccess] = useState(null);
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
+    const toast = useToast();
 
     useEffect(() => {
         fetchProfile();
@@ -34,7 +35,6 @@ export default function ProfilePage() {
         try {
             setLoading(true);
             setError(null);
-            setSuccessMessage(null);
 
             // Check cache first
             const cachedData = getCachedData("profile");
@@ -58,7 +58,7 @@ export default function ProfilePage() {
                 err.response?.data?.message ||
                 "Gagal memuat data profil. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Error fetching profile:", err);
+            logger.error("Error fetching profile:", err);
         } finally {
             setLoading(false);
         }
@@ -70,7 +70,6 @@ export default function ProfilePage() {
         try {
             setSaving(true);
             setError(null);
-            setSuccessMessage(null);
 
             const response = await api.put("/parent/profile", {
                 name: profileData.name,
@@ -78,7 +77,7 @@ export default function ProfilePage() {
                 phone: profileData.phone,
             });
 
-            setSuccessMessage("Profil berhasil diperbarui!");
+            toast.success("Profil berhasil diperbarui!");
             setProfileData(response.data.data);
 
             // Update cache and localStorage
@@ -89,7 +88,7 @@ export default function ProfilePage() {
                 err.response?.data?.message ||
                 "Gagal memperbarui profil. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Error updating profile:", err);
+            logger.error("Error updating profile:", err);
         } finally {
             setSaving(false);
         }
@@ -101,7 +100,6 @@ export default function ProfilePage() {
         try {
             setPasswordSaving(true);
             setPasswordError(null);
-            setPasswordSuccess(null);
 
             await api.put("/parent/profile/password", {
                 current_password: passwordForm.current_password,
@@ -110,24 +108,20 @@ export default function ProfilePage() {
                     passwordForm.new_password_confirmation,
             });
 
-            setPasswordSuccess("Password berhasil diubah!");
+            toast.success("Password berhasil diubah!");
             setPasswordForm({
                 current_password: "",
                 new_password: "",
                 new_password_confirmation: "",
             });
 
-            // Close modal after 2 seconds
-            setTimeout(() => {
-                setShowPasswordModal(false);
-                setPasswordSuccess(null);
-            }, 2000);
+            setShowPasswordModal(false);
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
                 "Gagal mengubah password. Silakan coba lagi.";
             setPasswordError(errorMessage);
-            console.error("Error updating password:", err);
+            logger.error("Error updating password:", err);
         } finally {
             setPasswordSaving(false);
         }
@@ -136,7 +130,6 @@ export default function ProfilePage() {
     const openPasswordModal = () => {
         setShowPasswordModal(true);
         setPasswordError(null);
-        setPasswordSuccess(null);
         setPasswordForm({
             current_password: "",
             new_password: "",
@@ -147,7 +140,6 @@ export default function ProfilePage() {
     const closePasswordModal = () => {
         setShowPasswordModal(false);
         setPasswordError(null);
-        setPasswordSuccess(null);
         setPasswordForm({
             current_password: "",
             new_password: "",
@@ -182,13 +174,6 @@ export default function ProfilePage() {
                 <p className="text-gray-600 mt-2 mb-6">
                     Kelola informasi profil dan akun Anda
                 </p>
-
-                {/* Success Message */}
-                {successMessage && (
-                    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p className="text-green-800">{successMessage}</p>
-                    </div>
-                )}
 
                 {/* Error Message */}
                 {error && (
@@ -309,15 +294,6 @@ export default function ProfilePage() {
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">
                                 Ganti Password
                             </h3>
-
-                            {/* Password Success Message */}
-                            {passwordSuccess && (
-                                <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                                    <p className="text-green-800 text-sm">
-                                        {passwordSuccess}
-                                    </p>
-                                </div>
-                            )}
 
                             {/* Password Error Message */}
                             {passwordError && (

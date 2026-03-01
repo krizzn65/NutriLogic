@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatAge } from "../../lib/utils";
+import logger from "../../lib/logger";
 
 export default function CreateConsultation() {
     const TITLE_MAX_LENGTH = 255;
@@ -51,7 +52,7 @@ export default function CreateConsultation() {
                 err.response?.data?.message ||
                 "Gagal memuat data. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Fetch error:", err);
+            logger.error("Fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -133,7 +134,7 @@ export default function CreateConsultation() {
                     "Gagal membuat konsultasi. Silakan coba lagi.";
                 setError(errorMessage);
             }
-            console.error("Create consultation error:", err);
+            logger.error("Create consultation error:", err);
         } finally {
             setSubmitting(false);
         }
@@ -466,4 +467,5 @@ export default function CreateConsultation() {
         </div>
     );
 }
+
 

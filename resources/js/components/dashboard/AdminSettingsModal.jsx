@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Settings, Save, X, Loader2 } from "lucide-react";
-import { Dialog, DialogContent } from "../ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+} from "../ui/dialog";
 import api from "../../lib/api";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
+import logger from "../../lib/logger";
 
 export default function AdminSettingsModal({ isOpen, onClose }) {
     const [settings, setSettings] = useState({
@@ -29,7 +35,7 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
                 session_timeout: (data.session_timeout || 60).toString(),
             });
         } catch (err) {
-            console.error("Failed to load settings:", err);
+            logger.error("Failed to load settings:", err);
         }
     };
 
@@ -59,7 +65,7 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
             setSaving(false);
             onClose();
         } catch (err) {
-            console.error("Failed to save settings:", err);
+            logger.error("Failed to save settings:", err);
             alert(err.response?.data?.message || "Gagal menyimpan pengaturan.");
             setSaving(false);
         }
@@ -73,6 +79,12 @@ export default function AdminSettingsModal({ isOpen, onClose }) {
                     hideClose={true}
                     className="w-[90%] md:w-full p-0 bg-white border-none shadow-2xl rounded-2xl overflow-hidden"
                 >
+                    <DialogTitle className="sr-only">
+                        Pengaturan Sistem
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Ubah konfigurasi dasar sistem NutriLogic.
+                    </DialogDescription>
                     {/* Header */}
                     <div className="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">

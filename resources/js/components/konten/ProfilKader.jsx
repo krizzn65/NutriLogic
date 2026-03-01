@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import PageHeader from "../ui/PageHeader";
 import ProfilKaderSkeleton from "../loading/ProfilKaderSkeleton";
 import SuccessModal from "../ui/SuccessModal";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 export default function ProfilKader() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [changingPassword, setChangingPassword] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
     const [profile, setProfile] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const toast = useToast();
 
     const [successModal, setSuccessModal] = useState({
         isOpen: false,
@@ -65,7 +67,7 @@ export default function ProfilKader() {
             setCachedData("kader_profile", response.data.data);
         } catch (err) {
             setError("Gagal memuat profil.");
-            console.error("Profile fetch error:", err);
+            logger.error("Profile fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -91,12 +93,11 @@ export default function ProfilKader() {
         e.preventDefault();
         setSaving(true);
         setError(null);
-        setSuccess(null);
 
         try {
             const response = await api.put("/kader/profile", formData);
             setProfile((prev) => ({ ...prev, ...response.data.data }));
-            setSuccess("Profil berhasil diperbarui!");
+            toast.success("Profil berhasil diperbarui!");
             setIsEditing(false);
             invalidateCache("kader_profile");
             invalidateCache("kader_dashboard");
@@ -125,7 +126,6 @@ export default function ProfilKader() {
 
         setChangingPassword(true);
         setError(null);
-        setSuccess(null);
 
         try {
             await api.put("/kader/profile/password", passwordData);
@@ -181,13 +181,6 @@ export default function ProfilKader() {
                         showProfile={false}
                     />
 
-                    {/* Success/Error Alerts */}
-                    {success && (
-                        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-                            {success}
-                        </div>
-                    )}
-
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
                             {error}
@@ -211,7 +204,7 @@ export default function ProfilKader() {
                                 </p>
                                 {profile?.posyandu && (
                                     <p className="text-sm text-gray-500 mt-1">
-                                        📍 {profile.posyandu.name}
+                                        ðŸ“ {profile.posyandu.name}
                                     </p>
                                 )}
                             </div>
@@ -301,6 +294,14 @@ export default function ProfilKader() {
                             {isEditing ? (
                                 <div className="flex gap-3 pt-4">
                                     <button
+                                        type="button"
+                                        onClick={handleCancelEdit}
+                                        disabled={saving}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
                                         type="submit"
                                         disabled={saving}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
@@ -308,14 +309,6 @@ export default function ProfilKader() {
                                         {saving
                                             ? "Menyimpan..."
                                             : "Simpan Perubahan"}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleCancelEdit}
-                                        disabled={saving}
-                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
-                                    >
-                                        Batal
                                     </button>
                                 </div>
                             ) : (

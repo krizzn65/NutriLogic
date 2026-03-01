@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,6 +11,7 @@ import {
     AlertTriangle,
 } from "lucide-react";
 import api from "../../lib/api";
+import logger from "../../lib/logger";
 
 export default function EditChildModal({
     isOpen,
@@ -75,7 +76,7 @@ export default function EditChildModal({
                 setPickerDate(new Date(child.birth_date));
             }
         } catch (err) {
-            console.error("Failed to fetch child data:", err);
+            logger.error("Failed to fetch child data:", err);
             setError(err.response?.data?.message || "Gagal memuat data anak");
         } finally {
             setLoading(false);
@@ -174,7 +175,7 @@ export default function EditChildModal({
             onSuccess("Data anak berhasil diperbarui!");
             onClose();
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
@@ -214,7 +215,7 @@ export default function EditChildModal({
             setShowDeactivateModal(false);
             onClose();
         } catch (err) {
-            console.error("Toggle active error:", err);
+            logger.error("Toggle active error:", err);
             const action = childData?.is_active
                 ? "menonaktifkan"
                 : "mengaktifkan";
@@ -1075,3 +1076,4 @@ export default function EditChildModal({
         document.body,
     );
 }
+

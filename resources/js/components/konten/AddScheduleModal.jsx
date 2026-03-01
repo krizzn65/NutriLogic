@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     X,
     Calendar,
@@ -13,10 +13,12 @@ import {
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { createPortal } from "react-dom";
 import api from "../../lib/api";
+import logger from "../../lib/logger";
 
 export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [existingSchedules, setExistingSchedules] = useState([]);
 
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
@@ -48,6 +50,7 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
             });
             setError(null);
             setPickerDate(new Date());
+            fetchSchedules();
         }
     }, [isOpen]);
 
@@ -84,14 +87,48 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (error) {
+            setError(null);
+        }
         setFormData((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
 
+    const fetchSchedules = async () => {
+        try {
+            const response = await api.get("/kader/schedules");
+            setExistingSchedules(response.data.data || []);
+        } catch (err) {
+            logger.error("Failed to fetch schedules:", err);
+            setExistingSchedules([]);
+        }
+    };
+
+    const conflictingSchedules = useMemo(() => {
+        if (!formData.scheduled_for || !formData.scheduled_time) {
+            return [];
+        }
+
+        const selectedTime = formData.scheduled_time.slice(0, 5);
+        return existingSchedules.filter((schedule) => {
+            if (schedule.status === "completed") return false;
+            if (schedule.scheduled_for !== formData.scheduled_for) return false;
+            const scheduleTime = (schedule.scheduled_time || "").slice(0, 5);
+            return scheduleTime === selectedTime;
+        });
+    }, [existingSchedules, formData.scheduled_for, formData.scheduled_time]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (conflictingSchedules.length > 0) {
+            setError(
+                "Jadwal bentrok dengan kegiatan lain di tanggal dan jam yang sama. Silakan pilih waktu berbeda.",
+            );
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -531,6 +568,22 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
                                 </div>
                             </div>
 
+                            {conflictingSchedules.length > 0 && (
+                                <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl flex items-start gap-3">
+                                    <AlertCircle className="w-5 h-5 mt-0.5" />
+                                    <div>
+                                        <p className="font-medium">
+                                            Peringatan jadwal bentrok
+                                        </p>
+                                        <p className="text-sm">
+                                            Sudah ada{" "}
+                                            {conflictingSchedules.length} jadwal
+                                            pada waktu yang sama.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Location */}
                             <div>
                                 <label
@@ -608,3 +661,4 @@ export default function AddScheduleModal({ isOpen, onClose, onSuccess }) {
         document.body,
     );
 }
+

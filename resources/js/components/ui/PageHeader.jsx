@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import {
     Calendar,
     Bell,
@@ -16,6 +16,7 @@ import ProfileModal from "../dashboard/ProfileModal";
 import AdminSettingsModal from "../dashboard/AdminSettingsModal";
 import SettingsModal from "../dashboard/SettingsModal";
 import ConfirmationModal from "../ui/ConfirmationModal";
+import logger from "../../lib/logger";
 
 export default function PageHeader({
     title,
@@ -75,7 +76,7 @@ export default function PageHeader({
                 return merged;
             });
         } catch (err) {
-            console.error("Failed to fetch notifications:", err);
+            logger.error("Failed to fetch notifications:", err);
         }
     }, []);
 
@@ -207,7 +208,7 @@ export default function PageHeader({
                         });
                     }
                 } catch (err) {
-                    console.error(
+                    logger.error(
                         "Failed to parse AI notifications from localStorage:",
                         err,
                     );
@@ -227,7 +228,7 @@ export default function PageHeader({
         if (notification.dbId) {
             api.post(`/notifications/${notification.dbId}/read`).catch(
                 (err) => {
-                    console.error("Failed to mark notification as read:", err);
+                    logger.error("Failed to mark notification as read:", err);
                 },
             );
 
@@ -270,7 +271,7 @@ export default function PageHeader({
                         JSON.stringify(updatedAiNotifs),
                     );
                 } catch (err) {
-                    console.error(
+                    logger.error(
                         "Failed to update AI notifications in localStorage:",
                         err,
                     );
@@ -608,3 +609,4 @@ export default function PageHeader({
         </>
     );
 }
+

@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx-js-style';
+﻿import * as XLSX from 'xlsx-js-style';
+import logger from "../lib/logger";
 
 /**
  * Export System Reports to Excel with Multiple Sheets and Professional Styling
@@ -8,7 +9,7 @@ import * as XLSX from 'xlsx-js-style';
  */
 export const exportSystemReportsToExcel = (reportData, posyanduName = 'Semua Posyandu') => {
     if (!reportData) {
-        console.error('No report data available');
+        logger.error('No report data available');
         return;
     }
 
@@ -397,7 +398,7 @@ export const exportSystemReportsToExcel = (reportData, posyanduName = 'Semua Pos
  */
 export const exportKaderChildrenToExcel = (children, posyanduName = 'Posyandu') => {
     if (!children || children.length === 0) {
-        console.error('No children data available');
+        logger.error('No children data available');
         alert('Tidak ada data anak untuk diekspor');
         return;
     }
@@ -560,7 +561,7 @@ export const exportKaderChildrenToExcel = (children, posyanduName = 'Posyandu') 
  */
 export const exportKaderWeighingsToExcel = (weighings, posyanduName = 'Posyandu', dateRange = {}) => {
     if (!weighings || weighings.length === 0) {
-        console.error('No weighing data available');
+        logger.error('No weighing data available');
         alert('Tidak ada data penimbangan untuk diekspor');
         return;
     }
@@ -777,4 +778,5 @@ export const exportKaderWeighingsToExcel = (weighings, posyanduName = 'Posyandu'
     
     XLSX.writeFile(wb, filename);
 };
+
 

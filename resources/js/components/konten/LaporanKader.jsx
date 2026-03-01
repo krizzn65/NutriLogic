@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import { getStatusColor, getStatusLabel } from "../../lib/utils";
@@ -20,6 +20,7 @@ import { Icon } from "@iconify/react";
 import kepalaBayi from "../../assets/kepala_bayi.png";
 import kepalaBayiCewe from "../../assets/kepala_bayi_cewe.png";
 import LaporanKaderSkeleton from "../loading/LaporanKaderSkeleton";
+import logger from "../../lib/logger";
 
 export default function LaporanKader() {
     // --- State Management ---
@@ -73,7 +74,7 @@ export default function LaporanKader() {
                 setPosyanduName(response.data.user.posyandu.name);
             }
         } catch (err) {
-            console.error("Error fetching posyandu info:", err);
+            logger.error("Error fetching posyandu info:", err);
         }
     };
 
@@ -89,7 +90,7 @@ export default function LaporanKader() {
             setChildren(response.data.data || []);
             setCachedData("kader_children_all", response.data.data || []);
         } catch (err) {
-            console.error("Error fetching children:", err);
+            logger.error("Error fetching children:", err);
         }
     };
 
@@ -1446,3 +1447,4 @@ export default function LaporanKader() {
         </DashboardLayout>
     );
 }
+

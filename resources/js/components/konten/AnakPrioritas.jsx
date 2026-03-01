@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Search,
@@ -18,6 +18,7 @@ import { formatAge } from "../../lib/utils";
 import kepalaBayi from "../../assets/kepala_bayi.png";
 import kepalaBayiCewe from "../../assets/kepala_bayi_cewe.png";
 import AnakPrioritasSkeleton from "../loading/AnakPrioritasSkeleton";
+import logger from "../../lib/logger";
 
 export default function AnakPrioritas() {
     const [loading, setLoading] = useState(true);
@@ -62,7 +63,7 @@ export default function AnakPrioritas() {
                 err.response?.data?.message ||
                 "Gagal memuat data anak prioritas. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("At-risk children fetch error:", err);
+            logger.error("At-risk children fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -238,7 +239,7 @@ export default function AnakPrioritas() {
         low: atRiskChildren.filter((c) => c.risk_level === "low").length,
     };
 
-    // Summary card config — Admin style
+    // Summary card config â€” Admin style
     const summaryCards = [
         {
             key: "high",
@@ -288,7 +289,7 @@ export default function AnakPrioritas() {
             }
         >
             <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto mb-10">
-                {/* Error Alert — Admin style centered */}
+                {/* Error Alert â€” Admin style centered */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center max-w-md mx-auto">
                         <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-3" />
@@ -302,7 +303,7 @@ export default function AnakPrioritas() {
                     </div>
                 )}
 
-                {/* Summary Cards — Admin style: white cards, colored icons, motion */}
+                {/* Summary Cards â€” Admin style: white cards, colored icons, motion */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
                     {summaryCards.map((card, index) => (
                         <div
@@ -356,7 +357,7 @@ export default function AnakPrioritas() {
                     ))}
                 </div>
 
-                {/* Search & Filter Bar — Clean integrated style */}
+                {/* Search & Filter Bar â€” Clean integrated style */}
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
                     <div className="relative w-full">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -519,7 +520,7 @@ export default function AnakPrioritas() {
                                                     {child.gender === "L"
                                                         ? "Laki-laki"
                                                         : "Perempuan"}{" "}
-                                                    •{" "}
+                                                    â€¢{" "}
                                                     {formatAge(
                                                         child.age_in_months,
                                                     )}
@@ -555,7 +556,7 @@ export default function AnakPrioritas() {
                                         </div>
                                     </div>
 
-                                    {/* Risk Indicators — Subtle card style */}
+                                    {/* Risk Indicators â€” Subtle card style */}
                                     <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2.5">
                                             Indikator Risiko
@@ -579,7 +580,7 @@ export default function AnakPrioritas() {
                                         </div>
                                     </div>
 
-                                    {/* Latest Data — Clean data grid */}
+                                    {/* Latest Data â€” Clean data grid */}
                                     <div className="bg-gray-50/60 rounded-xl p-4 border border-gray-100">
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -643,7 +644,7 @@ export default function AnakPrioritas() {
                                         )}
                                     </div>
 
-                                    {/* Footer — Clean with consistent button */}
+                                    {/* Footer â€” Clean with consistent button */}
                                     <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-gray-400 font-medium">
@@ -697,3 +698,4 @@ export default function AnakPrioritas() {
         </DashboardLayout>
     );
 }
+

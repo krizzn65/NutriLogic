@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
     useState,
     useEffect,
     useCallback,
@@ -55,6 +55,7 @@ import {
 } from "../../constants/statusColors";
 
 import ConfirmationModal from "../ui/ConfirmationModal";
+import logger from "../../lib/logger";
 
 // Static card config (icons and gradients don't change)
 const STAT_CARD_CONFIG = [
@@ -212,7 +213,7 @@ export default function DashboardAdmin() {
                 });
                 setPosyandus(response.data.data || []);
             } catch (err) {
-                console.error("Failed to fetch posyandus:", err);
+                logger.error("Failed to fetch posyandus:", err);
             }
         };
         fetchPosyandus();
@@ -230,7 +231,7 @@ export default function DashboardAdmin() {
                 try {
                     await api.get("/me"); // Menjaga sesi tetap aktif
                 } catch (err) {
-                    console.error("Session heartbeat failed", err);
+                    logger.error("Session heartbeat failed", err);
                 }
             },
             5 * 60 * 1000,
@@ -306,7 +307,7 @@ export default function DashboardAdmin() {
                     return;
                 }
 
-                console.error("Failed to fetch user profile", err);
+                logger.error("Failed to fetch user profile", err);
             }
         },
         [getCachedData, setCachedData],
@@ -354,7 +355,7 @@ export default function DashboardAdmin() {
                     err.response?.data?.message ||
                     "Gagal memuat data dashboard.";
                 setError(errorMessage);
-                console.error("Dashboard fetch error:", err);
+                logger.error("Dashboard fetch error:", err);
             } finally {
                 if (activeDashboardRequestId.current === requestId) {
                     setLoading(false);
@@ -830,7 +831,7 @@ export default function DashboardAdmin() {
 
                         <div className="relative z-10">
                             <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
-                                Halo, Administrator! 👋
+                                Halo, Administrator! ðŸ‘‹
                             </h2>
                             <p className="text-blue-100 text-lg max-w-2xl leading-relaxed">
                                 Selamat datang kembali di panel kontrol utama.
@@ -1513,3 +1514,4 @@ export default function DashboardAdmin() {
         </div>
     );
 }
+

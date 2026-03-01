@@ -9,54 +9,30 @@ import {
     Activity,
 } from "lucide-react";
 import { assets } from "../../assets/assets";
+import { ADMIN_SIDEBAR_NAV } from "../../constants/navigationConfigs";
+
+const ADMIN_ICON_MAP = {
+    home: Home,
+    "building-2": Building2,
+    "user-cog": UserCog,
+    database: Database,
+    "bar-chart-3": BarChart3,
+    activity: Activity,
+};
 
 export default function SidebarSuperAdmin() {
     const [open, setOpen] = useState(false);
 
-    const links = [
-        {
-            label: "Dashboard",
-            href: "/dashboard",
+    const links = ADMIN_SIDEBAR_NAV.map((item) => {
+        const IconComponent = ADMIN_ICON_MAP[item.icon];
+        return {
+            label: item.label,
+            href: item.href,
             icon: (
-                <Home className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <IconComponent className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
             ),
-        },
-        {
-            label: "Manajemen Posyandu",
-            href: "/dashboard/posyandu",
-            icon: (
-                <Building2 className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Manajemen Kader",
-            href: "/dashboard/kader",
-            icon: (
-                <UserCog className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Data Anak",
-            href: "/dashboard/anak",
-            icon: (
-                <Database className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Laporan Sistem",
-            href: "/dashboard/laporan",
-            icon: (
-                <BarChart3 className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Log Aktivitas",
-            href: "/dashboard/logs",
-            icon: (
-                <Activity className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-    ];
+        };
+    });
 
     return (
         <Sidebar open={open} setOpen={setOpen}>

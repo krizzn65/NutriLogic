@@ -1,16 +1,16 @@
-import React, { useState, useRef, memo, useCallback, useEffect } from "react";
+﻿import React, { useState, useRef, memo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Plus,
     Loader2,
-    Check,
     AlertCircle,
-    Clock,
     Utensils,
     ChevronDown,
     Sparkles,
 } from "lucide-react";
 import api from "../../lib/api";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 const QuickAddForm = memo(function QuickAddForm({
     childId,
@@ -27,9 +27,9 @@ const QuickAddForm = memo(function QuickAddForm({
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
-    const [showSuccess, setShowSuccess] = useState(false);
     const [isPortionDropdownOpen, setIsPortionDropdownOpen] = useState(false);
     const [isFromNutriAssist, setIsFromNutriAssist] = useState(false);
+    const toast = useToast();
 
     const descriptionRef = useRef(null);
     const notesCount = formData.notes.length;
@@ -89,8 +89,7 @@ const QuickAddForm = memo(function QuickAddForm({
                     source: "ortu",
                 });
 
-                setShowSuccess(true);
-                setTimeout(() => setShowSuccess(false), 2500);
+                toast.success("Data makan berhasil disimpan.");
 
                 setFormData({
                     time_of_day: "pagi",
@@ -102,7 +101,7 @@ const QuickAddForm = memo(function QuickAddForm({
 
                 if (onSuccess) onSuccess();
             } catch (err) {
-                console.error("Error adding meal log:", err);
+                logger.error("Error adding meal log:", err);
                 // Show a more user-friendly error message
                 let errorMessage = "Gagal menyimpan data. Silakan coba lagi.";
 
@@ -370,17 +369,6 @@ const QuickAddForm = memo(function QuickAddForm({
                                 >
                                     <AlertCircle className="w-3 h-3" />
                                     {error}
-                                </motion.div>
-                            )}
-                            {showSuccess && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    className="text-green-600 text-xs font-medium flex items-center gap-1"
-                                >
-                                    <Check className="w-3 h-3" />
-                                    Tersimpan
                                 </motion.div>
                             )}
                         </AnimatePresence>

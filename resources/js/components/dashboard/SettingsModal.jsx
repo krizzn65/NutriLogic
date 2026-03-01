@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
-import { Dialog, DialogContent } from "../ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+} from "../ui/dialog";
 import SuccessModal from "../ui/SuccessModal";
 import {
     X,
@@ -10,6 +15,7 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
+import logger from "../../lib/logger";
 
 export default function SettingsModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(false);
@@ -73,7 +79,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                 err.response?.data?.message ||
                 "Gagal mengubah password. Silakan coba lagi.";
             setPasswordError(errorMessage);
-            console.error("Error updating password:", err);
+            logger.error("Error updating password:", err);
         } finally {
             setPasswordSaving(false);
         }
@@ -94,6 +100,10 @@ export default function SettingsModal({ isOpen, onClose }) {
                     hideClose={true}
                     className="w-[90%] md:w-full p-0 bg-white border-none shadow-2xl rounded-3xl md:rounded-[40px] overflow-hidden"
                 >
+                    <DialogTitle className="sr-only">Pengaturan</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Kelola keamanan akun Anda.
+                    </DialogDescription>
                     {/* Header */}
                     <div className="px-8 py-6 bg-white flex items-start gap-4 border-b border-gray-100">
                         <div className="p-3 bg-blue-50 rounded-xl">

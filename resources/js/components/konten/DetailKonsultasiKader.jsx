@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import DetailKonsultasiKaderSkeleton from "../loading/DetailKonsultasiKaderSkeleton";
 import { useConsultationRealtime } from "../../lib/consultationRealtime";
+import logger from "../../lib/logger";
 
 export default function DetailKonsultasiKader({
     selectedId,
@@ -124,7 +125,7 @@ Catatan: ${data.notes || "-"}`;
 
             setNewMessage((prev) => (prev ? prev + "\n\n" + text : text));
         } catch (err) {
-            console.error("Failed to fetch child data:", err);
+            logger.error("Failed to fetch child data:", err);
             alert("Gagal mengambil data anak.");
         }
     };
@@ -169,7 +170,7 @@ Catatan: ${data.notes || "-"}`;
                     "Gagal memuat data konsultasi. Silakan coba lagi.";
                 setError(errorMessage);
             }
-            console.error("Consultation fetch error:", err);
+            logger.error("Consultation fetch error:", err);
         } finally {
             if (!silent) {
                 setLoading(false);
@@ -237,7 +238,7 @@ Catatan: ${data.notes || "-"}`;
                 err.response?.data?.message ||
                 "Gagal mengirim pesan. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Send message error:", err);
+            logger.error("Send message error:", err);
         } finally {
             setSending(false);
         }
@@ -264,7 +265,7 @@ Catatan: ${data.notes || "-"}`;
                 navigate("/dashboard/konsultasi");
             }
         } catch (err) {
-            console.error("Delete error:", err);
+            logger.error("Delete error:", err);
             alert("Gagal menghapus percakapan. Silakan coba lagi.");
             setDeleting(false);
             setShowDeleteModal(false);
@@ -378,7 +379,7 @@ Catatan: ${data.notes || "-"}`;
                                             "Orang Tua"}
                                         {consultation.parent?.is_online && (
                                             <span className="text-green-600 font-medium ml-1">
-                                                • Online
+                                                â€¢ Online
                                             </span>
                                         )}
                                     </span>
@@ -529,7 +530,7 @@ Catatan: ${data.notes || "-"}`;
                                                     }
                                                 </span>
                                             )}
-                                            <span>•</span>
+                                            <span>â€¢</span>
                                             <span>
                                                 {new Date(
                                                     message.created_at,
@@ -964,3 +965,4 @@ Catatan: ${data.notes || "-"}`;
         </div>
     );
 }
+

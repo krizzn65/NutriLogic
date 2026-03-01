@@ -6,7 +6,9 @@ import {
     Dialog,
     DialogClose,
     DialogContent,
+    DialogDescription,
     DialogFooter,
+    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,10 @@ export default function Dialog01() {
                 size="xl"
                 className="p-0 overflow-hidden rounded-2xl border"
             >
+                <DialogTitle className="sr-only">Edit Profile</DialogTitle>
+                <DialogDescription className="sr-only">
+                    Ubah informasi profil pengguna.
+                </DialogDescription>
                 <div
                     className="px-6 py-4 h-36"
                     style={{

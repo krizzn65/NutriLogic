@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge } from "../../lib/utils";
@@ -26,6 +26,7 @@ import {
     Plus,
     BookOpen,
 } from "lucide-react";
+import logger from "../../lib/logger";
 
 // TODO: Integrate with AI/n8n for advanced recommendations in future version
 const DAILY_REQUEST_LIMIT = 5;
@@ -79,7 +80,7 @@ export default function NutriAssistPage() {
 
             setDailyRequestCount(Number(parsed.count) || 0);
         } catch (e) {
-            console.error("Error syncing daily request counter:", e);
+            logger.error("Error syncing daily request counter:", e);
             setDailyRequestCount(0);
         }
     };
@@ -98,7 +99,7 @@ export default function NutriAssistPage() {
                 setRecommendations(parsed);
             }
         } catch (e) {
-            console.error("Error loading cached recommendations:", e);
+            logger.error("Error loading cached recommendations:", e);
         }
     }, []);
 
@@ -129,7 +130,7 @@ export default function NutriAssistPage() {
                     childData.weighing_logs.length > 0;
                 setSelectedChildHasWeighing(hasWeighing);
             } catch (err) {
-                console.error("Error checking weighing data:", err);
+                logger.error("Error checking weighing data:", err);
                 setSelectedChildHasWeighing(true); // Default to true to avoid blocking
             }
         };
@@ -168,7 +169,7 @@ export default function NutriAssistPage() {
                 err.response?.data?.message ||
                 "Gagal memuat data anak. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Children fetch error:", err);
+            logger.error("Children fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -297,7 +298,7 @@ export default function NutriAssistPage() {
                     JSON.stringify(newRecommendations),
                 );
             } catch (e) {
-                console.error(
+                logger.error(
                     "Error saving recommendations to sessionStorage:",
                     e,
                 );
@@ -315,7 +316,7 @@ export default function NutriAssistPage() {
                     });
             }, 200);
         } catch (err) {
-            console.error("Nutri-assist error details:", {
+            logger.error("Nutri-assist error details:", {
                 status: err.response?.status,
                 data: err.response?.data,
                 message: err.message,
@@ -1442,7 +1443,7 @@ export default function NutriAssistPage() {
                                                                                                                 className="text-sm text-gray-600 flex items-start gap-2"
                                                                                                             >
                                                                                                                 <span className="text-blue-500 mt-1">
-                                                                                                                    •
+                                                                                                                    â€¢
                                                                                                                 </span>
                                                                                                                 <span>
                                                                                                                     {
@@ -1630,3 +1631,4 @@ export default function NutriAssistPage() {
         </div>
     );
 }
+

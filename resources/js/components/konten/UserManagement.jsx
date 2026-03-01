@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
@@ -14,6 +14,7 @@ import {
     Check,
     Search,
     X,
+    Clock3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
@@ -26,6 +27,7 @@ import {
     ResetPasswordFormModal,
     ConfirmationModal,
 } from "./user-management/UserManagementModals";
+import logger from "../../lib/logger";
 
 export default function UserManagement() {
     const location = useLocation();
@@ -70,6 +72,7 @@ export default function UserManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterPosyandu, setFilterPosyandu] = useState("");
     const [isPosyanduFilterOpen, setIsPosyanduFilterOpen] = useState(false);
+    const [selectedUserIds, setSelectedUserIds] = useState([]);
 
     // Filtered users based on search and posyandu
     const filteredUsers = useMemo(() => {
@@ -90,6 +93,66 @@ export default function UserManagement() {
             return matchesSearch && matchesPosyandu;
         });
     }, [users, searchTerm, filterPosyandu]);
+
+    const activityTimeline = useMemo(() => {
+        const events = [];
+
+        users.forEach((user) => {
+            if (user?.created_at) {
+                events.push({
+                    id: `create-${user.id}`,
+                    date: user.created_at,
+                    label: `${user.name} ditambahkan sebagai kader`,
+                    tone: "blue",
+                });
+            }
+
+            if (
+                user?.updated_at &&
+                user.updated_at !== user.created_at &&
+                user?.is_active !== undefined
+            ) {
+                events.push({
+                    id: `status-${user.id}`,
+                    date: user.updated_at,
+                    label: `${user.name} saat ini ${user.is_active ? "aktif" : "nonaktif"}`,
+                    tone: user.is_active ? "green" : "red",
+                });
+            }
+        });
+
+        return events
+            .filter((event) => event.date)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 6);
+    }, [users]);
+
+    const isAllFilteredSelected =
+        filteredUsers.length > 0 &&
+        filteredUsers.every((user) => selectedUserIds.includes(user.id));
+
+    const toggleSelectUser = (userId) => {
+        setSelectedUserIds((prev) =>
+            prev.includes(userId)
+                ? prev.filter((id) => id !== userId)
+                : [...prev, userId],
+        );
+    };
+
+    const toggleSelectAllFiltered = () => {
+        if (isAllFilteredSelected) {
+            setSelectedUserIds((prev) =>
+                prev.filter(
+                    (id) => !filteredUsers.some((user) => user.id === id),
+                ),
+            );
+            return;
+        }
+
+        setSelectedUserIds((prev) => [
+            ...new Set([...prev, ...filteredUsers.map((user) => user.id)]),
+        ]);
+    };
 
     // Data caching
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
@@ -136,7 +199,7 @@ export default function UserManagement() {
                 const errorMessage =
                     err.response?.data?.message || "Gagal memuat data user.";
                 setError(errorMessage);
-                console.error("Users fetch error:", err);
+                logger.error("Users fetch error:", err);
             } finally {
                 if (activeUsersRequestId.current === requestId) {
                     setLoading(false);
@@ -170,6 +233,12 @@ export default function UserManagement() {
         });
     }, [activeTab, fetchUsers, getCachedData]);
 
+    useEffect(() => {
+        setSelectedUserIds((prev) =>
+            prev.filter((id) => filteredUsers.some((user) => user.id === id)),
+        );
+    }, [filteredUsers]);
+
     const fetchPosyandus = async (forceRefresh = false) => {
         // Check cache first (skip if forceRefresh)
         if (!forceRefresh) {
@@ -185,7 +254,7 @@ export default function UserManagement() {
             setPosyandus(response.data.data);
             setCachedData("admin_posyandus", response.data.data);
         } catch (err) {
-            console.error("Posyandus fetch error:", err);
+            logger.error("Posyandus fetch error:", err);
         }
     };
 
@@ -266,6 +335,79 @@ export default function UserManagement() {
         });
     };
 
+    const handleBulkToggleActive = (targetActive) => {
+        const usersToUpdate = filteredUsers.filter((user) => {
+            if (!selectedUserIds.includes(user.id)) return false;
+            if (currentUser && user.id === currentUser.id) return false;
+            return user.is_active !== targetActive;
+        });
+
+        if (usersToUpdate.length === 0) {
+            alert("Tidak ada user valid untuk aksi massal ini.");
+            return;
+        }
+
+        const actionLabel = targetActive ? "aktifkan" : "nonaktifkan";
+        const idsToUpdate = usersToUpdate.map((user) => user.id);
+
+        setConfirmationModal({
+            isOpen: true,
+            title: `Konfirmasi ${targetActive ? "Aktifkan" : "Nonaktifkan"} Massal`,
+            message: `Anda akan ${actionLabel} ${idsToUpdate.length} pengguna terpilih. Lanjutkan?`,
+            confirmLabel: `Ya, ${targetActive ? "Aktifkan" : "Nonaktifkan"} Semua`,
+            confirmColor: targetActive ? "green" : "red",
+            onConfirm: async () => {
+                const previousUsers = [...users];
+
+                setUsers((prev) =>
+                    prev.map((user) =>
+                        idsToUpdate.includes(user.id)
+                            ? { ...user, is_active: targetActive }
+                            : user,
+                    ),
+                );
+                setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+
+                try {
+                    await Promise.all(
+                        idsToUpdate.map((userId) =>
+                            api.patch(`/admin/users/${userId}/toggle-active`),
+                        ),
+                    );
+                    setSelectedUserIds([]);
+                    invalidateCache(`admin_users_${activeTab}`);
+                    invalidateCache("admin_dashboard");
+                    fetchUsers(activeTab, { forceRefresh: true });
+                    setSuccessModal({
+                        isOpen: true,
+                        title: "Aksi Massal Berhasil",
+                        message: `${idsToUpdate.length} pengguna berhasil diperbarui.`,
+                    });
+                } catch (err) {
+                    setUsers(previousUsers);
+                    alert(
+                        err.response?.data?.message ||
+                            "Gagal menjalankan aksi massal.",
+                    );
+                }
+            },
+        });
+    };
+
+    const formatTimelineDate = (isoDate) => {
+        try {
+            return new Date(isoDate).toLocaleString("id-ID", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } catch {
+            return "-";
+        }
+    };
+
     const handleResetPassword = (user) => {
         // Prevent admin from resetting own password through this endpoint
         if (currentUser && user.id === currentUser.id) {
@@ -282,14 +424,7 @@ export default function UserManagement() {
     };
 
     if (loading) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <GenericListSkeleton itemCount={8} />;
     }
 
     return (
@@ -469,6 +604,84 @@ export default function UserManagement() {
                     </div>
                 </motion.div>
 
+                {/* Activity Timeline */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.15 }}
+                    className="bg-white rounded-lg border border-gray-200 p-4"
+                >
+                    <div className="flex items-center gap-2 mb-3">
+                        <Clock3 className="w-4 h-4 text-blue-600" />
+                        <h3 className="text-sm font-semibold text-gray-800">
+                            Aktivitas Terbaru
+                        </h3>
+                    </div>
+                    {activityTimeline.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                            Belum ada aktivitas terbaru untuk ditampilkan.
+                        </p>
+                    ) : (
+                        <div className="space-y-2">
+                            {activityTimeline.map((event) => (
+                                <div
+                                    key={event.id}
+                                    className="flex items-start gap-2 text-sm"
+                                >
+                                    <span
+                                        className={`mt-1.5 h-2 w-2 rounded-full ${
+                                            event.tone === "green"
+                                                ? "bg-green-500"
+                                                : event.tone === "red"
+                                                  ? "bg-red-500"
+                                                  : "bg-blue-500"
+                                        }`}
+                                    />
+                                    <div>
+                                        <p className="text-gray-800">
+                                            {event.label}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {formatTimelineDate(event.date)}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </motion.div>
+
+                {/* Bulk Actions */}
+                {selectedUserIds.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-wrap items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3"
+                    >
+                        <p className="text-sm font-medium text-blue-900">
+                            {selectedUserIds.length} user dipilih
+                        </p>
+                        <button
+                            onClick={() => handleBulkToggleActive(true)}
+                            className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                        >
+                            Aktifkan Massal
+                        </button>
+                        <button
+                            onClick={() => handleBulkToggleActive(false)}
+                            className="px-3 py-1.5 text-xs font-medium rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                        >
+                            Nonaktifkan Massal
+                        </button>
+                        <button
+                            onClick={() => setSelectedUserIds([])}
+                            className="px-3 py-1.5 text-xs font-medium rounded-md bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
+                        >
+                            Batal Pilihan
+                        </button>
+                    </motion.div>
+                )}
+
                 {/* Mobile View (Cards) */}
                 <div className="md:hidden flex flex-col gap-4">
                     {filteredUsers.length === 0 ? (
@@ -513,6 +726,19 @@ export default function UserManagement() {
                             >
                                 <div className="flex justify-between items-start">
                                     <div>
+                                        <label className="inline-flex items-center gap-2 text-xs text-gray-500 mb-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedUserIds.includes(
+                                                    user.id,
+                                                )}
+                                                onChange={() =>
+                                                    toggleSelectUser(user.id)
+                                                }
+                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                            Pilih user
+                                        </label>
                                         <h3 className="font-bold text-gray-900">
                                             {user.name}
                                         </h3>
@@ -599,6 +825,15 @@ export default function UserManagement() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600 w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAllFilteredSelected}
+                                            onChange={toggleSelectAllFiltered}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            aria-label="Pilih semua user yang terlihat"
+                                        />
+                                    </th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
                                         Nama
                                     </th>
@@ -623,7 +858,7 @@ export default function UserManagement() {
                                 {filteredUsers.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={7}
                                             className="py-8 text-center"
                                         >
                                             <div className="text-gray-500">
@@ -656,6 +891,21 @@ export default function UserManagement() {
                                             }}
                                             className="border-b border-gray-100 hover:bg-gray-50"
                                         >
+                                            <td className="py-3 px-4 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedUserIds.includes(
+                                                        user.id,
+                                                    )}
+                                                    onChange={() =>
+                                                        toggleSelectUser(
+                                                            user.id,
+                                                        )
+                                                    }
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                    aria-label={`Pilih user ${user.name}`}
+                                                />
+                                            </td>
                                             <td className="py-3 px-4">
                                                 <span className="font-medium text-gray-800">
                                                     {user.name}
@@ -763,10 +1013,15 @@ export default function UserManagement() {
                         onSuccess={(password) => {
                             setShowModal(false);
                             fetchUsers(activeTab, { forceRefresh: true });
-                            if (password) {
-                                setNewPassword(password);
-                                setShowPasswordModal(true);
-                            }
+                            setSuccessModal({
+                                isOpen: true,
+                                title: editingUser
+                                    ? "Data Kader Diperbarui"
+                                    : "Kader Berhasil Ditambahkan",
+                                message: password
+                                    ? `Akun berhasil dibuat. Password sementara: ${password}`
+                                    : "Perubahan data kader berhasil disimpan.",
+                            });
                         }}
                     />
                 )}
@@ -821,3 +1076,4 @@ export default function UserManagement() {
         </div>
     );
 }
+

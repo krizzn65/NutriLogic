@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
@@ -6,6 +6,8 @@ import PageHeader from "../ui/PageHeader";
 import DashboardLayout from "../dashboard/DashboardLayout";
 import { Icon } from "@iconify/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 const COOLDOWN_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 const COOLDOWN_STORAGE_KEY = "broadcast_last_sent";
@@ -16,9 +18,9 @@ export default function BroadcastKader() {
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
     const [broadcasts, setBroadcasts] = useState([]);
     const [expandedId, setExpandedId] = useState(null);
+    const toast = useToast();
 
     // Cooldown state
     const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -85,14 +87,13 @@ export default function BroadcastKader() {
         }));
 
         if (Array.isArray(selectedChildren) && selectedChildren.length > 0) {
-            setSuccess(
+            toast.success(
                 `Template intervensi siap untuk ${selectedChildren.length} anak prioritas.`,
             );
-            setTimeout(() => setSuccess(null), 3000);
         }
 
         navigate(location.pathname, { replace: true, state: null });
-    }, [location.pathname, location.state, navigate]);
+    }, [location.pathname, location.state, navigate, toast]);
 
     const fetchBroadcasts = async () => {
         // Check cache first
@@ -109,7 +110,7 @@ export default function BroadcastKader() {
             setBroadcasts(response.data.data);
             setCachedData("kader_broadcasts", response.data.data);
         } catch (err) {
-            console.error("Failed to fetch broadcasts:", err);
+            logger.error("Failed to fetch broadcasts:", err);
             setError("Gagal memuat riwayat broadcast. Silakan coba lagi.");
         } finally {
             setLoading(false);
@@ -137,7 +138,6 @@ export default function BroadcastKader() {
 
         setSending(true);
         setError(null);
-        setSuccess(null);
 
         try {
             await api.post("/kader/broadcast", formData);
@@ -146,13 +146,10 @@ export default function BroadcastKader() {
             localStorage.setItem(COOLDOWN_STORAGE_KEY, Date.now().toString());
             setCooldownRemaining(COOLDOWN_DURATION);
 
-            setSuccess("Broadcast berhasil dikirim!");
+            toast.success("Broadcast berhasil dikirim!");
             setFormData({ type: "pengumuman_umum", message: "" });
             invalidateCache("kader_broadcasts");
             fetchBroadcasts(); // Refresh history
-
-            // Auto hide success after 3s
-            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
@@ -174,12 +171,11 @@ export default function BroadcastKader() {
 
         try {
             await api.delete(`/kader/broadcast/${deleteModal.id}`);
-            setSuccess("Broadcast berhasil dihapus");
+            toast.success("Broadcast berhasil dihapus");
             invalidateCache("kader_broadcasts");
             fetchBroadcasts();
-            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
-            console.error("Failed to delete broadcast:", err);
+            logger.error("Failed to delete broadcast:", err);
             setError("Gagal menghapus broadcast");
             setTimeout(() => setError(null), 3000);
         } finally {
@@ -251,26 +247,6 @@ export default function BroadcastKader() {
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-5">
-                                {/* Success Alert */}
-                                <AnimatePresence>
-                                    {success && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="bg-emerald-50 border border-emerald-100 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-3"
-                                        >
-                                            <Icon
-                                                icon="lucide:check-circle-2"
-                                                className="w-5 h-5 text-emerald-600"
-                                            />
-                                            <span className="font-medium text-sm">
-                                                {success}
-                                            </span>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
                                 {/* Error Alert */}
                                 <AnimatePresence>
                                     {error && (

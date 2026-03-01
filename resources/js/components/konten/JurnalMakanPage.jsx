@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
@@ -16,6 +16,8 @@ import ErrorBoundary from "../ErrorBoundary";
 import MealDataTable from "../jurnal/MealDataTable";
 import ConfirmationModal from "../ui/ConfirmationModal";
 import { useToast } from "../../contexts/ToastContext";
+import JurnalMakanPageSkeleton from "../loading/JurnalMakanPageSkeleton";
+import logger from "../../lib/logger";
 
 function JurnalMakanPageContent() {
     const location = useLocation();
@@ -64,7 +66,7 @@ function JurnalMakanPageContent() {
                 }
             }
         } catch (error) {
-            console.error("Error fetching children:", error);
+            logger.error("Error fetching children:", error);
         } finally {
             setLoading(false);
         }
@@ -91,7 +93,7 @@ function JurnalMakanPageContent() {
 
             setMeals(todayMeals);
         } catch (error) {
-            console.error("Error fetching meals:", error);
+            logger.error("Error fetching meals:", error);
         } finally {
             setMealsLoading(false);
         }
@@ -117,7 +119,7 @@ function JurnalMakanPageContent() {
             setIsDeleteConfirmOpen(false);
             setTargetMealId(null);
         } catch (error) {
-            console.error("Error deleting meal:", error);
+            logger.error("Error deleting meal:", error);
             toast.error("Gagal menghapus data. Silakan coba lagi.");
         } finally {
             setIsDeletingMeal(false);
@@ -129,31 +131,7 @@ function JurnalMakanPageContent() {
     );
 
     if (loading) {
-        return (
-            <div className="flex flex-col h-full w-full bg-gray-50/50 font-sans">
-                <div className="relative z-50">
-                    <PageHeader
-                        title="Jurnal Makan"
-                        subtitle="Portal Orang Tua"
-                    />
-                </div>
-                <div className="flex-1 overflow-auto p-6 md:p-10">
-                    <div className="max-w-6xl mx-auto animate-pulse space-y-8">
-                        <div className="h-8 w-48 bg-gray-200 rounded"></div>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                            <div className="space-y-4">
-                                <div className="h-12 w-full bg-gray-200 rounded"></div>
-                                <div className="h-64 w-full bg-gray-200 rounded"></div>
-                            </div>
-                            <div className="lg:col-span-2 space-y-4">
-                                <div className="h-32 w-full bg-gray-200 rounded"></div>
-                                <div className="h-64 w-full bg-gray-200 rounded"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <JurnalMakanPageSkeleton />;
     }
 
     return (
@@ -381,3 +359,4 @@ export default function JurnalMakanPage() {
         </ErrorBoundary>
     );
 }
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
@@ -20,6 +20,7 @@ import DetailKonsultasiKader from "./DetailKonsultasiKader";
 import PageHeader from "../ui/PageHeader";
 import ConsultationListSkeleton from "../loading/ConsultationListSkeleton";
 import { useConsultationRealtime } from "../../lib/consultationRealtime";
+import logger from "../../lib/logger";
 
 export default function KonsultasiKader() {
     const { id } = useParams();
@@ -65,7 +66,7 @@ export default function KonsultasiKader() {
                 err.response?.data?.message ||
                 "Gagal memuat data konsultasi. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Consultations fetch error:", err);
+            logger.error("Consultations fetch error:", err);
         } finally {
             if (!silent) {
                 setLoading(false);
@@ -113,7 +114,7 @@ export default function KonsultasiKader() {
                 navigate("/dashboard/konsultasi");
             }
         } catch (err) {
-            console.error("Delete error:", err);
+            logger.error("Delete error:", err);
             alert("Gagal menghapus percakapan.");
         } finally {
             setDeletingId(null);
@@ -497,3 +498,4 @@ export default function KonsultasiKader() {
         </div>
     );
 }
+

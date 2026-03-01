@@ -317,6 +317,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // Activity Logs
         Route::get('/activity-logs', [App\Http\Controllers\AdminActivityLogController::class, 'index']);
 
+        // Admin profile
+        Route::prefix('profile')->group(function () {
+            Route::put('/', [App\Http\Controllers\AdminProfileController::class, 'update']);
+            Route::put('/password', [App\Http\Controllers\AdminProfileController::class, 'updatePassword']);
+        });
+
         // Admin Notifications
         Route::prefix('notifications')->group(function () {
             Route::get('/', [App\Http\Controllers\NotificationController::class, 'index']);

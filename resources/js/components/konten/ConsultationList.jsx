@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+﻿import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
@@ -11,6 +11,14 @@ import {
     AlertTriangle,
     Archive,
     ArchiveRestore,
+    CalendarPlus2,
+    Clock3,
+    Upload,
+    FileText,
+    Download,
+    X,
+    Bell,
+    BellRing,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -21,6 +29,7 @@ import EmptyState from "../ui/EmptyState";
 import { Skeleton } from "../ui/Skeleton";
 import ErrorState from "../ui/ErrorState";
 import { useConsultationRealtime } from "../../lib/consultationRealtime";
+import logger from "../../lib/logger";
 
 const TAG_OPTIONS = [
     { key: "", label: "Tanpa Kategori" },
@@ -39,6 +48,26 @@ const TAG_STYLES = {
     lainnya: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
+const APPOINTMENT_STORAGE_KEY = "parent_appointment_bookings";
+const DOCUMENT_STORAGE_KEY = "parent_uploaded_documents";
+const DOCUMENT_MAX_SIZE_MB = 2;
+
+const DOCUMENT_CATEGORIES = [
+    { key: "rekam_medis", label: "Rekam Medis" },
+    { key: "hasil_lab", label: "Hasil Lab" },
+    { key: "resep", label: "Resep Obat" },
+    { key: "imunisasi", label: "Dokumen Imunisasi" },
+    { key: "lainnya", label: "Lainnya" },
+];
+
+const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
 export default function ConsultationList() {
     const { id } = useParams();
     const [loading, setLoading] = useState(true);
@@ -51,9 +80,38 @@ export default function ConsultationList() {
     const [searchQuery, setSearchQuery] = useState("");
     const [archivedConsultationIds, setArchivedConsultationIds] = useState([]);
     const [consultationTags, setConsultationTags] = useState({});
+    const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [appointments, setAppointments] = useState([]);
+    const [documents, setDocuments] = useState([]);
+    const [childrenOptions, setChildrenOptions] = useState([]);
+    const [kaderOptions, setKaderOptions] = useState([]);
+    const [supportDataLoading, setSupportDataLoading] = useState(false);
+    const [bookingError, setBookingError] = useState(null);
+    const [documentError, setDocumentError] = useState(null);
+    const [submittingBooking, setSubmittingBooking] = useState(false);
+    const [submittingDocument, setSubmittingDocument] = useState(false);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [reminderBanner, setReminderBanner] = useState(null);
+    const [bookingForm, setBookingForm] = useState({
+        child_id: "",
+        kader_id: "",
+        date: "",
+        time: "",
+        topic: "",
+        notes: "",
+    });
+    const [documentForm, setDocumentForm] = useState({
+        child_id: "",
+        title: "",
+        category: "rekam_medis",
+        notes: "",
+        file: null,
+    });
     const navigate = useNavigate();
     const { getCachedData, setCachedData, invalidateCache } = useDataCache();
     const listParentRef = useRef(null);
+    const remindedAppointmentKeysRef = useRef(new Set());
 
     useEffect(() => {
         fetchConsultations(filterStatus);
@@ -79,7 +137,7 @@ export default function ConsultationList() {
                 }
             }
         } catch (err) {
-            console.error(
+            logger.error(
                 "Failed to load consultation archive/tag state:",
                 err,
             );
@@ -99,6 +157,91 @@ export default function ConsultationList() {
             JSON.stringify(consultationTags),
         );
     }, [consultationTags]);
+
+    useEffect(() => {
+        try {
+            const appointmentsRaw = localStorage.getItem(
+                APPOINTMENT_STORAGE_KEY,
+            );
+            const documentsRaw = localStorage.getItem(DOCUMENT_STORAGE_KEY);
+
+            if (appointmentsRaw) {
+                const parsed = JSON.parse(appointmentsRaw);
+                if (Array.isArray(parsed)) {
+                    setAppointments(parsed);
+                }
+            }
+
+            if (documentsRaw) {
+                const parsed = JSON.parse(documentsRaw);
+                if (Array.isArray(parsed)) {
+                    setDocuments(parsed);
+                }
+            }
+        } catch (err) {
+            logger.error("Failed to load appointment/document state:", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem(
+            APPOINTMENT_STORAGE_KEY,
+            JSON.stringify(appointments),
+        );
+    }, [appointments]);
+
+    useEffect(() => {
+        localStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(documents));
+    }, [documents]);
+
+    useEffect(() => {
+        const enabled =
+            localStorage.getItem("parent_reminder_notifications_enabled") ===
+            "1";
+        setNotificationsEnabled(enabled);
+
+        try {
+            const remindedRaw = localStorage.getItem(
+                "parent_reminder_notified_keys",
+            );
+            const parsed = remindedRaw ? JSON.parse(remindedRaw) : [];
+            if (Array.isArray(parsed)) {
+                remindedAppointmentKeysRef.current = new Set(parsed);
+            }
+        } catch {
+            remindedAppointmentKeysRef.current = new Set();
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem(
+            "parent_reminder_notifications_enabled",
+            notificationsEnabled ? "1" : "0",
+        );
+    }, [notificationsEnabled]);
+
+    useEffect(() => {
+        if (!reminderBanner) return;
+        const timer = setTimeout(() => setReminderBanner(null), 5000);
+        return () => clearTimeout(timer);
+    }, [reminderBanner]);
+
+    useEffect(() => {
+        if (!bookingForm.child_id || kaderOptions.length === 0) return;
+        const selectedChild = childrenOptions.find(
+            (item) => String(item.id) === String(bookingForm.child_id),
+        );
+        if (!selectedChild?.posyandu_id) return;
+        const suggestedKader = kaderOptions.find(
+            (item) => item.posyandu_id === selectedChild.posyandu_id,
+        );
+        if (!suggestedKader) return;
+        setBookingForm((prev) =>
+            prev.kader_id
+                ? prev
+                : { ...prev, kader_id: String(suggestedKader.id) },
+        );
+    }, [bookingForm.child_id, childrenOptions, kaderOptions]);
 
     const fetchConsultations = async (status = "all", silent = false) => {
         try {
@@ -128,7 +271,7 @@ export default function ConsultationList() {
                 err.response?.data?.message ||
                 "Gagal memuat data konsultasi. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Consultations fetch error:", err);
+            logger.error("Consultations fetch error:", err);
         } finally {
             if (!silent) {
                 setLoading(false);
@@ -176,11 +319,235 @@ export default function ConsultationList() {
                 navigate("/dashboard/konsultasi");
             }
         } catch (err) {
-            console.error("Delete error:", err);
+            logger.error("Delete error:", err);
             alert("Gagal menghapus percakapan.");
         } finally {
             setDeletingId(null);
         }
+    };
+
+    const fetchSupportData = async () => {
+        if (childrenOptions.length > 0 && kaderOptions.length > 0) return;
+
+        try {
+            setSupportDataLoading(true);
+            const [childrenRes, kadersRes] = await Promise.all([
+                api.get("/parent/children"),
+                api.get("/parent/kaders"),
+            ]);
+            setChildrenOptions(childrenRes.data?.data || []);
+            setKaderOptions(kadersRes.data?.data || []);
+        } catch (err) {
+            logger.error("Support data fetch error:", err);
+        } finally {
+            setSupportDataLoading(false);
+        }
+    };
+
+    const openAppointmentModal = async () => {
+        setBookingError(null);
+        await fetchSupportData();
+        setShowAppointmentModal(true);
+    };
+
+    const openDocumentModal = async () => {
+        setDocumentError(null);
+        await fetchSupportData();
+        setShowDocumentModal(true);
+    };
+
+    const formatDateTimeLabel = (date, time) => {
+        if (!date || !time) return "-";
+        const dt = new Date(`${date}T${time}`);
+        if (Number.isNaN(dt.getTime())) return `${date} ${time}`;
+        return dt.toLocaleString("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
+    const persistReminderKeys = () => {
+        localStorage.setItem(
+            "parent_reminder_notified_keys",
+            JSON.stringify([...remindedAppointmentKeysRef.current]),
+        );
+    };
+
+    const toggleReminderNotifications = async () => {
+        if (notificationsEnabled) {
+            setNotificationsEnabled(false);
+            return;
+        }
+
+        if (!("Notification" in window)) {
+            alert("Browser tidak mendukung notifikasi.");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            setNotificationsEnabled(true);
+            return;
+        }
+
+        if (Notification.permission === "denied") {
+            alert(
+                "Izin notifikasi ditolak di browser. Aktifkan dari pengaturan browser jika ingin reminder otomatis.",
+            );
+            return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            setNotificationsEnabled(true);
+        }
+    };
+
+    const handleBookingSubmit = async (event) => {
+        event.preventDefault();
+        setBookingError(null);
+
+        if (
+            !bookingForm.child_id ||
+            !bookingForm.kader_id ||
+            !bookingForm.date ||
+            !bookingForm.time ||
+            !bookingForm.topic.trim()
+        ) {
+            setBookingError("Lengkapi data janji terlebih dahulu.");
+            return;
+        }
+
+        const hasConflict = appointments.some(
+            (item) =>
+                String(item.kader_id) === String(bookingForm.kader_id) &&
+                item.date === bookingForm.date &&
+                item.time === bookingForm.time,
+        );
+
+        if (hasConflict) {
+            setBookingError(
+                "Jadwal bentrok dengan janji lain pada kader dan waktu yang sama.",
+            );
+            return;
+        }
+
+        setSubmittingBooking(true);
+
+        const child = childrenOptions.find(
+            (item) => String(item.id) === String(bookingForm.child_id),
+        );
+        const kader = kaderOptions.find(
+            (item) => String(item.id) === String(bookingForm.kader_id),
+        );
+
+        const newAppointment = {
+            id: Date.now(),
+            child_id: Number(bookingForm.child_id),
+            child_name: child?.full_name || "Anak",
+            kader_id: Number(bookingForm.kader_id),
+            kader_name: kader?.name || "Kader",
+            date: bookingForm.date,
+            time: bookingForm.time,
+            topic: bookingForm.topic.trim(),
+            notes: bookingForm.notes.trim(),
+            status: "pending",
+            created_at: new Date().toISOString(),
+        };
+
+        setAppointments((prev) => [newAppointment, ...prev]);
+        setBookingForm({
+            child_id: "",
+            kader_id: "",
+            date: "",
+            time: "",
+            topic: "",
+            notes: "",
+        });
+        setShowAppointmentModal(false);
+        setSubmittingBooking(false);
+    };
+
+    const handleDocumentSubmit = async (event) => {
+        event.preventDefault();
+        setDocumentError(null);
+
+        if (!documentForm.title.trim() || !documentForm.file) {
+            setDocumentError("Judul dan file dokumen wajib diisi.");
+            return;
+        }
+
+        const acceptedTypes = ["application/pdf", "image/jpeg", "image/png"];
+        if (!acceptedTypes.includes(documentForm.file.type)) {
+            setDocumentError(
+                "Format dokumen tidak didukung. Gunakan PDF, JPG, atau PNG.",
+            );
+            return;
+        }
+
+        if (documentForm.file.size > DOCUMENT_MAX_SIZE_MB * 1024 * 1024) {
+            setDocumentError(
+                `Ukuran file melebihi ${DOCUMENT_MAX_SIZE_MB}MB. Kompres file lalu coba lagi.`,
+            );
+            return;
+        }
+
+        setSubmittingDocument(true);
+
+        try {
+            const dataUrl = await fileToDataUrl(documentForm.file);
+            const child = childrenOptions.find(
+                (item) => String(item.id) === String(documentForm.child_id),
+            );
+
+            const newDocument = {
+                id: Date.now(),
+                title: documentForm.title.trim(),
+                category: documentForm.category,
+                notes: documentForm.notes.trim(),
+                child_id: documentForm.child_id
+                    ? Number(documentForm.child_id)
+                    : null,
+                child_name: child?.full_name || null,
+                file_name: documentForm.file.name,
+                mime_type: documentForm.file.type,
+                size_bytes: documentForm.file.size,
+                data_url: dataUrl,
+                uploaded_at: new Date().toISOString(),
+            };
+
+            setDocuments((prev) => [newDocument, ...prev]);
+            setDocumentForm({
+                child_id: "",
+                title: "",
+                category: "rekam_medis",
+                notes: "",
+                file: null,
+            });
+            setShowDocumentModal(false);
+        } catch (err) {
+            setDocumentError("Gagal membaca file dokumen.");
+            logger.error("Document read error:", err);
+        } finally {
+            setSubmittingDocument(false);
+        }
+    };
+
+    const handleDownloadDocument = (doc) => {
+        if (!doc?.data_url) {
+            alert("File dokumen tidak tersedia.");
+            return;
+        }
+        const link = document.createElement("a");
+        link.href = doc.data_url;
+        link.download = doc.file_name || "dokumen";
+        link.click();
+    };
+
+    const removeDocument = (docId) => {
+        setDocuments((prev) => prev.filter((item) => item.id !== docId));
     };
 
     const getTimeAgo = (date) => {
@@ -243,6 +610,78 @@ export default function ConsultationList() {
             return matchesSearch && matchesArchive && matchesStatus;
         });
     }, [consultations, searchQuery, filterStatus, archivedConsultationIds]);
+
+    const upcomingAppointments = useMemo(() => {
+        return [...appointments]
+            .sort(
+                (a, b) =>
+                    new Date(`${a.date}T${a.time}`).getTime() -
+                    new Date(`${b.date}T${b.time}`).getTime(),
+            )
+            .slice(0, 3);
+    }, [appointments]);
+
+    const recentDocuments = useMemo(() => {
+        return [...documents]
+            .sort(
+                (a, b) =>
+                    new Date(b.uploaded_at).getTime() -
+                    new Date(a.uploaded_at).getTime(),
+            )
+            .slice(0, 3);
+    }, [documents]);
+
+    useEffect(() => {
+        if (!notificationsEnabled || appointments.length === 0) return;
+
+        const runReminderCheck = () => {
+            const now = Date.now();
+
+            appointments.forEach((appointment) => {
+                const appointmentTime = new Date(
+                    `${appointment.date}T${appointment.time}`,
+                ).getTime();
+                if (Number.isNaN(appointmentTime)) return;
+
+                const diffMs = appointmentTime - now;
+                if (diffMs <= 0) return;
+
+                const withinOneHour = diffMs <= 60 * 60 * 1000;
+                if (!withinOneHour) return;
+
+                const reminderStage = diffMs <= 15 * 60 * 1000 ? "15m" : "60m";
+                const reminderKey = `${appointment.id}:${reminderStage}`;
+
+                if (remindedAppointmentKeysRef.current.has(reminderKey)) {
+                    return;
+                }
+
+                remindedAppointmentKeysRef.current.add(reminderKey);
+                persistReminderKeys();
+
+                const reminderText =
+                    reminderStage === "15m"
+                        ? "15 menit lagi"
+                        : "kurang dari 1 jam lagi";
+                setReminderBanner(
+                    `Pengingat: janji ${appointment.child_name} dengan ${appointment.kader_name} ${reminderText}.`,
+                );
+
+                if (
+                    "Notification" in window &&
+                    Notification.permission === "granted"
+                ) {
+                    new Notification("Reminder Janji Konsultasi", {
+                        body: `${appointment.child_name} - ${appointment.topic} (${formatDateTimeLabel(appointment.date, appointment.time)})`,
+                    });
+                }
+            });
+        };
+
+        runReminderCheck();
+        const interval = setInterval(runReminderCheck, 60 * 1000);
+        return () => clearInterval(interval);
+    }, [appointments, notificationsEnabled]);
 
     const consultationVirtualizer = useVirtualizer({
         count: filteredConsultations.length,
@@ -478,6 +917,24 @@ export default function ConsultationList() {
                                     />
                                 )}
                                 <button
+                                    onClick={openAppointmentModal}
+                                    className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:border-blue-300 hover:text-blue-600 transition-colors text-xs font-semibold"
+                                    title="Buat Janji Konsultasi"
+                                    aria-label="Buat janji konsultasi"
+                                >
+                                    <CalendarPlus2 className="w-4 h-4" />
+                                    Janji
+                                </button>
+                                <button
+                                    onClick={openDocumentModal}
+                                    className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:border-blue-300 hover:text-blue-600 transition-colors text-xs font-semibold"
+                                    title="Upload Dokumen Medis"
+                                    aria-label="Upload dokumen medis"
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    Dokumen
+                                </button>
+                                <button
                                     onClick={() =>
                                         navigate("/dashboard/konsultasi/create")
                                     }
@@ -489,6 +946,71 @@ export default function ConsultationList() {
                                 </button>
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                            <button
+                                onClick={openAppointmentModal}
+                                className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-left hover:bg-blue-100 transition-colors"
+                                aria-label="Buka fitur booking janji konsultasi"
+                            >
+                                <div className="flex items-center justify-between text-blue-700">
+                                    <span className="text-xs font-semibold">
+                                        Appointment
+                                    </span>
+                                    <CalendarPlus2 className="w-4 h-4" />
+                                </div>
+                                <p className="mt-1 text-[11px] text-blue-800">
+                                    {appointments.length} janji tersimpan
+                                </p>
+                            </button>
+                            <button
+                                onClick={openDocumentModal}
+                                className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-left hover:bg-emerald-100 transition-colors"
+                                aria-label="Buka fitur upload dokumen medis"
+                            >
+                                <div className="flex items-center justify-between text-emerald-700">
+                                    <span className="text-xs font-semibold">
+                                        Dokumen Medis
+                                    </span>
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                                <p className="mt-1 text-[11px] text-emerald-800">
+                                    {documents.length} dokumen tersimpan
+                                </p>
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={toggleReminderNotifications}
+                            className={`w-full mb-3 rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                                notificationsEnabled
+                                    ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                            }`}
+                            aria-label="Aktifkan atau nonaktifkan pengingat janji konsultasi"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                    {notificationsEnabled ? (
+                                        <BellRing className="w-3.5 h-3.5" />
+                                    ) : (
+                                        <Bell className="w-3.5 h-3.5" />
+                                    )}
+                                    Reminder Notifications
+                                </span>
+                                <span>
+                                    {notificationsEnabled
+                                        ? "Aktif"
+                                        : "Nonaktif"}
+                                </span>
+                            </div>
+                        </button>
+
+                        {reminderBanner && (
+                            <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                                {reminderBanner}
+                            </div>
+                        )}
 
                         {/* Search Bar */}
                         <div className="relative mb-3">
@@ -528,6 +1050,49 @@ export default function ConsultationList() {
                                 ),
                             )}
                         </div>
+
+                        {(upcomingAppointments.length > 0 ||
+                            recentDocuments.length > 0) && (
+                            <div className="mt-3 space-y-2">
+                                {upcomingAppointments.length > 0 && (
+                                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                                        <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                                            <Clock3 className="w-3.5 h-3.5" />
+                                            Janji terdekat
+                                        </p>
+                                        {upcomingAppointments.map((item) => (
+                                            <p
+                                                key={item.id}
+                                                className="truncate"
+                                            >
+                                                {item.child_name} -{" "}
+                                                {formatDateTimeLabel(
+                                                    item.date,
+                                                    item.time,
+                                                )}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {recentDocuments.length > 0 && (
+                                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                                        <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                                            <FileText className="w-3.5 h-3.5" />
+                                            Dokumen terbaru
+                                        </p>
+                                        {recentDocuments.map((item) => (
+                                            <p
+                                                key={item.id}
+                                                className="truncate"
+                                            >
+                                                {item.title} ({item.file_name})
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* List Content */}
@@ -682,6 +1247,545 @@ export default function ConsultationList() {
                     )}
                 </div>
 
+                <AnimatePresence>
+                    {showAppointmentModal && (
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                                onClick={() => setShowAppointmentModal(false)}
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative z-[71] w-full max-w-xl bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto"
+                            >
+                                <form
+                                    onSubmit={handleBookingSubmit}
+                                    className="p-5 space-y-4"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-slate-800">
+                                                Appointment Booking
+                                            </h3>
+                                            <p className="text-sm text-slate-500">
+                                                Jadwalkan sesi konsultasi dengan
+                                                kader.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowAppointmentModal(false)
+                                            }
+                                            className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
+                                            aria-label="Tutup modal booking appointment"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    {bookingError && (
+                                        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                            {bookingError}
+                                        </div>
+                                    )}
+
+                                    {supportDataLoading ? (
+                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-6 text-sm text-slate-500 text-center">
+                                            Memuat data anak dan kader...
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                        Anak
+                                                    </label>
+                                                    <select
+                                                        value={
+                                                            bookingForm.child_id
+                                                        }
+                                                        onChange={(e) =>
+                                                            setBookingForm(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    child_id:
+                                                                        e.target
+                                                                            .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                        required
+                                                    >
+                                                        <option value="">
+                                                            Pilih Anak
+                                                        </option>
+                                                        {childrenOptions.map(
+                                                            (child) => (
+                                                                <option
+                                                                    key={
+                                                                        child.id
+                                                                    }
+                                                                    value={
+                                                                        child.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        child.full_name
+                                                                    }
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                        Kader
+                                                    </label>
+                                                    <select
+                                                        value={
+                                                            bookingForm.kader_id
+                                                        }
+                                                        onChange={(e) =>
+                                                            setBookingForm(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    kader_id:
+                                                                        e.target
+                                                                            .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                        required
+                                                    >
+                                                        <option value="">
+                                                            Pilih Kader
+                                                        </option>
+                                                        {kaderOptions.map(
+                                                            (kader) => (
+                                                                <option
+                                                                    key={
+                                                                        kader.id
+                                                                    }
+                                                                    value={
+                                                                        kader.id
+                                                                    }
+                                                                >
+                                                                    {kader.name}
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                        Tanggal
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        min={
+                                                            new Date()
+                                                                .toISOString()
+                                                                .split("T")[0]
+                                                        }
+                                                        value={bookingForm.date}
+                                                        onChange={(e) =>
+                                                            setBookingForm(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    date: e
+                                                                        .target
+                                                                        .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                        Jam
+                                                    </label>
+                                                    <input
+                                                        type="time"
+                                                        value={bookingForm.time}
+                                                        onChange={(e) =>
+                                                            setBookingForm(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    time: e
+                                                                        .target
+                                                                        .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                    Topik
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={bookingForm.topic}
+                                                    onChange={(e) =>
+                                                        setBookingForm(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                topic: e.target
+                                                                    .value,
+                                                            }),
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: Konsultasi pola makan minggu ini"
+                                                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                    Catatan (Opsional)
+                                                </label>
+                                                <textarea
+                                                    value={bookingForm.notes}
+                                                    onChange={(e) =>
+                                                        setBookingForm(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                notes: e.target
+                                                                    .value,
+                                                            }),
+                                                        )
+                                                    }
+                                                    rows={3}
+                                                    placeholder="Tambahkan detail keluhan atau agenda diskusi"
+                                                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                />
+                                            </div>
+
+                                            {appointments.length > 0 && (
+                                                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                                                    <p className="text-xs font-semibold text-slate-700 mb-2">
+                                                        Riwayat Janji Tersimpan
+                                                    </p>
+                                                    <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                                                        {appointments
+                                                            .slice(0, 5)
+                                                            .map((item) => (
+                                                                <p
+                                                                    key={
+                                                                        item.id
+                                                                    }
+                                                                    className="text-xs text-slate-600"
+                                                                >
+                                                                    {
+                                                                        item.child_name
+                                                                    }{" "}
+                                                                    -{" "}
+                                                                    {formatDateTimeLabel(
+                                                                        item.date,
+                                                                        item.time,
+                                                                    )}
+                                                                </p>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    <div className="flex justify-end gap-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowAppointmentModal(false)
+                                            }
+                                            className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={
+                                                supportDataLoading ||
+                                                submittingBooking
+                                            }
+                                            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:bg-blue-300"
+                                        >
+                                            {submittingBooking
+                                                ? "Menyimpan..."
+                                                : "Simpan Janji"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {showDocumentModal && (
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                                onClick={() => setShowDocumentModal(false)}
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative z-[71] w-full max-w-xl bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto"
+                            >
+                                <form
+                                    onSubmit={handleDocumentSubmit}
+                                    className="p-5 space-y-4"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-slate-800">
+                                                Document Upload
+                                            </h3>
+                                            <p className="text-sm text-slate-500">
+                                                Simpan dokumen medis anak
+                                                (PDF/JPG/PNG, max{" "}
+                                                {DOCUMENT_MAX_SIZE_MB}MB).
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowDocumentModal(false)
+                                            }
+                                            className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
+                                            aria-label="Tutup modal upload dokumen"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    {documentError && (
+                                        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                            {documentError}
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                Terkait Anak (Opsional)
+                                            </label>
+                                            <select
+                                                value={documentForm.child_id}
+                                                onChange={(e) =>
+                                                    setDocumentForm((prev) => ({
+                                                        ...prev,
+                                                        child_id:
+                                                            e.target.value,
+                                                    }))
+                                                }
+                                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                            >
+                                                <option value="">
+                                                    Semua / Umum
+                                                </option>
+                                                {childrenOptions.map(
+                                                    (child) => (
+                                                        <option
+                                                            key={child.id}
+                                                            value={child.id}
+                                                        >
+                                                            {child.full_name}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                Kategori
+                                            </label>
+                                            <select
+                                                value={documentForm.category}
+                                                onChange={(e) =>
+                                                    setDocumentForm((prev) => ({
+                                                        ...prev,
+                                                        category:
+                                                            e.target.value,
+                                                    }))
+                                                }
+                                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                            >
+                                                {DOCUMENT_CATEGORIES.map(
+                                                    (item) => (
+                                                        <option
+                                                            key={item.key}
+                                                            value={item.key}
+                                                        >
+                                                            {item.label}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                            Judul Dokumen
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={documentForm.title}
+                                            onChange={(e) =>
+                                                setDocumentForm((prev) => ({
+                                                    ...prev,
+                                                    title: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="Contoh: Hasil Lab Februari 2026"
+                                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                            File
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            onChange={(e) =>
+                                                setDocumentForm((prev) => ({
+                                                    ...prev,
+                                                    file:
+                                                        e.target.files?.[0] ||
+                                                        null,
+                                                }))
+                                            }
+                                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-slate-700"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                            Catatan (Opsional)
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            value={documentForm.notes}
+                                            onChange={(e) =>
+                                                setDocumentForm((prev) => ({
+                                                    ...prev,
+                                                    notes: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="Tambahkan catatan singkat tentang dokumen"
+                                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                        />
+                                    </div>
+
+                                    {documents.length > 0 && (
+                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                                            <p className="text-xs font-semibold text-slate-700 mb-2">
+                                                Dokumen Tersimpan
+                                            </p>
+                                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                                {documents
+                                                    .slice(0, 6)
+                                                    .map((doc) => (
+                                                        <div
+                                                            key={doc.id}
+                                                            className="flex items-center justify-between gap-2 rounded-md bg-white border border-slate-200 px-2 py-1.5"
+                                                        >
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-medium text-slate-700 truncate">
+                                                                    {doc.title}
+                                                                </p>
+                                                                <p className="text-[11px] text-slate-500 truncate">
+                                                                    {
+                                                                        doc.file_name
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleDownloadDocument(
+                                                                            doc,
+                                                                        )
+                                                                    }
+                                                                    className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500"
+                                                                    aria-label={`Download dokumen ${doc.title}`}
+                                                                >
+                                                                    <Download className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeDocument(
+                                                                            doc.id,
+                                                                        )
+                                                                    }
+                                                                    className="p-1.5 rounded-md hover:bg-red-50 text-slate-500 hover:text-red-600"
+                                                                    aria-label={`Hapus dokumen ${doc.title}`}
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowDocumentModal(false)
+                                            }
+                                            className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={
+                                                submittingDocument ||
+                                                supportDataLoading
+                                            }
+                                            className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:bg-emerald-300"
+                                        >
+                                            {submittingDocument
+                                                ? "Menyimpan..."
+                                                : "Simpan Dokumen"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
                 {/* Delete Confirmation Modal (List Level) */}
                 <AnimatePresence>
                     {deleteModal.show && (
@@ -741,3 +1845,4 @@ export default function ConsultationList() {
         </div>
     );
 }
+

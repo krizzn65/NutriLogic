@@ -19,7 +19,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
+import logger from "../../lib/logger";
 
 // InputField component defined outside to prevent re-creation on every render
 const InputField = ({
@@ -143,8 +144,8 @@ export default function TambahAnakKaderForm() {
                 console.warn("No parents found in this posyandu");
             }
         } catch (err) {
-            console.error("Failed to fetch parents:", err);
-            console.error("Error response:", err.response?.data);
+            logger.error("Failed to fetch parents:", err);
+            logger.error("Error response:", err.response?.data);
             setError("Gagal memuat data orang tua. Silakan refresh halaman.");
         } finally {
             setParentsLoading(false);
@@ -306,7 +307,7 @@ export default function TambahAnakKaderForm() {
                 });
             }
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
@@ -1170,3 +1171,4 @@ export default function TambahAnakKaderForm() {
         </div>
     );
 }
+

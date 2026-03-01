@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import HistoryPageSkeleton from "../loading/HistoryPageSkeleton";
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Icon } from "@iconify/react";
+import logger from "../../lib/logger";
 
 export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
@@ -61,7 +62,7 @@ export default function HistoryPage() {
       setChildren(data);
       setCachedData('children', data);
     } catch (err) {
-      console.error("Error fetching children:", err);
+      logger.error("Error fetching children:", err);
       setChildrenError("Gagal memuat daftar anak");
     }
   };
@@ -102,7 +103,7 @@ export default function HistoryPage() {
       const errorMessage =
         err.response?.data?.message || "Gagal memuat riwayat. Silakan coba lagi.";
       setError(errorMessage);
-      console.error("History fetch error:", err);
+      logger.error("History fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -161,10 +162,10 @@ export default function HistoryPage() {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case "weighing": return "⚖️";
-      case "meal": return "🍽️";
-      case "immunization": return "💉";
-      default: return "📋";
+      case "weighing": return "âš–ï¸";
+      case "meal": return "ðŸ½ï¸";
+      case "immunization": return "ðŸ’‰";
+      default: return "ðŸ“‹";
     }
   };
 
@@ -240,7 +241,7 @@ export default function HistoryPage() {
           {/* Date & Time */}
           <div className="text-right min-w-[120px]">
             <p className="text-sm font-medium text-gray-900">{formatDate(datetime).split(' ').slice(0, 2).join(' ')}</p>
-            <p className="text-xs text-gray-400">{new Date(datetime).getFullYear()} • {new Date(datetime).getHours().toString().padStart(2, '0')}:{new Date(datetime).getMinutes().toString().padStart(2, '0')}</p>
+            <p className="text-xs text-gray-400">{new Date(datetime).getFullYear()} â€¢ {new Date(datetime).getHours().toString().padStart(2, '0')}:{new Date(datetime).getMinutes().toString().padStart(2, '0')}</p>
           </div>
         </div>
       </div>
@@ -336,9 +337,9 @@ export default function HistoryPage() {
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100">
                   <span>
                     {filters.type === "all" && "Semua Tipe"}
-                    {filters.type === "weighing" && "⚖️ Penimbangan"}
-                    {filters.type === "meal" && "🍽️ Makanan"}
-                    {filters.type === "immunization" && "💉 Imunisasi"}
+                    {filters.type === "weighing" && "âš–ï¸ Penimbangan"}
+                    {filters.type === "meal" && "ðŸ½ï¸ Makanan"}
+                    {filters.type === "immunization" && "ðŸ’‰ Imunisasi"}
                   </span>
                   <Icon icon="lucide:chevron-down" className="text-gray-400 w-4 h-4 ml-1" />
                 </button>
@@ -354,19 +355,19 @@ export default function HistoryPage() {
                   onClick={() => handleFilterChange("type", "weighing")}
                   className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                 >
-                  <span>⚖️</span> Penimbangan
+                  <span>âš–ï¸</span> Penimbangan
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleFilterChange("type", "meal")}
                   className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                 >
-                  <span>🍽️</span> Makanan
+                  <span>ðŸ½ï¸</span> Makanan
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleFilterChange("type", "immunization")}
                   className="rounded-lg cursor-pointer hover:bg-gray-50 focus:bg-gray-50 gap-2"
                 >
-                  <span>💉</span> Imunisasi
+                  <span>ðŸ’‰</span> Imunisasi
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -396,7 +397,7 @@ export default function HistoryPage() {
       <div className="flex-1 overflow-auto bg-white [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {historyData.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-            <div className="text-4xl mb-3">📭</div>
+            <div className="text-4xl mb-3">ðŸ“­</div>
             <p>Tidak ada riwayat ditemukan</p>
           </div>
         ) : (
@@ -469,7 +470,7 @@ export default function HistoryPage() {
             </div>
 
             <div className="text-sm text-gray-500 bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
-              Halaman {pagination.current_page} dari {pagination.last_page} • Total: <span className="font-bold text-gray-900">{pagination.total}</span> riwayat
+              Halaman {pagination.current_page} dari {pagination.last_page} â€¢ Total: <span className="font-bold text-gray-900">{pagination.total}</span> riwayat
             </div>
           </div>
         )}
@@ -477,4 +478,5 @@ export default function HistoryPage() {
     </div>
   );
 }
+
 

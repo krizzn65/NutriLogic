@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx-js-style';
+﻿import * as XLSX from 'xlsx-js-style';
+import logger from "../lib/logger";
 
 /**
  * Calculate age in months from birth date (real-time)
@@ -400,7 +401,7 @@ export function exportWeighingsToExcel(weighingData, posyanduName = 'Semua Posya
         return { success: true, filename };
 
     } catch (error) {
-        console.error('Excel export error:', error);
+        logger.error('Excel export error:', error);
         throw new Error(error.message || 'Gagal membuat file Excel');
     }
 }
@@ -513,3 +514,4 @@ function calculateNutritionalStats(weighingData) {
 
     return stats;
 }
+

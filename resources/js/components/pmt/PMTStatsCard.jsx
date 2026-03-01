@@ -1,8 +1,9 @@
-import React, { useState, useEffect, memo } from 'react';
+﻿import React, { useState, useEffect, memo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import api from '../../lib/api';
 import StatsSkeleton from './StatsSkeleton';
+import logger from "../../lib/logger";
 
 
 const PMTStatsCard = memo(function PMTStatsCard({ childId }) {
@@ -21,7 +22,7 @@ const PMTStatsCard = memo(function PMTStatsCard({ childId }) {
             const response = await api.get(`/pmt-logs/child/${childId}/stats`);
             setStats(response.data.data);
         } catch (error) {
-            console.error('Error fetching PMT stats:', error);
+            logger.error('Error fetching PMT stats:', error);
         } finally {
             setLoading(false);
         }
@@ -114,3 +115,4 @@ const PMTStatsCard = memo(function PMTStatsCard({ childId }) {
 });
 
 export default PMTStatsCard;
+

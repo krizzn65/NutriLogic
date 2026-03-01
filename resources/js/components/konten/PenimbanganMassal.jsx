@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +28,7 @@ import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import PageHeader from "../ui/PageHeader";
 import DashboardLayout from "../dashboard/DashboardLayout";
 import PenimbanganMassalSkeleton from "../loading/PenimbanganMassalSkeleton";
+import logger from "../../lib/logger";
 
 const OFFLINE_WEIGHING_QUEUE_KEY = "kader_offline_weighing_queue";
 const OFFLINE_WEIGHING_SNAPSHOT_KEY =
@@ -324,7 +325,7 @@ export default function KegiatanPosyandu() {
                     "Gagal memuat data anak. Silakan coba lagi.";
                 setError(errorMessage);
             }
-            console.error("Children fetch error:", err);
+            logger.error("Children fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -445,7 +446,7 @@ export default function KegiatanPosyandu() {
             document.body.appendChild(successDiv);
             setTimeout(() => successDiv.remove(), 3000);
         } catch (err) {
-            console.error("Update weighing error:", err);
+            logger.error("Update weighing error:", err);
             alert(
                 err.response?.data?.message ||
                     "Gagal memperbarui data penimbangan",
@@ -613,7 +614,7 @@ export default function KegiatanPosyandu() {
             // Refresh children data to show latest weighing
             fetchChildren(true);
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
             setError(
                 err.response?.data?.message ||
                     "Gagal menyimpan data penimbangan. Silakan coba lagi.",
@@ -656,7 +657,7 @@ export default function KegiatanPosyandu() {
                 err.response?.data?.message ||
                 "Gagal memuat data anak. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Children fetch error:", err);
+            logger.error("Children fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -739,7 +740,7 @@ export default function KegiatanPosyandu() {
                 setTimeout(() => successDiv.remove(), 3000);
             }
         } catch (error) {
-            console.error("Error updating vitamin:", error);
+            logger.error("Error updating vitamin:", error);
             alert("Gagal memperbarui data vitamin.");
         } finally {
             setSubmitting(false);
@@ -801,7 +802,7 @@ export default function KegiatanPosyandu() {
             // Refresh children data
             fetchChildrenForVitamin();
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
             setError(
                 err.response?.data?.message ||
                     "Gagal menyimpan data vitamin. Silakan coba lagi.",
@@ -842,7 +843,7 @@ export default function KegiatanPosyandu() {
                 err.response?.data?.message ||
                 "Gagal memuat data anak. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Children fetch error:", err);
+            logger.error("Children fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -915,7 +916,7 @@ export default function KegiatanPosyandu() {
                 setTimeout(() => successDiv.remove(), 3000);
             }
         } catch (error) {
-            console.error("Error updating immunization:", error);
+            logger.error("Error updating immunization:", error);
             alert(
                 error.response?.data?.message ||
                     "Gagal memperbarui data imunisasi.",
@@ -978,7 +979,7 @@ export default function KegiatanPosyandu() {
             // Refresh children data
             fetchChildrenForImmunization();
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
             setError(
                 err.response?.data?.message ||
                     "Gagal menyimpan data imunisasi. Silakan coba lagi.",
@@ -5590,3 +5591,4 @@ export default function KegiatanPosyandu() {
         </DashboardLayout>
     );
 }
+

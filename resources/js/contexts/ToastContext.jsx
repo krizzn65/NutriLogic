@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, {
+    createContext,
+    useCallback,
+    useContext,
+    useMemo,
+    useState,
+} from "react";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 
 const DEFAULT_DURATION = 5000;
@@ -8,11 +14,18 @@ const ToastContext = createContext(null);
 
 function ToastIcon({ type }) {
     if (type === "success") {
-        return <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" />;
+        return (
+            <CheckCircle2
+                className="h-5 w-5 text-emerald-600"
+                aria-hidden="true"
+            />
+        );
     }
 
     if (type === "error") {
-        return <AlertCircle className="h-5 w-5 text-red-600" aria-hidden="true" />;
+        return (
+            <AlertCircle className="h-5 w-5 text-red-600" aria-hidden="true" />
+        );
     }
 
     return <Info className="h-5 w-5 text-blue-600" aria-hidden="true" />;
@@ -23,8 +36,8 @@ function ToastItem({ toast, onClose }) {
     const containerClass = isError
         ? "border-red-100 bg-red-50"
         : toast.type === "success"
-            ? "border-emerald-100 bg-emerald-50"
-            : "border-blue-100 bg-blue-50";
+          ? "border-emerald-100 bg-emerald-50"
+          : "border-blue-100 bg-blue-50";
 
     return (
         <div
@@ -36,9 +49,13 @@ function ToastItem({ toast, onClose }) {
                 <ToastIcon type={toast.type} />
                 <div className="flex-1 min-w-0">
                     {toast.title && (
-                        <p className="text-sm font-semibold text-gray-900 leading-5">{toast.title}</p>
+                        <p className="text-sm font-semibold text-gray-900 leading-5">
+                            {toast.title}
+                        </p>
                     )}
-                    <p className="text-sm text-gray-700 leading-5">{toast.message}</p>
+                    <p className="text-sm text-gray-700 leading-5">
+                        {toast.message}
+                    </p>
                 </div>
                 <button
                     type="button"
@@ -60,40 +77,57 @@ export function ToastProvider({ children }) {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, []);
 
-    const push = useCallback((toast) => {
-        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        const duration = toast.duration ?? DEFAULT_DURATION;
-        const nextToast = {
-            id,
-            type: toast.type ?? "info",
-            title: toast.title ?? "",
-            message: toast.message ?? "",
-            duration,
-        };
+    const push = useCallback(
+        (toast) => {
+            const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const duration = toast.duration ?? DEFAULT_DURATION;
+            const nextToast = {
+                id,
+                type: toast.type ?? "info",
+                title: toast.title ?? "",
+                message: toast.message ?? "",
+                duration,
+            };
 
-        setToasts((prev) => [nextToast, ...prev].slice(0, MAX_TOASTS));
+            setToasts((prev) => [nextToast, ...prev].slice(0, MAX_TOASTS));
 
-        if (duration > 0) {
-            window.setTimeout(() => {
-                dismiss(id);
-            }, duration);
-        }
-    }, [dismiss]);
+            if (duration > 0) {
+                window.setTimeout(() => {
+                    dismiss(id);
+                }, duration);
+            }
+        },
+        [dismiss],
+    );
 
-    const api = useMemo(() => ({
-        show: (message, options = {}) => push({ message, ...options }),
-        success: (message, options = {}) => push({ message, ...options, type: "success" }),
-        error: (message, options = {}) => push({ message, ...options, type: "error" }),
-        info: (message, options = {}) => push({ message, ...options, type: "info" }),
-        dismiss,
-    }), [dismiss, push]);
+    const api = useMemo(
+        () => ({
+            show: (message, options = {}) => push({ message, ...options }),
+            success: (message, options = {}) =>
+                push({
+                    message,
+                    ...options,
+                    type: "success",
+                    duration: DEFAULT_DURATION,
+                }),
+            error: (message, options = {}) =>
+                push({ message, ...options, type: "error" }),
+            info: (message, options = {}) =>
+                push({ message, ...options, type: "info" }),
+            dismiss,
+        }),
+        [dismiss, push],
+    );
 
     return (
         <ToastContext.Provider value={api}>
             {children}
             <div className="fixed top-4 right-4 left-4 sm:left-auto z-[10000] flex flex-col gap-3 pointer-events-none">
                 {toasts.map((toast) => (
-                    <div key={toast.id} className="pointer-events-auto sm:w-[360px] sm:max-w-[90vw] sm:ml-auto">
+                    <div
+                        key={toast.id}
+                        className="pointer-events-auto sm:w-[360px] sm:max-w-[90vw] sm:ml-auto"
+                    >
                         <ToastItem toast={toast} onClose={dismiss} />
                     </div>
                 ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import api from "../../lib/api";
 import EditAnakKaderFormSkeleton from "../loading/EditAnakKaderFormSkeleton";
+import logger from "../../lib/logger";
 
 export default function EditAnakKaderForm() {
     const navigate = useNavigate();
@@ -67,7 +68,7 @@ export default function EditAnakKaderForm() {
                 setPickerDate(new Date(child.birth_date));
             }
         } catch (err) {
-            console.error("Failed to fetch child data:", err);
+            logger.error("Failed to fetch child data:", err);
             setError(err.response?.data?.message || "Gagal memuat data anak");
         } finally {
             setLoading(false);
@@ -197,7 +198,7 @@ export default function EditAnakKaderForm() {
                 state: { message: "Data anak berhasil diperbarui!" },
             });
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
@@ -223,7 +224,7 @@ export default function EditAnakKaderForm() {
                 state: { message: "Data anak berhasil dinonaktifkan!" },
             });
         } catch (err) {
-            console.error("Delete error:", err);
+            logger.error("Delete error:", err);
             setError(
                 err.response?.data?.message || "Gagal menonaktifkan data anak",
             );
@@ -965,3 +966,4 @@ export default function EditAnakKaderForm() {
         </div>
     );
 }
+

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, memo, useCallback } from 'react';
+﻿import React, { useState, useEffect, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import api from '../../lib/api';
 import TodayStatusSkeleton from './TodayStatusSkeleton';
+import logger from "../../lib/logger";
 
 const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSuccess }) {
     const [status, setStatus] = useState(null);
@@ -20,7 +21,7 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
             textColor: 'text-green-800',
             bgColor: 'bg-green-50',
             borderColor: 'border-green-300',
-            emoji: '✓',
+            emoji: 'âœ“',
             hoverBorder: 'hover:border-green-400'
         },
         {
@@ -42,7 +43,7 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
             textColor: 'text-red-800',
             bgColor: 'bg-red-50',
             borderColor: 'border-red-300',
-            emoji: '✗',
+            emoji: 'âœ—',
             hoverBorder: 'hover:border-red-400'
         },
     ];
@@ -85,7 +86,7 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
                 setNotes('');
             }
         } catch (error) {
-            console.error('Error fetching today status:', error);
+            logger.error('Error fetching today status:', error);
         } finally {
             setLoading(false);
         }
@@ -112,7 +113,7 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
             setStatus(selectedStatus);
             if (onSuccess) onSuccess();
         } catch (err) {
-            console.error('Error saving PMT status:', err);
+            logger.error('Error saving PMT status:', err);
             setError(err.response?.data?.message || 'Gagal menyimpan status. Silakan coba lagi.');
         } finally {
             setSubmitting(false);
@@ -138,7 +139,7 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
                     notes: newNotes || null,
                 });
             } catch (err) {
-                console.error('Error saving notes:', err);
+                logger.error('Error saving notes:', err);
             }
         }
     }, [childId, status]);
@@ -253,3 +254,4 @@ const TodayStatusCard = memo(function TodayStatusCard({ childId, childName, onSu
 });
 
 export default TodayStatusCard;
+

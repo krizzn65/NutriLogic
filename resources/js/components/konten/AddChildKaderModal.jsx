@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
     User,
     Calendar,
@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
+import logger from "../../lib/logger";
 
 // InputField component defined OUTSIDE to prevent re-creation on every render
 const InputField = ({
@@ -166,7 +167,7 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
             const response = await api.get("/kader/parents");
             setParents(response.data.data);
         } catch (err) {
-            console.error("Failed to fetch parents:", err);
+            logger.error("Failed to fetch parents:", err);
             setError("Gagal memuat data orang tua. Silakan refresh halaman.");
         } finally {
             setParentsLoading(false);
@@ -300,7 +301,7 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
             onSuccess?.("Data anak berhasil ditambahkan!");
             onClose();
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -1069,3 +1070,4 @@ export default function AddChildKaderModal({ isOpen, onClose, onSuccess }) {
         </AnimatePresence>
     );
 }
+

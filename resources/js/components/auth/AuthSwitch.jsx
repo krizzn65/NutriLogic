@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import {
 import { Icon } from "@iconify/react";
 import { login, fetchMe } from "../../lib/auth";
 import api from "../../lib/api";
+import logger from "../../lib/logger";
 
 // ---- Extracted OUTSIDE the main component so they have stable references ----
 
@@ -221,7 +222,7 @@ export default function AuthSwitch() {
                 const response = await api.get("/posyandus");
                 setPosyandus(response.data.data || response.data || []);
             } catch (err) {
-                console.error("Failed to fetch posyandus:", err);
+                logger.error("Failed to fetch posyandus:", err);
             }
         };
         fetchPosyandus();
@@ -278,7 +279,7 @@ export default function AuthSwitch() {
             const statusCode = err.response?.status;
 
             if (statusCode === 429) {
-                setError(`🔒 ${errorMessage}`);
+                setError(`ðŸ”’ ${errorMessage}`);
             } else {
                 setError(errorMessage);
             }
@@ -1244,3 +1245,4 @@ export default function AuthSwitch() {
         </motion.div>
     );
 }
+

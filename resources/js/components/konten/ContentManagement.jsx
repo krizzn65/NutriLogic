@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import {
     FileText,
@@ -10,6 +10,7 @@ import {
     Search,
 } from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
+import logger from "../../lib/logger";
 
 export default function ContentManagement() {
     const [loading, setLoading] = useState(true);
@@ -43,7 +44,7 @@ export default function ContentManagement() {
             const errorMessage =
                 err.response?.data?.message || "Gagal memuat data artikel.";
             setError(errorMessage);
-            console.error("Articles fetch error:", err);
+            logger.error("Articles fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -107,14 +108,7 @@ export default function ContentManagement() {
     };
 
     if (loading && articles.length === 0) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <GenericListSkeleton itemCount={6} />;
     }
 
     return (
@@ -573,3 +567,4 @@ function ArticleModal({ article, onClose, onSuccess }) {
         </div>
     );
 }
+

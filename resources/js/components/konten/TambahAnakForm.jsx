@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
-import PageHeader from "../dashboard/PageHeader";
-import CreditCard from "../credit-card-1";
-import logoScroll from '../../assets/logo_scroll.svg';
-import { assets } from '../../assets/assets';
+import PageHeader from "../ui/PageHeader";
+import logger from "../../lib/logger";
 
 export default function TambahAnakForm() {
     const navigate = useNavigate();
@@ -28,33 +26,33 @@ export default function TambahAnakForm() {
 
     const fetchUserData = async () => {
         try {
-            const response = await api.get('/me');
+            const response = await api.get("/me");
             const user = response.data.data || response.data;
 
             // Auto-fill posyandu if user has one
             if (user.posyandu_id) {
-                setFormData(prev => ({
+                setFormData((prev) => ({
                     ...prev,
-                    posyandu_id: user.posyandu_id
+                    posyandu_id: user.posyandu_id,
                 }));
             }
         } catch (err) {
-            console.error('Failed to fetch user data:', err);
+            logger.error("Failed to fetch user data:", err);
         }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
 
         // Clear error for this field
         if (errors[name]) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
                 ...prev,
-                [name]: null
+                [name]: null,
             }));
         }
     };
@@ -86,11 +84,13 @@ export default function TambahAnakForm() {
             const today = new Date();
             const maxAge = new Date();
             maxAge.setFullYear(maxAge.getFullYear() - 18); // Maksimal 18 tahun (anak posyandu)
-            
+
             if (birthDate > today) {
-                newErrors.birth_date = "Tanggal lahir tidak boleh di masa depan";
+                newErrors.birth_date =
+                    "Tanggal lahir tidak boleh di masa depan";
             } else if (birthDate < maxAge) {
-                newErrors.birth_date = "Usia anak melebihi batas maksimal (18 tahun)";
+                newErrors.birth_date =
+                    "Usia anak melebihi batas maksimal (18 tahun)";
             }
         }
 
@@ -98,11 +98,19 @@ export default function TambahAnakForm() {
             newErrors.gender = "Jenis kelamin wajib dipilih";
         }
 
-        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0 || parseFloat(formData.birth_weight_kg) > 10)) {
+        if (
+            formData.birth_weight_kg &&
+            (parseFloat(formData.birth_weight_kg) < 0 ||
+                parseFloat(formData.birth_weight_kg) > 10)
+        ) {
             newErrors.birth_weight_kg = "Berat lahir harus antara 0-10 kg";
         }
 
-        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 0 || parseFloat(formData.birth_height_cm) > 100)) {
+        if (
+            formData.birth_height_cm &&
+            (parseFloat(formData.birth_height_cm) < 0 ||
+                parseFloat(formData.birth_height_cm) > 100)
+        ) {
             newErrors.birth_height_cm = "Tinggi lahir harus antara 0-100 cm";
         }
 
@@ -121,12 +129,14 @@ export default function TambahAnakForm() {
         setError(null);
 
         try {
-            const response = await api.get('/me');
+            const response = await api.get("/me");
             const user = response.data.data || response.data;
 
             // Pastikan user memiliki posyandu_id
             if (!user.posyandu_id) {
-                setError('Akun Anda belum terdaftar di posyandu. Silakan hubungi admin.');
+                setError(
+                    "Akun Anda belum terdaftar di posyandu. Silakan hubungi admin.",
+                );
                 setLoading(false);
                 return;
             }
@@ -137,139 +147,225 @@ export default function TambahAnakForm() {
                 nik: formData.nik ? formData.nik.trim() : null,
                 parent_id: user.id,
                 posyandu_id: parseInt(user.posyandu_id), // Ambil dari user, bukan formData
-                birth_weight_kg: formData.birth_weight_kg ? parseFloat(formData.birth_weight_kg) : null,
-                birth_height_cm: formData.birth_height_cm ? parseFloat(formData.birth_height_cm) : null,
+                birth_weight_kg: formData.birth_weight_kg
+                    ? parseFloat(formData.birth_weight_kg)
+                    : null,
+                birth_height_cm: formData.birth_height_cm
+                    ? parseFloat(formData.birth_height_cm)
+                    : null,
                 notes: formData.notes ? formData.notes.trim() : null,
             };
 
-            await api.post('/children', dataToSubmit);
+            await api.post("/children", dataToSubmit);
 
             // Navigate back to list with success message
-            navigate('/dashboard/anak', {
-                state: { message: 'Data anak berhasil ditambahkan!' }
+            navigate("/dashboard/anak", {
+                state: { message: "Data anak berhasil ditambahkan!" },
             });
         } catch (err) {
-            console.error('Submit error:', err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 // Validation errors from backend
                 setErrors(err.response.data.errors);
             } else {
-                setError(err.response?.data?.message || 'Gagal menambahkan data anak. Silakan coba lagi.');
+                setError(
+                    err.response?.data?.message ||
+                        "Gagal menambahkan data anak. Silakan coba lagi.",
+                );
             }
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper to format date for card expiry
-    const getFormattedDate = (dateString) => {
-        if (!dateString) return "00/00";
-        const date = new Date(dateString);
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = String(date.getFullYear()).slice(-2);
-        return `${month}/${year}`;
-    };
+    const genderLabel =
+        formData.gender === "L"
+            ? "Laki-laki"
+            : formData.gender === "P"
+              ? "Perempuan"
+              : "-";
 
     return (
         <div className="flex flex-1 w-full h-full overflow-auto bg-gray-50">
-            <div className="p-4 md:p-8 w-full max-w-5xl mx-auto flex flex-col gap-8">
+            <div className="p-4 md:p-8 w-full max-w-6xl mx-auto flex flex-col gap-8">
                 {/* Header */}
                 <PageHeader title="Tambah Anak" subtitle="Portal Orang Tua">
                     <button
-                        onClick={() => navigate('/dashboard/anak')}
+                        onClick={() => navigate("/dashboard/anak")}
                         className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                     >
-                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <svg
+                            className="w-6 h-6 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                            />
                         </svg>
                     </button>
                 </PageHeader>
 
-                <div className="flex flex-col gap-8 items-center">
-                    {/* Top - Card Preview */}
-                    <div className="w-full max-w-md flex flex-col items-center">
-                        <div className="w-full aspect-[1.586/1]">
-                            <CreditCard
-                                cardNumber={formData.nik ? formData.nik.replace(/(\d{4})(?=\d)/g, '$1 ') : "0000 0000 0000 0000"}
-                                cardHolder={formData.full_name || "NAMA ANAK"}
-                                expiryDate={getFormattedDate(formData.birth_date)}
-                                cvv={formData.gender === 'L' ? '001' : formData.gender === 'P' ? '002' : 'XXX'}
-                                variant="gradient"
-                                labelName="NAMA ANAK"
-                                labelExpiry="TGL LAHIR"
-                                brandLogo={logoScroll}
-                                chipImage={formData.gender === 'L' ? assets.kepala_bayi : formData.gender === 'P' ? assets.kepala_bayi_cewe : null}
-                            />
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
+                    {/* Sidebar Summary */}
+                    <div className="w-full lg:sticky lg:top-6">
+                        <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+                            <h3 className="text-base font-semibold text-blue-900">
+                                Ringkasan Data Anak
+                            </h3>
+                            <p className="text-sm text-blue-700 mt-1">
+                                Preview sederhana agar data mudah dibaca sebelum
+                                disimpan.
+                            </p>
+
+                            <div className="mt-5 space-y-3">
+                                <div className="rounded-xl border border-blue-100 bg-white px-3 py-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                                        Nama
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {formData.full_name || "-"}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl border border-blue-100 bg-white px-3 py-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                                        Tanggal Lahir
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {formData.birth_date || "-"}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl border border-blue-100 bg-white px-3 py-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                                        Jenis Kelamin
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {genderLabel}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl border border-blue-100 bg-white px-3 py-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                                        NIK
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {formData.nik || "-"}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Bottom - Form */}
-                    <div className="w-full max-w-3xl">
+                    {/* Form */}
+                    <div className="w-full">
                         {/* Error Alert */}
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
                                 <div className="flex items-center gap-2">
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    <svg
+                                        className="w-5 h-5"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                            clipRule="evenodd"
+                                        />
                                     </svg>
                                     <span>{error}</span>
                                 </div>
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-6">Informasi Anak</h3>
+                        <form
+                            onSubmit={handleSubmit}
+                            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8"
+                        >
+                            <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                                Informasi Anak
+                            </h3>
 
                             <div className="space-y-5">
-                                {/* Nama Lengkap */}
-                                <div>
-                                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-2">
-                                        Nama Lengkap <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="full_name"
-                                        name="full_name"
-                                        value={formData.full_name}
-                                        onChange={handleChange}
-                                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.full_name ? 'border-red-500' : 'border-gray-200'
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    {/* Nama Lengkap */}
+                                    <div>
+                                        <label
+                                            htmlFor="full_name"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
+                                            Nama Lengkap{" "}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="full_name"
+                                            name="full_name"
+                                            value={formData.full_name}
+                                            onChange={handleChange}
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                                                errors.full_name
+                                                    ? "border-red-500"
+                                                    : "border-gray-200"
                                             }`}
-                                        placeholder="Masukkan nama lengkap anak"
-                                    />
-                                    {errors.full_name && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
-                                    )}
+                                            placeholder="Masukkan nama lengkap anak"
+                                        />
+                                        {errors.full_name && (
+                                            <p className="mt-1 text-sm text-red-600">
+                                                {errors.full_name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* NIK */}
+                                    <div>
+                                        <label
+                                            htmlFor="nik"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
+                                            NIK (Opsional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="nik"
+                                            name="nik"
+                                            value={formData.nik}
+                                            onChange={handleChange}
+                                            maxLength="16"
+                                            pattern="[0-9]*"
+                                            inputMode="numeric"
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                                                errors.nik
+                                                    ? "border-red-500"
+                                                    : "border-gray-200"
+                                            }`}
+                                            placeholder="Masukkan 16 digit NIK"
+                                        />
+                                        {errors.nik && (
+                                            <p className="mt-1 text-sm text-red-600">
+                                                {errors.nik}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
 
-                                {/* NIK */}
-                                <div>
-                                    <label htmlFor="nik" className="block text-sm font-medium text-gray-700 mb-2">
-                                        NIK (Opsional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="nik"
-                                        name="nik"
-                                        value={formData.nik}
-                                        onChange={handleChange}
-                                        maxLength="16"
-                                        pattern="[0-9]*"
-                                        inputMode="numeric"
-                                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.nik ? 'border-red-500' : 'border-gray-200'
-                                            }`}
-                                        placeholder="Masukkan 16 digit NIK"
-                                    />
-                                    {errors.nik && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.nik}</p>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     {/* Tanggal Lahir */}
                                     <div>
-                                        <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Tanggal Lahir <span className="text-red-500">*</span>
+                                        <label
+                                            htmlFor="birth_date"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
+                                            Tanggal Lahir{" "}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </label>
                                         <input
                                             type="date"
@@ -277,43 +373,75 @@ export default function TambahAnakForm() {
                                             name="birth_date"
                                             value={formData.birth_date}
                                             onChange={handleChange}
-                                            max={new Date().toISOString().split('T')[0]}
-                                            min={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.birth_date ? 'border-red-500' : 'border-gray-200'
-                                                }`}
+                                            max={
+                                                new Date()
+                                                    .toISOString()
+                                                    .split("T")[0]
+                                            }
+                                            min={
+                                                new Date(
+                                                    new Date().setFullYear(
+                                                        new Date().getFullYear() -
+                                                            18,
+                                                    ),
+                                                )
+                                                    .toISOString()
+                                                    .split("T")[0]
+                                            }
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                                                errors.birth_date
+                                                    ? "border-red-500"
+                                                    : "border-gray-200"
+                                            }`}
                                         />
                                         {errors.birth_date && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.birth_date}</p>
+                                            <p className="mt-1 text-sm text-red-600">
+                                                {errors.birth_date}
+                                            </p>
                                         )}
                                     </div>
 
                                     {/* Jenis Kelamin */}
                                     <div>
-                                        <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Jenis Kelamin <span className="text-red-500">*</span>
+                                        <label
+                                            htmlFor="gender"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
+                                            Jenis Kelamin{" "}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </label>
                                         <select
                                             id="gender"
                                             name="gender"
                                             value={formData.gender}
                                             onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.gender ? 'border-red-500' : 'border-gray-200'
-                                                }`}
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                                                errors.gender
+                                                    ? "border-red-500"
+                                                    : "border-gray-200"
+                                            }`}
                                         >
                                             <option value="">Pilih...</option>
                                             <option value="L">Laki-laki</option>
                                             <option value="P">Perempuan</option>
                                         </select>
                                         {errors.gender && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+                                            <p className="mt-1 text-sm text-red-600">
+                                                {errors.gender}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     {/* Berat Lahir */}
                                     <div>
-                                        <label htmlFor="birth_weight_kg" className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            htmlFor="birth_weight_kg"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
                                             Berat Lahir (kg)
                                         </label>
                                         <input
@@ -325,18 +453,26 @@ export default function TambahAnakForm() {
                                             step="0.1"
                                             min="0"
                                             max="10"
-                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.birth_weight_kg ? 'border-red-500' : 'border-gray-200'
-                                                }`}
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                                                errors.birth_weight_kg
+                                                    ? "border-red-500"
+                                                    : "border-gray-200"
+                                            }`}
                                             placeholder="0.0"
                                         />
                                         {errors.birth_weight_kg && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.birth_weight_kg}</p>
+                                            <p className="mt-1 text-sm text-red-600">
+                                                {errors.birth_weight_kg}
+                                            </p>
                                         )}
                                     </div>
 
                                     {/* Tinggi Lahir */}
                                     <div>
-                                        <label htmlFor="birth_height_cm" className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            htmlFor="birth_height_cm"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
                                             Tinggi Lahir (cm)
                                         </label>
                                         <input
@@ -348,19 +484,27 @@ export default function TambahAnakForm() {
                                             step="0.1"
                                             min="0"
                                             max="100"
-                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${errors.birth_height_cm ? 'border-red-500' : 'border-gray-200'
-                                                }`}
+                                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                                                errors.birth_height_cm
+                                                    ? "border-red-500"
+                                                    : "border-gray-200"
+                                            }`}
                                             placeholder="0.0"
                                         />
                                         {errors.birth_height_cm && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.birth_height_cm}</p>
+                                            <p className="mt-1 text-sm text-red-600">
+                                                {errors.birth_height_cm}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Catatan */}
                                 <div>
-                                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label
+                                        htmlFor="notes"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
                                         Catatan (Opsional)
                                     </label>
                                     <textarea
@@ -379,7 +523,7 @@ export default function TambahAnakForm() {
                             <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
                                 <button
                                     type="button"
-                                    onClick={() => navigate('/dashboard/anak')}
+                                    onClick={() => navigate("/dashboard/anak")}
                                     className="px-6 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
                                     disabled={loading}
                                 >
@@ -397,8 +541,18 @@ export default function TambahAnakForm() {
                                         </>
                                     ) : (
                                         <>
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            <svg
+                                                className="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M5 13l4 4L19 7"
+                                                />
                                             </svg>
                                             Simpan Data
                                         </>
@@ -412,3 +566,4 @@ export default function TambahAnakForm() {
         </div>
     );
 }
+

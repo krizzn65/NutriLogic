@@ -1,19 +1,26 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+﻿import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/api";
 import { fetchMe, getUser } from "../../lib/auth";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import { Dialog, DialogContent } from "../ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+} from "../ui/dialog";
 import { Camera, X, Loader2, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useProfileModal } from "../../contexts/ProfileModalContext";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 export default function ProfileModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
-    const [successMessage, setSuccessMessage] = useState(null);
     const { notifyProfileUpdate } = useProfileModal();
+    const toast = useToast();
     const [profileData, setProfileData] = useState({
         name: "",
         email: "",
@@ -40,7 +47,6 @@ export default function ProfileModal({ isOpen, onClose }) {
     const fetchProfile = useCallback(async () => {
         try {
             setError(null);
-            setSuccessMessage(null);
 
             const cachedData = getCachedData("profile");
             if (cachedData) {
@@ -68,7 +74,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                 err.response?.data?.message ||
                 "Gagal memuat data profil. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Error fetching profile:", err);
+            logger.error("Error fetching profile:", err);
         } finally {
             setLoading(false);
         }
@@ -85,7 +91,7 @@ export default function ProfileModal({ isOpen, onClose }) {
             setPosyandus(response.data.data || []);
             setCachedData("posyandus_list", response.data.data || []);
         } catch (err) {
-            console.error("Error fetching posyandus:", err);
+            logger.error("Error fetching posyandus:", err);
         }
     }, [getCachedData, setCachedData]);
 
@@ -116,7 +122,6 @@ export default function ProfileModal({ isOpen, onClose }) {
         try {
             setSaving(true);
             setError(null);
-            setSuccessMessage(null);
 
             const formData = new FormData();
             formData.append("name", profileData.name);
@@ -139,7 +144,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                 },
             });
 
-            setSuccessMessage("Profil berhasil diperbarui!");
+            toast.success("Profil berhasil diperbarui!");
             setProfileData((prev) => ({
                 ...prev,
                 ...response.data.data,
@@ -152,16 +157,13 @@ export default function ProfileModal({ isOpen, onClose }) {
             // CRITICAL FIX: Must fetch new data (update localStorage) BEFORE notifying listeners
             await fetchMe();
             notifyProfileUpdate();
-
-            setTimeout(() => {
-                onClose();
-            }, 1500);
+            onClose();
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
                 "Gagal memperbarui profil. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Error updating profile:", err);
+            logger.error("Error updating profile:", err);
         } finally {
             setSaving(false);
         }
@@ -181,6 +183,10 @@ export default function ProfileModal({ isOpen, onClose }) {
                 hideClose={true}
                 className={`w-[90%] md:w-full p-0 bg-white border-none shadow-2xl rounded-2xl ${isPosyanduDropdownOpen ? "overflow-visible" : "overflow-hidden"} max-h-[90vh]`}
             >
+                <DialogTitle className="sr-only">Profil Pengguna</DialogTitle>
+                <DialogDescription className="sr-only">
+                    Kelola informasi profil akun Anda.
+                </DialogDescription>
                 {/* Profile Header Section - LEFT aligned */}
                 <div className="px-8 pt-8 relative">
                     <div className="flex items-start gap-6 mb-6">
@@ -240,11 +246,6 @@ export default function ProfileModal({ isOpen, onClose }) {
                             onSubmit={handleProfileSubmit}
                             className="space-y-6 overflow-visible"
                         >
-                            {successMessage && (
-                                <div className="p-4 bg-green-50 text-green-700 rounded-xl text-sm font-medium flex items-center gap-2">
-                                    <span>✓</span> {successMessage}
-                                </div>
-                            )}
                             {error && (
                                 <div className="p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium">
                                     {error}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Plus, User, Calendar, Activity, Printer } from "lucide-react";
 import api from "../../lib/api";
@@ -10,6 +10,8 @@ import DashboardLayout from "../dashboard/DashboardLayout";
 import { assets } from "../../assets/assets";
 import EditChildModal from "./EditChildModal";
 import AddChildKaderModal from "./AddChildKaderModal";
+import { useToast } from "../../contexts/ToastContext";
+import logger from "../../lib/logger";
 
 export default function DataAnakKader() {
     const [loading, setLoading] = useState(true);
@@ -18,7 +20,6 @@ export default function DataAnakKader() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
     const [filterActive, setFilterActive] = useState("1");
-    const [successMessage, setSuccessMessage] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -32,6 +33,7 @@ export default function DataAnakKader() {
     });
 
     const { getCachedData, setCachedData } = useDataCache();
+    const toast = useToast();
 
     const statusOptions = [
         { value: "", label: "Semua Status" },
@@ -54,11 +56,10 @@ export default function DataAnakKader() {
 
     useEffect(() => {
         if (location.state?.message) {
-            setSuccessMessage(location.state.message);
+            toast.success(location.state.message);
             window.history.replaceState({}, document.title);
-            setTimeout(() => setSuccessMessage(null), 5000);
         }
-    }, [location]);
+    }, [location, toast]);
 
     useEffect(() => {
         setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to page 1
@@ -117,7 +118,7 @@ export default function DataAnakKader() {
                 err.response?.data?.message ||
                 "Gagal memuat data anak. Silakan coba lagi.";
             setError(errorMessage);
-            console.error("Error fetching children:", err);
+            logger.error("Error fetching children:", err);
         } finally {
             setLoading(false);
         }
@@ -152,48 +153,6 @@ export default function DataAnakKader() {
                 />
             }
         >
-            {/* Success Message */}
-            {successMessage && (
-                <div className="bg-green-50/80 backdrop-blur-sm border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-green-200 flex items-center justify-center">
-                            <svg
-                                className="w-3 h-3 text-green-700"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={3}
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
-                        </div>
-                        <span className="font-medium">{successMessage}</span>
-                    </div>
-                    <button
-                        onClick={() => setSuccessMessage(null)}
-                        className="text-green-600 hover:text-green-800 transition-colors"
-                    >
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
-                    </button>
-                </div>
-            )}
-
             {/* Filters & Search */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between mb-4 md:mb-0">
@@ -780,9 +739,8 @@ export default function DataAnakKader() {
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 onSuccess={(msg) => {
-                    setSuccessMessage(msg);
+                    toast.success(msg);
                     fetchChildren(1, true); // Force refresh from server
-                    setTimeout(() => setSuccessMessage(null), 5000);
                 }}
                 childId={selectedChildId}
             />
@@ -791,9 +749,8 @@ export default function DataAnakKader() {
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={(msg) => {
-                    setSuccessMessage(msg);
+                    toast.success(msg);
                     fetchChildren(1, true); // Force refresh from server
-                    setTimeout(() => setSuccessMessage(null), 5000);
                 }}
             />
         </DashboardLayout>

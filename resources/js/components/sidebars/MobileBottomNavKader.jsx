@@ -3,7 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logoutWithApi } from "../../lib/auth";
-import { useProfileModal } from "../../contexts/ProfileModalContext";
+import {
+    KADER_MOBILE_MAIN_NAV,
+    KADER_MOBILE_MORE_NAV,
+} from "../../constants/navigationConfigs";
 
 const MobileBottomNavKader = () => {
     const navigate = useNavigate();
@@ -11,65 +14,9 @@ const MobileBottomNavKader = () => {
     const [active, setActive] = useState(0);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [showMoreModal, setShowMoreModal] = useState(false);
-    const { openProfileModal } = useProfileModal();
-
-    // Main navigation items (5 items)
-    const mainItems = [
-        { id: 0, icon: "lucide:home", label: "Home", href: "/dashboard" },
-        {
-            id: 1,
-            icon: "lucide:users",
-            label: "Anak",
-            href: "/dashboard/data-anak",
-        },
-        {
-            id: 2,
-            icon: "lucide:scale",
-            label: "Kegiatan",
-            href: "/dashboard/kegiatan",
-        },
-        {
-            id: 3,
-            icon: "lucide:alert-triangle",
-            label: "Prioritas",
-            href: "/dashboard/anak-prioritas",
-        },
-        { id: 4, icon: "lucide:more-horizontal", label: "More", isMore: true },
-    ];
-
-    // More submenu items
-    const moreItems = [
-        {
-            id: 5,
-            icon: "lucide:clipboard-list",
-            label: "Antrian",
-            href: "/dashboard/antrian-prioritas",
-        },
-        {
-            id: 6,
-            icon: "lucide:calendar",
-            label: "Jadwal",
-            href: "/dashboard/jadwal",
-        },
-        {
-            id: 7,
-            icon: "lucide:message-square",
-            label: "Konsultasi",
-            href: "/dashboard/konsultasi",
-        },
-        {
-            id: 8,
-            icon: "lucide:megaphone",
-            label: "Broadcast",
-            href: "/dashboard/broadcast",
-        },
-        {
-            id: 9,
-            icon: "lucide:file-text",
-            label: "Laporan",
-            href: "/dashboard/laporan",
-        },
-    ];
+    const mainItems = KADER_MOBILE_MAIN_NAV;
+    const moreItems = KADER_MOBILE_MORE_NAV;
+    const moreTabIndex = mainItems.findIndex((item) => item.isMore);
 
     useEffect(() => {
         const currentPath = location.pathname;
@@ -90,21 +37,19 @@ const MobileBottomNavKader = () => {
         );
 
         if (activeMainItem) {
-            setActive(activeMainItem.id);
+            setActive(mainItems.indexOf(activeMainItem));
         } else if (activeMoreItem) {
-            setActive(4); // Set "More" as active
+            setActive(moreTabIndex); // Set "More" as active
         } else if (currentPath === "/dashboard") {
             setActive(0);
         }
-    }, [location.pathname]);
+    }, [location.pathname, mainItems, moreItems, moreTabIndex]);
 
     const handleItemClick = (index, item) => {
         if (item.isMore) {
             setShowMoreModal(true);
         } else if (item.isLogout) {
             setShowLogoutConfirm(true);
-        } else if (item.isProfile) {
-            openProfileModal();
         } else {
             setActive(index);
             navigate(item.href);
@@ -113,7 +58,7 @@ const MobileBottomNavKader = () => {
 
     const handleMoreItemClick = (item) => {
         setShowMoreModal(false);
-        setActive(4); // Keep "More" active
+        setActive(moreTabIndex); // Keep "More" active
         navigate(item.href);
     };
 
@@ -134,7 +79,7 @@ const MobileBottomNavKader = () => {
                         const isActive = index === active;
                         return (
                             <motion.div
-                                key={item.id}
+                                key={item.href || item.label}
                                 className="relative flex flex-col items-center flex-1"
                             >
                                 {/* Top Indicator Line */}
@@ -221,7 +166,7 @@ const MobileBottomNavKader = () => {
                             <div className="px-6 py-4 space-y-2">
                                 {moreItems.map((item) => (
                                     <button
-                                        key={item.id}
+                                        key={item.href || item.label}
                                         onClick={() =>
                                             handleMoreItemClick(item)
                                         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Check, Clock, AlertTriangle, X, Shield, ChevronRight, Award } from "lucide-react";
 import PageHeader from "../ui/PageHeader";
@@ -9,6 +9,7 @@ import { formatAge } from "../../lib/utils";
 import kepalaBayi from "../../assets/kepala_bayi.png";
 import kepalaBayiCewe from "../../assets/kepala_bayi_cewe.png";
 import AntrianPrioritasSkeleton from "../loading/AntrianPrioritasSkeleton";
+import logger from "../../lib/logger";
 
 export default function AntrianPrioritas() {
     const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ export default function AntrianPrioritas() {
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data antrian prioritas. Silakan coba lagi.';
             setError(errorMessage);
-            console.error('Priority queue fetch error:', err);
+            logger.error('Priority queue fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -75,14 +76,14 @@ export default function AntrianPrioritas() {
                 <PageHeader
                     title="Antrian Prioritas"
                     subtitle="Portal Kader"
-                    description="Daftar anak yang berhak mendapat antrian prioritas karena patuh konsumsi PMT (≥80%)"
+                    description="Daftar anak yang berhak mendapat antrian prioritas karena patuh konsumsi PMT (â‰¥80%)"
                     showProfile={true}
                 />
             }
         >
             <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto mb-10">
 
-                {/* Error Alert — Admin style centered */}
+                {/* Error Alert â€” Admin style centered */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center max-w-md mx-auto">
                         <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-3" />
@@ -96,7 +97,7 @@ export default function AntrianPrioritas() {
                     </div>
                 )}
 
-                {/* Summary Card — Admin style: white card, colored icon */}
+                {/* Summary Card â€” Admin style: white card, colored icon */}
                 {summary && (
                     <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 transition-all group">
                         <div className="flex justify-between items-start mb-4">
@@ -104,7 +105,7 @@ export default function AntrianPrioritas() {
                                 <Award className="w-6 h-6" />
                             </div>
                             <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full text-emerald-600 bg-emerald-50">
-                                Patuh PMT ≥80%
+                                Patuh PMT â‰¥80%
                             </span>
                         </div>
                         <div>
@@ -116,7 +117,7 @@ export default function AntrianPrioritas() {
                     </div>
                 )}
 
-                {/* Search Bar — Clean style tanpa wrapper */}
+                {/* Search Bar â€” Clean style tanpa wrapper */}
                 <div className="relative w-full">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-gray-400" />
@@ -185,13 +186,13 @@ export default function AntrianPrioritas() {
                                                     {child.full_name}
                                                 </h3>
                                                 <p className="text-xs text-gray-500 mt-0.5">
-                                                    {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} • {formatAge(child.age_in_months)}
+                                                    {child.gender === 'L' ? 'Laki-laki' : 'Perempuan'} â€¢ {formatAge(child.age_in_months)}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* PMT Compliance — Subtle card style */}
+                                    {/* PMT Compliance â€” Subtle card style */}
                                     <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
                                         <div className="flex items-center justify-between mb-2.5">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -233,7 +234,7 @@ export default function AntrianPrioritas() {
                                         </div>
                                     </div>
 
-                                    {/* Latest Data — Clean data grid */}
+                                    {/* Latest Data â€” Clean data grid */}
                                     <div className="bg-gray-50/60 rounded-xl p-4 border border-gray-100">
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data Terakhir</span>
@@ -268,7 +269,7 @@ export default function AntrianPrioritas() {
                                         )}
                                     </div>
 
-                                    {/* Footer — Clean with consistent button */}
+                                    {/* Footer â€” Clean with consistent button */}
                                     <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-gray-400 font-medium">Orang Tua</span>
@@ -290,3 +291,4 @@ export default function AntrianPrioritas() {
         </DashboardLayout>
     );
 }
+

@@ -10,47 +10,29 @@ import {
     Award,
 } from "lucide-react";
 import { assets } from "../../assets/assets";
+import { ORANG_TUA_SIDEBAR_NAV } from "../../constants/navigationConfigs";
+
+const ORANG_TUA_ICON_MAP = {
+    home: Home,
+    "file-text": FileText,
+    baby: Baby,
+    "utensils-crossed": UtensilsCrossed,
+    utensils: Utensils,
+    "message-circle": MessageCircle,
+    award: Award,
+};
 
 export default function SidebarOrangTua() {
     const [open, setOpen] = useState(false);
 
-    const links = [
-        {
-            label: "Dashboard",
-            href: "/dashboard",
-            icon: <Home className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Data Anak",
-            href: "/dashboard/anak",
-            icon: <Baby className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Nutri-Assist",
-            href: "/dashboard/nutri-assist",
-            icon: <UtensilsCrossed className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Jurnal Makan",
-            href: "/dashboard/jurnal-makan",
-            icon: <Utensils className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Konsultasi",
-            href: "/dashboard/konsultasi",
-            icon: <MessageCircle className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Poin & Badge",
-            href: "/dashboard/gamification",
-            icon: <Award className="text-white h-5 w-5 shrink-0" />,
-        },
-        {
-            label: "Riwayat",
-            href: "/dashboard/riwayat",
-            icon: <FileText className="text-white h-5 w-5 shrink-0" />,
-        },
-    ];
+    const links = ORANG_TUA_SIDEBAR_NAV.map((item) => {
+        const IconComponent = ORANG_TUA_ICON_MAP[item.icon];
+        return {
+            label: item.label,
+            href: item.href,
+            icon: <IconComponent className="text-white h-5 w-5 shrink-0" />,
+        };
+    });
 
     return (
         <>

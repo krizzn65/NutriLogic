@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { formatAge, getStatusColor, getStatusLabel } from "../../lib/utils";
 import { useDataCache } from "../../contexts/DataCacheContext";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
 import {
     ChevronLeft,
     Calendar,
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import AddChildModal from "./AddChildModal";
 import { assets } from '../../assets/assets';
+import logger from "../../lib/logger";
 
 export default function DataAnakDetail() {
     const { id } = useParams();
@@ -67,7 +68,7 @@ export default function DataAnakDetail() {
                 const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
                 setError(errorMessage);
             }
-            console.error('Child detail fetch error:', err);
+            logger.error('Child detail fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -82,7 +83,7 @@ export default function DataAnakDetail() {
                 invalidateCache('dashboard');
                 navigate('/dashboard/anak', { state: { message: 'Data anak berhasil dihapus.' } });
             } catch (err) {
-                console.error('Delete error:', err);
+                logger.error('Delete error:', err);
                 alert('Gagal menghapus data anak. Silakan coba lagi.');
             }
         }
@@ -888,4 +889,5 @@ function EmptyState({ message }) {
         </div>
     );
 }
+
 

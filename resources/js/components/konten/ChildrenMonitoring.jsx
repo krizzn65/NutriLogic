@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
 import {
@@ -16,6 +16,8 @@ import {
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { formatAge } from "../../lib/utils";
 import PageHeader from "../ui/PageHeader";
+import ChildrenMonitoringSkeleton from "../loading/ChildrenMonitoringSkeleton";
+import logger from "../../lib/logger";
 
 export default function ChildrenMonitoring() {
     const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export default function ChildrenMonitoring() {
                 setPosyandus(response.data.data);
                 setCachedData("admin_posyandus", response.data.data);
             } catch (err) {
-                console.error("Posyandus fetch error:", err);
+                logger.error("Posyandus fetch error:", err);
             }
         },
         [getCachedData, setCachedData],
@@ -120,7 +122,7 @@ export default function ChildrenMonitoring() {
                 const errorMessage =
                     err.response?.data?.message || "Gagal memuat data anak.";
                 setError(errorMessage);
-                console.error("Children fetch error:", err);
+                logger.error("Children fetch error:", err);
             } finally {
                 if (activeChildrenRequestId.current === requestId) {
                     setLoading(false);
@@ -204,14 +206,7 @@ export default function ChildrenMonitoring() {
     };
 
     if (loading && children.length === 0) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <ChildrenMonitoringSkeleton />;
     }
 
     return (
@@ -517,7 +512,7 @@ export default function ChildrenMonitoring() {
                                                 {child.gender === "L"
                                                     ? "Laki-laki"
                                                     : "Perempuan"}{" "}
-                                                •{" "}
+                                                â€¢{" "}
                                                 {child.age_months
                                                     ? formatAge(
                                                           child.age_months,
@@ -731,11 +726,11 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
     };
 
     const tabs = [
-        { id: "weighing", label: "Penimbangan", icon: "⚖️" },
-        { id: "vitamin", label: "Vitamin", icon: "💊" },
-        { id: "immunization", label: "Imunisasi", icon: "💉" },
-        { id: "meal", label: "Makanan", icon: "🍽️" },
-        { id: "pmt", label: "PMT", icon: "🥛" },
+        { id: "weighing", label: "Penimbangan", icon: "âš–ï¸" },
+        { id: "vitamin", label: "Vitamin", icon: "ðŸ’Š" },
+        { id: "immunization", label: "Imunisasi", icon: "ðŸ’‰" },
+        { id: "meal", label: "Makanan", icon: "ðŸ½ï¸" },
+        { id: "pmt", label: "PMT", icon: "ðŸ¥›" },
     ];
 
     // Get PMT status color
@@ -1075,7 +1070,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                     ) : (
                                         <div className="p-8 text-center">
                                             <div className="text-4xl mb-3">
-                                                💊
+                                                ðŸ’Š
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat vitamin
@@ -1137,7 +1132,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                     ) : (
                                         <div className="p-8 text-center">
                                             <div className="text-4xl mb-3">
-                                                💉
+                                                ðŸ’‰
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat imunisasi
@@ -1206,7 +1201,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                     ) : (
                                         <div className="p-8 text-center">
                                             <div className="text-4xl mb-3">
-                                                🍽️
+                                                ðŸ½ï¸
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat jurnal makan
@@ -1270,7 +1265,7 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
                                     ) : (
                                         <div className="p-8 text-center">
                                             <div className="text-4xl mb-3">
-                                                🥛
+                                                ðŸ¥›
                                             </div>
                                             <p className="text-gray-500 font-medium">
                                                 Belum ada riwayat PMT
@@ -1296,3 +1291,4 @@ function ChildDetailModal({ child, onClose, getStatusColor, getStatusLabel }) {
         </div>
     );
 }
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,6 +13,7 @@ import api from "../../lib/api";
 import CreditCard from "../credit-card-1";
 import logoScroll from "../../assets/logo_scroll.svg";
 import { assets } from "../../assets/assets";
+import logger from "../../lib/logger";
 
 export default function AddChildModal({
     isOpen,
@@ -104,7 +105,7 @@ export default function AddChildModal({
                 }));
             }
         } catch (err) {
-            console.error("Failed to fetch user data:", err);
+            logger.error("Failed to fetch user data:", err);
         }
     };
 
@@ -220,7 +221,7 @@ export default function AddChildModal({
             }
             onClose();
         } catch (err) {
-            console.error("Submit error:", err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 // Validation errors from backend
@@ -984,3 +985,4 @@ export default function AddChildModal({
         </AnimatePresence>
     );
 }
+
