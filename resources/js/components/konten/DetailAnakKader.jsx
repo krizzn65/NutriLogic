@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
 import { useDataCache } from "../../contexts/DataCacheContext";
@@ -7,6 +7,7 @@ import PageHeader from "../ui/PageHeader";
 import { assets } from "../../assets/assets";
 import { ChevronLeft } from "lucide-react";
 import DetailAnakKaderSkeleton from "../loading/DetailAnakKaderSkeleton";
+import logger from "../../lib/logger";
 
 export default function DetailAnakKader() {
     const navigate = useNavigate();
@@ -49,7 +50,7 @@ export default function DetailAnakKader() {
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Gagal memuat data anak. Silakan coba lagi.';
             setError(errorMessage);
-            console.error('Child fetch error:', err);
+            logger.error('Child fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -855,4 +856,5 @@ export default function DetailAnakKader() {
         </div>
     );
 }
+
 

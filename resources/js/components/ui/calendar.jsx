@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import api from '../../lib/api';
 import { Icon } from '@iconify/react';
+import logger from "../../lib/logger";
 
 const dayNames = ["MIN", "SEN", "SEL", "RAB", "KAM", "JUM", "SAB"];
 
@@ -56,7 +57,7 @@ export function Calendar({ schedules: propSchedules, currentDate: propCurrentDat
       const response = await api.get('/parent/calendar/schedules');
       setSchedules(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching schedules:', error);
+      logger.error('Error fetching schedules:', error);
     } finally {
       setLoading(false);
     }
@@ -173,3 +174,4 @@ export function Calendar({ schedules: propSchedules, currentDate: propCurrentDat
     </div>
   );
 }
+

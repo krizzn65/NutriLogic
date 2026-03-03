@@ -1,4 +1,5 @@
-import api from './api';
+﻿import api from './api';
+import logger from "./logger";
 
 const TOKEN_KEY = 'nutrilogic_token';
 const USER_KEY = 'nutrilogic_user';
@@ -48,7 +49,7 @@ export function getUser() {
   try {
     return JSON.parse(userStr);
   } catch (error) {
-    console.error('Error parsing user data:', error);
+    logger.error('Error parsing user data:', error);
     return null;
   }
 }
@@ -99,10 +100,11 @@ export async function logoutWithApi() {
     await api.post('/logout');
   } catch (error) {
     // Even if API call fails, clear local data
-    console.error('Logout API error:', error);
+    logger.error('Logout API error:', error);
   } finally {
     // Always clear local data
     logout();
   }
 }
+
 

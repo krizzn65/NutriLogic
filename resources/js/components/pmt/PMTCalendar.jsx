@@ -1,8 +1,9 @@
-import React, { useState, useEffect, memo, useCallback } from 'react';
+﻿import React, { useState, useEffect, memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import api from '../../lib/api';
 import CalendarSkeleton from './CalendarSkeleton';
+import logger from "../../lib/logger";
 
 
 const PMTCalendar = memo(function PMTCalendar({ childId }) {
@@ -27,7 +28,7 @@ const PMTCalendar = memo(function PMTCalendar({ childId }) {
             });
             setLogs(response.data.data || []);
         } catch (error) {
-            console.error('Error fetching PMT logs:', error);
+            logger.error('Error fetching PMT logs:', error);
         } finally {
             setLoading(false);
         }
@@ -67,9 +68,9 @@ const PMTCalendar = memo(function PMTCalendar({ childId }) {
 
     const getStatusEmoji = (status) => {
         const emojis = {
-            consumed: '✓',
+            consumed: 'âœ“',
             partial: '~',
-            refused: '✗',
+            refused: 'âœ—',
         };
         return emojis[status] || '';
     };
@@ -168,9 +169,9 @@ const PMTCalendar = memo(function PMTCalendar({ childId }) {
                                 <span className="text-sm font-medium">{day}</span>
                                 {status && (
                                     <span className="text-[10px] leading-none mt-0.5">
-                                        {status === 'consumed' && '✓'}
+                                        {status === 'consumed' && 'âœ“'}
                                         {status === 'partial' && '~'}
-                                        {status === 'refused' && '✗'}
+                                        {status === 'refused' && 'âœ—'}
                                     </span>
                                 )}
                             </div>
@@ -189,3 +190,4 @@ const PMTCalendar = memo(function PMTCalendar({ childId }) {
 });
 
 export default PMTCalendar;
+

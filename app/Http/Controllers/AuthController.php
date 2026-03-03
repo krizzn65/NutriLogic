@@ -18,7 +18,7 @@ class AuthController extends Controller
     }
     /**
      * Register a new user.
-     * 
+     *
      * Public endpoint that only allows registration with role 'ibu'.
      * Any other role sent by client will be overridden to 'ibu' for security.
      */
@@ -71,17 +71,8 @@ class AuthController extends Controller
                 ['ip' => $request->ip(), 'user_agent' => $request->userAgent()]
             );
 
-            // More specific error message for better UX
-            if ($emailExists && $phoneExists) {
-                $message = 'Email dan nomor telepon sudah terdaftar.';
-            } elseif ($emailExists) {
-                $message = 'Email sudah terdaftar. Gunakan email lain atau login dengan akun yang sudah ada.';
-            } else {
-                $message = 'Nomor telepon sudah terdaftar. Gunakan nomor lain atau login dengan akun yang sudah ada.';
-            }
-
             return response()->json([
-                'message' => $message,
+                'message' => 'Data registrasi tidak dapat digunakan. Gunakan kredensial lain atau masuk ke akun yang sudah ada.',
             ], 422);
         }
 
@@ -132,7 +123,7 @@ class AuthController extends Controller
         // Check if account is locked
         if ($this->loginAttemptService->isLocked($identifier, $ipAddress)) {
             $lockoutMinutes = $this->loginAttemptService->getLockoutTime($identifier, $ipAddress);
-            
+
             return response()->json([
                 'message' => "Akun terkunci karena terlalu banyak percobaan login gagal. Coba lagi dalam {$lockoutMinutes} menit.",
                 'locked_until' => $lockoutMinutes,
@@ -149,7 +140,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             // Record failed attempt
             $this->loginAttemptService->recordFailedAttempt($identifier, $ipAddress, $request->userAgent());
-            
+
             // Get remaining attempts
             $failedAttempts = $this->loginAttemptService->getFailedAttempts($identifier);
             $maxAttempts = $this->loginAttemptService->getMaxAttempts();
@@ -158,14 +149,14 @@ class AuthController extends Controller
             // Log failed login attempt
             if ($user) {
                 AdminActivityLogController::log(
-                    'login_failed', 
+                    'login_failed',
                     "Login gagal untuk user: {$user->name} (Attempt {$failedAttempts}/{$maxAttempts})",
-                    'User', 
+                    'User',
                     $user->id,
                     ['ip' => $ipAddress, 'user_agent' => $request->userAgent()]
                 );
             }
-            
+
             $message = 'Email/No. Telepon atau password salah.';
             if ($remainingAttempts > 0 && $remainingAttempts <= 2) {
                 $message .= " Sisa percobaan: {$remainingAttempts}x.";
@@ -209,16 +200,16 @@ class AuthController extends Controller
 
     /**
      * Logout user (revoke current token).
-     * 
+     *
      * Requires authentication via Sanctum middleware.
      */
     public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         // Log logout
         AdminActivityLogController::log('logout', "User logout: {$user->name} ({$user->role})", 'User', $user->id);
-        
+
         // Delete current access token
         $user->currentAccessToken()->delete();
 
@@ -229,14 +220,14 @@ class AuthController extends Controller
 
     /**
      * Get current authenticated user.
-     * 
+     *
      * Requires authentication via Sanctum middleware.
      */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
         $user->load('posyandu');
-        
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -251,11 +242,10 @@ class AuthController extends Controller
                     'name' => $user->posyandu->name,
                 ] : null,
                 'role' => $user->role,
-                'profile_photo_url' => $user->profile_photo_path 
-                    ? asset('storage/' . $user->profile_photo_path) 
+                'profile_photo_url' => $user->profile_photo_path
+                    ? asset('storage/' . $user->profile_photo_path)
                     : null,
             ],
         ], 200);
     }
 }
-

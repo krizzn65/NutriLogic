@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx-js-style';
+﻿import * as XLSX from 'xlsx-js-style';
+import logger from "../lib/logger";
 
 /**
  * Export Activity Logs to Excel with Professional Styling
@@ -125,7 +126,7 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
                 ];
                 logsSheetData.push(row);
             } catch (err) {
-                console.error(`Error processing log at index ${index}:`, err);
+                logger.error(`Error processing log at index ${index}:`, err);
             }
         });
 
@@ -374,14 +375,14 @@ export function exportActivityLogsToExcel(logsData, filters = {}) {
         try {
             XLSX.writeFile(wb, filename);
         } catch (writeError) {
-            console.error('Error writing Excel file:', writeError);
+            logger.error('Error writing Excel file:', writeError);
             throw new Error('Gagal menyimpan file Excel. Pastikan tidak ada file dengan nama yang sama yang sedang terbuka.');
         }
 
         return { success: true, filename };
 
     } catch (error) {
-        console.error('Excel export error:', error);
+        logger.error('Excel export error:', error);
         
         // Provide more specific error messages
         let errorMessage = 'Gagal membuat file Excel';
@@ -419,7 +420,7 @@ function formatAction(action) {
 
         return actionMap[action.toLowerCase()] || action;
     } catch (error) {
-        console.error('Error formatting action:', error);
+        logger.error('Error formatting action:', error);
         return action || '-';
     }
 }
@@ -444,7 +445,7 @@ function calculateActivityStats(logsData) {
                 const action = log.action || 'unknown';
                 stats.actions[action] = (stats.actions[action] || 0) + 1;
             } catch (err) {
-                console.error('Error counting action:', err);
+                logger.error('Error counting action:', err);
             }
         });
 
@@ -465,7 +466,7 @@ function calculateActivityStats(logsData) {
                 }
                 userCounts[userId].count++;
             } catch (err) {
-                console.error('Error counting user activity:', err);
+                logger.error('Error counting user activity:', err);
             }
         });
 
@@ -474,8 +475,9 @@ function calculateActivityStats(logsData) {
             .sort((a, b) => b.count - a.count);
 
     } catch (error) {
-        console.error('Error calculating statistics:', error);
+        logger.error('Error calculating statistics:', error);
     }
 
     return stats;
 }
+

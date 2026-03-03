@@ -1,14 +1,45 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Calendar, Ruler, Weight, FileText, Save, X, ChevronDown, Search, Phone, Mail, AlertCircle, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import {
+    User,
+    Calendar,
+    Ruler,
+    Weight,
+    FileText,
+    Save,
+    X,
+    ChevronDown,
+    Search,
+    Phone,
+    Mail,
+    AlertCircle,
+    ChevronLeft,
+    ChevronRight,
+    Check,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
-import PageHeader from "../dashboard/PageHeader";
+import PageHeader from "../ui/PageHeader";
+import logger from "../../lib/logger";
 
 // InputField component defined outside to prevent re-creation on every render
-const InputField = ({ label, name, type = "text", placeholder, icon: Icon, required = false, formData, handleChange, errors, ...props }) => (
+const InputField = ({
+    label,
+    name,
+    type = "text",
+    placeholder,
+    icon: Icon,
+    required = false,
+    formData,
+    handleChange,
+    errors,
+    ...props
+}) => (
     <div className="w-full">
-        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
+        <label
+            htmlFor={`tambah-anak-${name}`}
+            className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1"
+        >
             {label} {required && <span className="text-red-500">*</span>}
         </label>
         <div className="relative group">
@@ -16,12 +47,13 @@ const InputField = ({ label, name, type = "text", placeholder, icon: Icon, requi
                 <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
             )}
             <input
+                id={`tambah-anak-${name}`}
                 type={type}
                 name={name}
                 value={formData[name]}
                 onChange={handleChange}
                 placeholder={placeholder}
-                className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${errors[name] ? 'border-red-500 bg-red-50/50' : ''}`}
+                className={`w-full ${Icon ? "pl-11" : "pl-4"} pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white border focus:border-blue-500 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-900 placeholder:text-gray-400 ${errors[name] ? "border-red-500 bg-red-50/50" : ""}`}
                 {...props}
             />
         </div>
@@ -75,13 +107,22 @@ export default function TambahAnakKaderForm() {
 
         // Click outside handler
         const handleClickOutside = (event) => {
-            if (dateWrapperRef.current && !dateWrapperRef.current.contains(event.target)) {
+            if (
+                dateWrapperRef.current &&
+                !dateWrapperRef.current.contains(event.target)
+            ) {
                 setIsDatePickerOpen(false);
             }
-            if (genderWrapperRef.current && !genderWrapperRef.current.contains(event.target)) {
+            if (
+                genderWrapperRef.current &&
+                !genderWrapperRef.current.contains(event.target)
+            ) {
                 setIsGenderDropdownOpen(false);
             }
-            if (parentWrapperRef.current && !parentWrapperRef.current.contains(event.target)) {
+            if (
+                parentWrapperRef.current &&
+                !parentWrapperRef.current.contains(event.target)
+            ) {
                 setIsParentDropdownOpen(false);
             }
         };
@@ -95,17 +136,17 @@ export default function TambahAnakKaderForm() {
     const fetchParents = async () => {
         try {
             setParentsLoading(true);
-            const response = await api.get('/kader/parents');
+            const response = await api.get("/kader/parents");
             const parentsData = response.data.data || [];
             setParents(parentsData);
 
             if (parentsData.length === 0) {
-                console.warn('No parents found in this posyandu');
+                console.warn("No parents found in this posyandu");
             }
         } catch (err) {
-            console.error('Failed to fetch parents:', err);
-            console.error('Error response:', err.response?.data);
-            setError('Gagal memuat data orang tua. Silakan refresh halaman.');
+            logger.error("Failed to fetch parents:", err);
+            logger.error("Error response:", err.response?.data);
+            setError("Gagal memuat data orang tua. Silakan refresh halaman.");
         } finally {
             setParentsLoading(false);
         }
@@ -113,15 +154,15 @@ export default function TambahAnakKaderForm() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
 
         if (errors[name]) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
                 ...prev,
-                [name]: null
+                [name]: null,
             }));
         }
     };
@@ -159,14 +200,17 @@ export default function TambahAnakKaderForm() {
 
             // Check if date is in the future
             if (birthDate > today) {
-                newErrors.birth_date = "Tanggal lahir tidak boleh di masa depan";
+                newErrors.birth_date =
+                    "Tanggal lahir tidak boleh di masa depan";
             } else {
                 // Calculate age in months
-                const ageInMonths = (today - birthDate) / (1000 * 60 * 60 * 24 * 30.44);
+                const ageInMonths =
+                    (today - birthDate) / (1000 * 60 * 60 * 24 * 30.44);
 
                 // Check if child is too old (>60 months = 5 years)
                 if (ageInMonths > 60) {
-                    newErrors.birth_date = "Anak harus berusia maksimal 60 bulan (5 tahun)";
+                    newErrors.birth_date =
+                        "Anak harus berusia maksimal 60 bulan (5 tahun)";
                 }
 
                 // Check if age is negative (shouldn't happen, but double-check)
@@ -180,12 +224,22 @@ export default function TambahAnakKaderForm() {
             newErrors.gender = "Jenis kelamin wajib dipilih";
         }
 
-        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0.5 || parseFloat(formData.birth_weight_kg) > 6)) {
-            newErrors.birth_weight_kg = "Berat lahir harus antara 0.5-6 kg (normal bayi)";
+        if (
+            formData.birth_weight_kg &&
+            (parseFloat(formData.birth_weight_kg) < 0.5 ||
+                parseFloat(formData.birth_weight_kg) > 6)
+        ) {
+            newErrors.birth_weight_kg =
+                "Berat lahir harus antara 0.5-6 kg (normal bayi)";
         }
 
-        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 30 || parseFloat(formData.birth_height_cm) > 60)) {
-            newErrors.birth_height_cm = "Tinggi lahir harus antara 30-60 cm (normal bayi)";
+        if (
+            formData.birth_height_cm &&
+            (parseFloat(formData.birth_height_cm) < 30 ||
+                parseFloat(formData.birth_height_cm) > 60)
+        ) {
+            newErrors.birth_height_cm =
+                "Tinggi lahir harus antara 30-60 cm (normal bayi)";
         }
 
         setErrors(newErrors);
@@ -208,8 +262,12 @@ export default function TambahAnakKaderForm() {
                 nik: formData.nik || null,
                 birth_date: formData.birth_date,
                 gender: formData.gender,
-                birth_weight_kg: formData.birth_weight_kg ? parseFloat(formData.birth_weight_kg) : null,
-                birth_height_cm: formData.birth_height_cm ? parseFloat(formData.birth_height_cm) : null,
+                birth_weight_kg: formData.birth_weight_kg
+                    ? parseFloat(formData.birth_weight_kg)
+                    : null,
+                birth_height_cm: formData.birth_height_cm
+                    ? parseFloat(formData.birth_height_cm)
+                    : null,
                 notes: formData.notes || null,
             };
 
@@ -221,40 +279,24 @@ export default function TambahAnakKaderForm() {
                 dataToSubmit.parent_phone = formData.parent_phone || null;
             }
 
-            const response = await api.post('/kader/children', dataToSubmit);
+            const response = await api.post("/kader/children", dataToSubmit);
+            const successMessage = response.data?.parent_info
+                ? "Data anak dan orang tua berhasil ditambahkan. Password awal tidak ditampilkan di aplikasi."
+                : "Data anak berhasil ditambahkan!";
 
-            // Check if new parent was created and password was generated
-            if (response.data.parent_info) {
-                setGeneratedPasswordInfo(response.data.parent_info);
-                setShowPasswordModal(true);
-
-                // Clear form
-                setFormData({
-                    parent_id: "",
-                    parent_name: "",
-                    parent_email: "",
-                    parent_phone: "",
-                    full_name: "",
-                    nik: "",
-                    birth_date: "",
-                    gender: "",
-                    birth_weight_kg: "",
-                    birth_height_cm: "",
-                    notes: "",
-                });
-            } else {
-                // Navigate immediately if no password to show
-                navigate('/dashboard/data-anak', {
-                    state: { message: 'Data anak berhasil ditambahkan!' }
-                });
-            }
+            navigate("/dashboard/data-anak", {
+                state: { message: successMessage },
+            });
         } catch (err) {
-            console.error('Submit error:', err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
-                setError(err.response?.data?.message || 'Gagal menambahkan data anak. Silakan coba lagi.');
+                setError(
+                    err.response?.data?.message ||
+                        "Gagal menambahkan data anak. Silakan coba lagi.",
+                );
             }
         } finally {
             setLoading(false);
@@ -265,7 +307,10 @@ export default function TambahAnakKaderForm() {
         <div className="flex flex-col flex-1 w-full h-full overflow-auto bg-gray-50/50">
             {/* Header - Full Width */}
             <div className="w-full px-4 md:px-8 pt-4 md:pt-8">
-                <PageHeader title="Tambah Data Anak" subtitle="Formulir Pendaftaran" />
+                <PageHeader
+                    title="Tambah Data Anak"
+                    subtitle="Formulir Pendaftaran"
+                />
             </div>
 
             {/* Content - Centered with max-width */}
@@ -286,27 +331,31 @@ export default function TambahAnakKaderForm() {
                                     <User className="w-5 h-5 text-blue-500" />
                                     Data Orang Tua
                                 </h2>
-                                <p className="text-sm text-gray-500 mt-1">Informasi orang tua atau wali anak</p>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Informasi orang tua atau wali anak
+                                </p>
                             </div>
 
                             <div className="flex bg-gray-100 p-1 rounded-xl">
                                 <button
                                     type="button"
                                     onClick={() => setUseExistingParent(true)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${useExistingParent
-                                        ? 'bg-white text-blue-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                        }`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        useExistingParent
+                                            ? "bg-white text-blue-600 shadow-sm"
+                                            : "text-gray-500 hover:text-gray-700"
+                                    }`}
                                 >
                                     Pilih Existing
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setUseExistingParent(false)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!useExistingParent
-                                        ? 'bg-white text-blue-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                        }`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        !useExistingParent
+                                            ? "bg-white text-blue-600 shadow-sm"
+                                            : "text-gray-500 hover:text-gray-700"
+                                    }`}
                                 >
                                     Buat Baru
                                 </button>
@@ -315,36 +364,72 @@ export default function TambahAnakKaderForm() {
 
                         {useExistingParent ? (
                             <div className="w-full" ref={parentWrapperRef}>
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
-                                    Pilih Orang Tua <span className="text-red-500">*</span>
+                                <label
+                                    htmlFor="tambah-anak-parent-select"
+                                    className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1"
+                                >
+                                    Pilih Orang Tua{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <button
+                                        id="tambah-anak-parent-select"
                                         type="button"
-                                        onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
+                                        onClick={() =>
+                                            setIsParentDropdownOpen(
+                                                !isParentDropdownOpen,
+                                            )
+                                        }
                                         disabled={parentsLoading}
-                                        className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed ${errors.parent_id ? 'border-red-500 bg-red-50/50' : 'border-transparent'}`}
+                                        className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed ${errors.parent_id ? "border-red-500 bg-red-50/50" : "border-transparent"}`}
                                     >
-                                        <span className={!formData.parent_id ? "text-gray-400" : ""}>
+                                        <span
+                                            className={
+                                                !formData.parent_id
+                                                    ? "text-gray-400"
+                                                    : ""
+                                            }
+                                        >
                                             {parentsLoading
                                                 ? "Memuat data orang tua..."
                                                 : formData.parent_id
-                                                    ? parents.find(p => p.id === parseInt(formData.parent_id))?.name || "Orang Tua Terpilih"
-                                                    : "-- Pilih Orang Tua --"}
+                                                  ? parents.find(
+                                                        (p) =>
+                                                            p.id ===
+                                                            parseInt(
+                                                                formData.parent_id,
+                                                            ),
+                                                    )?.name ||
+                                                    "Orang Tua Terpilih"
+                                                  : "-- Pilih Orang Tua --"}
                                         </span>
                                         {parentsLoading ? (
                                             <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
                                         ) : (
-                                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? "rotate-180" : ""}`} />
+                                            <ChevronDown
+                                                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? "rotate-180" : ""}`}
+                                            />
                                         )}
                                     </button>
 
                                     <AnimatePresence>
                                         {isParentDropdownOpen && (
                                             <motion.div
-                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                initial={{
+                                                    opacity: 0,
+                                                    y: 10,
+                                                    scale: 0.95,
+                                                }}
+                                                animate={{
+                                                    opacity: 1,
+                                                    y: 0,
+                                                    scale: 1,
+                                                }}
+                                                exit={{
+                                                    opacity: 0,
+                                                    y: 10,
+                                                    scale: 0.95,
+                                                }}
                                                 transition={{ duration: 0.2 }}
                                                 className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                                             >
@@ -355,50 +440,95 @@ export default function TambahAnakKaderForm() {
                                                             type="text"
                                                             placeholder="Cari nama orang tua..."
                                                             value={parentSearch}
-                                                            onChange={(e) => setParentSearch(e.target.value)}
+                                                            onChange={(e) =>
+                                                                setParentSearch(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
                                                             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-                                                            onClick={(e) => e.stopPropagation()}
+                                                            onClick={(e) =>
+                                                                e.stopPropagation()
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="max-h-60 overflow-y-auto">
-                                                    {parents.filter(p => p.name.toLowerCase().includes(parentSearch.toLowerCase())).length > 0 ? (
+                                                    {parents.filter((p) =>
+                                                        p.name
+                                                            .toLowerCase()
+                                                            .includes(
+                                                                parentSearch.toLowerCase(),
+                                                            ),
+                                                    ).length > 0 ? (
                                                         parents
-                                                            .filter(p => p.name.toLowerCase().includes(parentSearch.toLowerCase()))
+                                                            .filter((p) =>
+                                                                p.name
+                                                                    .toLowerCase()
+                                                                    .includes(
+                                                                        parentSearch.toLowerCase(),
+                                                                    ),
+                                                            )
                                                             .map((parent) => (
-                                                                <div
-                                                                    key={parent.id}
+                                                                <button
+                                                                    type="button"
+                                                                    key={
+                                                                        parent.id
+                                                                    }
                                                                     onClick={() => {
-                                                                        handleChange({ target: { name: 'parent_id', value: parent.id } });
-                                                                        setIsParentDropdownOpen(false);
+                                                                        handleChange(
+                                                                            {
+                                                                                target: {
+                                                                                    name: "parent_id",
+                                                                                    value: parent.id,
+                                                                                },
+                                                                            },
+                                                                        );
+                                                                        setIsParentDropdownOpen(
+                                                                            false,
+                                                                        );
                                                                     }}
-                                                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
+                                                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
                                                                 >
                                                                     <div>
-                                                                        <span className={`block text-sm ${parseInt(formData.parent_id) === parent.id ? 'text-blue-700 font-semibold' : 'text-gray-700 font-medium group-hover:text-blue-700'}`}>
-                                                                            {parent.name}
+                                                                        <span
+                                                                            className={`block text-sm ${parseInt(formData.parent_id) === parent.id ? "text-blue-700 font-semibold" : "text-gray-700 font-medium group-hover:text-blue-700"}`}
+                                                                        >
+                                                                            {
+                                                                                parent.name
+                                                                            }
                                                                         </span>
                                                                         {parent.phone && (
                                                                             <span className="text-xs text-gray-400 group-hover:text-blue-400">
-                                                                                {parent.phone}
+                                                                                {
+                                                                                    parent.phone
+                                                                                }
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                    {parseInt(formData.parent_id) === parent.id && (
+                                                                    {parseInt(
+                                                                        formData.parent_id,
+                                                                    ) ===
+                                                                        parent.id && (
                                                                         <Check className="w-4 h-4 text-blue-600" />
                                                                     )}
-                                                                </div>
+                                                                </button>
                                                             ))
                                                     ) : (
                                                         <div className="px-4 py-8 text-center">
                                                             <p className="text-gray-500 text-sm mb-2">
                                                                 {parentSearch
-                                                                    ? 'Tidak ada data orang tua yang sesuai dengan pencarian'
-                                                                    : 'Belum ada data orang tua di posyandu ini'}
+                                                                    ? "Tidak ada data orang tua yang sesuai dengan pencarian"
+                                                                    : "Belum ada data orang tua di posyandu ini"}
                                                             </p>
                                                             {!parentSearch && (
                                                                 <p className="text-xs text-gray-400">
-                                                                    Gunakan opsi "Buat Baru" untuk menambahkan orang tua baru
+                                                                    Gunakan opsi
+                                                                    "Buat Baru"
+                                                                    untuk
+                                                                    menambahkan
+                                                                    orang tua
+                                                                    baru
                                                                 </p>
                                                             )}
                                                         </div>
@@ -460,7 +590,9 @@ export default function TambahAnakKaderForm() {
                                 <User className="w-5 h-5 text-orange-600" />
                                 Data Anak
                             </h2>
-                            <p className="text-sm text-gray-500 mt-1">Informasi lengkap anak yang akan didaftarkan</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Informasi lengkap anak yang akan didaftarkan
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -488,26 +620,51 @@ export default function TambahAnakKaderForm() {
                                     handleChange={handleChange}
                                     errors={errors}
                                 />
-                                <p className="mt-1 text-xs text-gray-400 ml-1">Harus 16 digit angka</p>
+                                <p className="mt-1 text-xs text-gray-400 ml-1">
+                                    Harus 16 digit angka
+                                </p>
                             </div>
 
                             {/* Custom Date Picker */}
                             <div className="relative" ref={dateWrapperRef}>
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
-                                    Tanggal Lahir <span className="text-red-500">*</span>
+                                <label
+                                    htmlFor="tambah-anak-birth-date"
+                                    className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1"
+                                >
+                                    Tanggal Lahir{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <button
+                                    id="tambah-anak-birth-date"
                                     type="button"
-                                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.birth_date ? 'border-red-500 bg-red-50/50' : 'border-transparent'}`}
+                                    onClick={() =>
+                                        setIsDatePickerOpen(!isDatePickerOpen)
+                                    }
+                                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.birth_date ? "border-red-500 bg-red-50/50" : "border-transparent"}`}
                                 >
-                                    <span className={!formData.birth_date ? "text-gray-400" : ""}>
-                                        {formData.birth_date ? new Date(formData.birth_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : "dd/mm/yyyy"}
+                                    <span
+                                        className={
+                                            !formData.birth_date
+                                                ? "text-gray-400"
+                                                : ""
+                                        }
+                                    >
+                                        {formData.birth_date
+                                            ? new Date(
+                                                  formData.birth_date,
+                                              ).toLocaleDateString("id-ID", {
+                                                  day: "numeric",
+                                                  month: "long",
+                                                  year: "numeric",
+                                              })
+                                            : "dd/mm/yyyy"}
                                     </span>
                                     <Calendar className="w-5 h-5 text-gray-400" />
                                 </button>
                                 {!errors.birth_date && (
-                                    <p className="mt-1 text-xs text-gray-400 ml-1">Usia anak maksimal 60 bulan (5 tahun)</p>
+                                    <p className="mt-1 text-xs text-gray-400 ml-1">
+                                        Usia anak maksimal 60 bulan (5 tahun)
+                                    </p>
                                 )}
                                 {errors.birth_date && (
                                     <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1 ml-1">
@@ -519,26 +676,62 @@ export default function TambahAnakKaderForm() {
                                 <AnimatePresence>
                                     {isDatePickerOpen && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            initial={{
+                                                opacity: 0,
+                                                y: 10,
+                                                scale: 0.95,
+                                            }}
+                                            animate={{
+                                                opacity: 1,
+                                                y: 0,
+                                                scale: 1,
+                                            }}
+                                            exit={{
+                                                opacity: 0,
+                                                y: 10,
+                                                scale: 0.95,
+                                            }}
                                             transition={{ duration: 0.2 }}
                                             className="absolute z-50 mt-2 p-4 bg-white border border-gray-200 rounded-2xl shadow-xl w-[320px]"
                                         >
                                             <div className="flex items-center justify-between mb-4">
                                                 <button
                                                     type="button"
-                                                    onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() - 1)))}
+                                                    onClick={() =>
+                                                        setPickerDate(
+                                                            new Date(
+                                                                pickerDate.setMonth(
+                                                                    pickerDate.getMonth() -
+                                                                        1,
+                                                                ),
+                                                            ),
+                                                        )
+                                                    }
                                                     className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                                                 >
                                                     <ChevronLeft className="w-5 h-5 text-gray-600" />
                                                 </button>
                                                 <span className="font-semibold text-gray-800">
-                                                    {pickerDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                    {pickerDate.toLocaleDateString(
+                                                        "id-ID",
+                                                        {
+                                                            month: "long",
+                                                            year: "numeric",
+                                                        },
+                                                    )}
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setPickerDate(new Date(pickerDate.setMonth(pickerDate.getMonth() + 1)))}
+                                                    onClick={() =>
+                                                        setPickerDate(
+                                                            new Date(
+                                                                pickerDate.setMonth(
+                                                                    pickerDate.getMonth() +
+                                                                        1,
+                                                                ),
+                                                            ),
+                                                        )
+                                                    }
                                                     className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                                                 >
                                                     <ChevronRight className="w-5 h-5 text-gray-600" />
@@ -546,8 +739,19 @@ export default function TambahAnakKaderForm() {
                                             </div>
 
                                             <div className="grid grid-cols-7 mb-2">
-                                                {['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'].map((day) => (
-                                                    <div key={day} className="text-xs font-medium text-gray-400 text-center py-1">
+                                                {[
+                                                    "Mg",
+                                                    "Sn",
+                                                    "Sl",
+                                                    "Rb",
+                                                    "Km",
+                                                    "Jm",
+                                                    "Sb",
+                                                ].map((day) => (
+                                                    <div
+                                                        key={day}
+                                                        className="text-xs font-medium text-gray-400 text-center py-1"
+                                                    >
                                                         {day}
                                                     </div>
                                                 ))}
@@ -555,37 +759,78 @@ export default function TambahAnakKaderForm() {
 
                                             <div className="grid grid-cols-7 gap-1">
                                                 {(() => {
-                                                    const daysInMonth = new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 0).getDate();
-                                                    const firstDay = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), 1).getDay();
+                                                    const daysInMonth =
+                                                        new Date(
+                                                            pickerDate.getFullYear(),
+                                                            pickerDate.getMonth() +
+                                                                1,
+                                                            0,
+                                                        ).getDate();
+                                                    const firstDay = new Date(
+                                                        pickerDate.getFullYear(),
+                                                        pickerDate.getMonth(),
+                                                        1,
+                                                    ).getDay();
                                                     const days = [];
 
-                                                    for (let i = 0; i < firstDay; i++) {
-                                                        days.push(<div key={`empty-${i}`} className="w-8 h-8" />);
+                                                    for (
+                                                        let i = 0;
+                                                        i < firstDay;
+                                                        i++
+                                                    ) {
+                                                        days.push(
+                                                            <div
+                                                                key={`empty-${i}`}
+                                                                className="w-8 h-8"
+                                                            />,
+                                                        );
                                                     }
 
-                                                    for (let i = 1; i <= daysInMonth; i++) {
-                                                        const currentDateStr = `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                                                        const isSelected = formData.birth_date === currentDateStr;
-                                                        const isToday = new Date().toISOString().split('T')[0] === currentDateStr;
+                                                    for (
+                                                        let i = 1;
+                                                        i <= daysInMonth;
+                                                        i++
+                                                    ) {
+                                                        const currentDateStr = `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
+                                                        const isSelected =
+                                                            formData.birth_date ===
+                                                            currentDateStr;
+                                                        const isToday =
+                                                            new Date()
+                                                                .toISOString()
+                                                                .split(
+                                                                    "T",
+                                                                )[0] ===
+                                                            currentDateStr;
 
                                                         days.push(
                                                             <button
                                                                 key={i}
                                                                 type="button"
                                                                 onClick={() => {
-                                                                    handleChange({ target: { name: 'birth_date', value: currentDateStr } });
-                                                                    setIsDatePickerOpen(false);
+                                                                    handleChange(
+                                                                        {
+                                                                            target: {
+                                                                                name: "birth_date",
+                                                                                value: currentDateStr,
+                                                                            },
+                                                                        },
+                                                                    );
+                                                                    setIsDatePickerOpen(
+                                                                        false,
+                                                                    );
                                                                 }}
                                                                 className={`w-8 h-8 text-sm rounded-full flex items-center justify-center transition-all
-                                                                    ${isSelected
-                                                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                                                                        : isToday
-                                                                            ? 'text-blue-600 font-bold bg-blue-50'
-                                                                            : 'text-gray-700 hover:bg-gray-100'
+                                                                    ${
+                                                                        isSelected
+                                                                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/30"
+                                                                            : isToday
+                                                                              ? "text-blue-600 font-bold bg-blue-50"
+                                                                              : "text-gray-700 hover:bg-gray-100"
                                                                     }`}
                                                             >
                                                                 {i}
-                                                            </button>
+                                                            </button>,
                                                         );
                                                     }
                                                     return days;
@@ -598,48 +843,98 @@ export default function TambahAnakKaderForm() {
 
                             {/* Custom Gender Dropdown */}
                             <div className="relative" ref={genderWrapperRef}>
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
-                                    Jenis Kelamin <span className="text-red-500">*</span>
+                                <label
+                                    htmlFor="tambah-anak-gender"
+                                    className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1"
+                                >
+                                    Jenis Kelamin{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <button
+                                    id="tambah-anak-gender"
                                     type="button"
-                                    onClick={() => setIsGenderDropdownOpen(!isGenderDropdownOpen)}
-                                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.gender ? 'border-red-500 bg-red-50/50' : 'border-transparent'}`}
+                                    onClick={() =>
+                                        setIsGenderDropdownOpen(
+                                            !isGenderDropdownOpen,
+                                        )
+                                    }
+                                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-left text-gray-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all flex items-center justify-between ${errors.gender ? "border-red-500 bg-red-50/50" : "border-transparent"}`}
                                 >
-                                    <span className={!formData.gender ? "text-gray-400" : ""}>
-                                        {formData.gender === 'L' ? 'Laki-laki' : formData.gender === 'P' ? 'Perempuan' : 'Pilih jenis kelamin'}
+                                    <span
+                                        className={
+                                            !formData.gender
+                                                ? "text-gray-400"
+                                                : ""
+                                        }
+                                    >
+                                        {formData.gender === "L"
+                                            ? "Laki-laki"
+                                            : formData.gender === "P"
+                                              ? "Perempuan"
+                                              : "Pilih jenis kelamin"}
                                     </span>
-                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isGenderDropdownOpen ? "rotate-180" : ""}`} />
+                                    <ChevronDown
+                                        className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isGenderDropdownOpen ? "rotate-180" : ""}`}
+                                    />
                                 </button>
 
                                 <AnimatePresence>
                                     {isGenderDropdownOpen && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            initial={{
+                                                opacity: 0,
+                                                y: 10,
+                                                scale: 0.95,
+                                            }}
+                                            animate={{
+                                                opacity: 1,
+                                                y: 0,
+                                                scale: 1,
+                                            }}
+                                            exit={{
+                                                opacity: 0,
+                                                y: 10,
+                                                scale: 0.95,
+                                            }}
                                             transition={{ duration: 0.2 }}
                                             className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                                         >
                                             {[
-                                                { value: 'L', label: 'Laki-laki' },
-                                                { value: 'P', label: 'Perempuan' }
+                                                {
+                                                    value: "L",
+                                                    label: "Laki-laki",
+                                                },
+                                                {
+                                                    value: "P",
+                                                    label: "Perempuan",
+                                                },
                                             ].map((option) => (
-                                                <div
+                                                <button
+                                                    type="button"
                                                     key={option.value}
                                                     onClick={() => {
-                                                        handleChange({ target: { name: 'gender', value: option.value } });
-                                                        setIsGenderDropdownOpen(false);
+                                                        handleChange({
+                                                            target: {
+                                                                name: "gender",
+                                                                value: option.value,
+                                                            },
+                                                        });
+                                                        setIsGenderDropdownOpen(
+                                                            false,
+                                                        );
                                                     }}
-                                                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
+                                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
                                                 >
-                                                    <span className={`text-sm ${formData.gender === option.value ? 'text-blue-700 font-semibold' : 'text-gray-700 font-medium group-hover:text-blue-700'}`}>
+                                                    <span
+                                                        className={`text-sm ${formData.gender === option.value ? "text-blue-700 font-semibold" : "text-gray-700 font-medium group-hover:text-blue-700"}`}
+                                                    >
                                                         {option.label}
                                                     </span>
-                                                    {formData.gender === option.value && (
+                                                    {formData.gender ===
+                                                        option.value && (
                                                         <Check className="w-4 h-4 text-blue-600" />
                                                     )}
-                                                </div>
+                                                </button>
                                             ))}
                                         </motion.div>
                                     )}
@@ -665,7 +960,9 @@ export default function TambahAnakKaderForm() {
                                         handleChange={handleChange}
                                         errors={errors}
                                     />
-                                    <p className="mt-1 text-xs text-gray-400 ml-1">Normal: 0.5-6 kg</p>
+                                    <p className="mt-1 text-xs text-gray-400 ml-1">
+                                        Normal: 0.5-6 kg
+                                    </p>
                                 </div>
                                 <div>
                                     <InputField
@@ -679,15 +976,21 @@ export default function TambahAnakKaderForm() {
                                         handleChange={handleChange}
                                         errors={errors}
                                     />
-                                    <p className="mt-1 text-xs text-gray-400 ml-1">Normal: 30-60 cm</p>
+                                    <p className="mt-1 text-xs text-gray-400 ml-1">
+                                        Normal: 30-60 cm
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1">
+                                <label
+                                    htmlFor="tambah-anak-notes"
+                                    className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block ml-1"
+                                >
                                     Catatan (Opsional)
                                 </label>
                                 <textarea
+                                    id="tambah-anak-notes"
                                     name="notes"
                                     value={formData.notes}
                                     onChange={handleChange}
@@ -703,7 +1006,7 @@ export default function TambahAnakKaderForm() {
                     <div className="flex items-center justify-end gap-3 pt-4">
                         <button
                             type="button"
-                            onClick={() => navigate('/dashboard/data-anak')}
+                            onClick={() => navigate("/dashboard/data-anak")}
                             className="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium"
                             disabled={loading}
                         >
@@ -738,41 +1041,68 @@ export default function TambahAnakKaderForm() {
                             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Check className="w-8 h-8 text-green-600" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Akun Orang Tua Dibuat!</h3>
-                            <p className="text-sm text-gray-600">Data berhasil disimpan. Segera informasikan password ke orang tua.</p>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                Akun Orang Tua Dibuat!
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                Data berhasil disimpan. Segera informasikan
+                                password ke orang tua.
+                            </p>
                         </div>
 
                         <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
                             <div className="space-y-3">
                                 <div>
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Orang Tua</label>
-                                    <p className="text-lg font-bold text-gray-900">{generatedPasswordInfo.name}</p>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        Nama Orang Tua
+                                    </p>
+                                    <p className="text-lg font-bold text-gray-900">
+                                        {generatedPasswordInfo.name}
+                                    </p>
                                 </div>
                                 {generatedPasswordInfo.contact && (
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email/Telepon</label>
-                                        <p className="text-sm font-medium text-gray-700">{generatedPasswordInfo.contact}</p>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            Email/Telepon
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-700">
+                                            {generatedPasswordInfo.contact}
+                                        </p>
                                     </div>
                                 )}
                                 <div className="pt-3 border-t-2 border-blue-200">
-                                    <label className="text-xs font-semibold text-blue-700 uppercase tracking-wider flex items-center gap-2">
+                                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider flex items-center gap-2">
                                         <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
                                         Password Login (PENTING!)
-                                    </label>
+                                    </p>
                                     <div className="flex items-center gap-2 mt-2">
                                         <code className="flex-1 text-2xl font-bold text-blue-600 bg-white px-4 py-3 rounded-lg border-2 border-blue-300 tracking-wider">
                                             {generatedPasswordInfo.password}
                                         </code>
                                         <button
                                             onClick={() => {
-                                                navigator.clipboard.writeText(generatedPasswordInfo.password);
-                                                alert('Password berhasil disalin!');
+                                                navigator.clipboard.writeText(
+                                                    generatedPasswordInfo.password,
+                                                );
+                                                alert(
+                                                    "Password berhasil disalin!",
+                                                );
                                             }}
                                             className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                             title="Salin password"
                                         >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            <svg
+                                                className="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                                />
                                             </svg>
                                         </button>
                                     </div>
@@ -784,11 +1114,19 @@ export default function TambahAnakKaderForm() {
                             <div className="flex gap-3">
                                 <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                                 <div className="text-xs text-yellow-800">
-                                    <p className="font-bold mb-1">Catatan Penting:</p>
+                                    <p className="font-bold mb-1">
+                                        Catatan Penting:
+                                    </p>
                                     <ul className="list-disc list-inside space-y-1">
                                         <li>Catat password ini dengan aman</li>
-                                        <li>Informasikan ke orang tua untuk login pertama kali</li>
-                                        <li>Sarankan untuk segera mengganti password</li>
+                                        <li>
+                                            Informasikan ke orang tua untuk
+                                            login pertama kali
+                                        </li>
+                                        <li>
+                                            Sarankan untuk segera mengganti
+                                            password
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -797,8 +1135,11 @@ export default function TambahAnakKaderForm() {
                         <button
                             onClick={() => {
                                 setShowPasswordModal(false);
-                                navigate('/dashboard/data-anak', {
-                                    state: { message: 'Data anak dan orang tua berhasil ditambahkan!' }
+                                navigate("/dashboard/data-anak", {
+                                    state: {
+                                        message:
+                                            "Data anak dan orang tua berhasil ditambahkan!",
+                                    },
                                 });
                             }}
                             className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
@@ -811,4 +1152,3 @@ export default function TambahAnakKaderForm() {
         </div>
     );
 }
-

@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 class NutriAssistController extends Controller
 {
     protected NutritionService $nutritionService;
+    private const DEFAULT_DAILY_LIMIT = 10;
+    private const CACHE_TTL_SECONDS = 86400;
 
     public function __construct(NutritionService $nutritionService)
     {
@@ -54,6 +56,14 @@ class NutriAssistController extends Controller
             ], 422);
         }
 
+        $dailyLimit = (int) config('services.n8n.daily_limit', self::DEFAULT_DAILY_LIMIT);
+        if (!$this->consumeDailyQuota($user->id, $dailyLimit)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Batas harian Nutri-Assist tercapai ({$dailyLimit} request/hari). Coba lagi besok.",
+                'daily_limit' => $dailyLimit,
+            ], 429);
+        }
 
         // Check if n8n is enabled
         if (!config('services.n8n.enabled')) {
@@ -62,9 +72,10 @@ class NutriAssistController extends Controller
 
         // Try to get from cache first (24 hours)
         $cacheKey = 'nutriassist_' . $child->id . '_' . md5(json_encode($validated['ingredients']));
+        $this->rememberChildCacheKey($child->id, $cacheKey);
 
         try {
-            $recommendations = Cache::remember($cacheKey, 86400, function () use ($child, $validated) {
+            $recommendations = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($child, $validated) {
                 return $this->getAIRecommendations($child, $validated);
             });
 
@@ -97,13 +108,16 @@ class NutriAssistController extends Controller
             throw new \Exception('n8n webhook URL or API key not configured');
         }
 
-        $response = Http::timeout($timeout)->post($webhookUrl, [
-            'child_id' => $child->id,
-            'ingredients' => $validated['ingredients'],
-            'date' => $validated['date'] ?? now()->toDateString(),
-            'notes' => $validated['notes'] ?? null,
-            'api_key' => $apiKey,
-        ]);
+        $response = Http::timeout($timeout)
+            ->withHeaders([
+                'X-API-KEY' => $apiKey,
+            ])
+            ->post($webhookUrl, [
+                'child_id' => $child->id,
+                'ingredients' => $validated['ingredients'],
+                'date' => $validated['date'] ?? now()->toDateString(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
         if ($response->failed()) {
             throw new \Exception('n8n webhook request failed: ' . $response->status());
@@ -174,13 +188,47 @@ class NutriAssistController extends Controller
             ], 403);
         }
 
-        // Clear all cache for this child
-        $pattern = 'nutriassist_' . $childId . '_*';
-        Cache::flush(); // Simple approach, or use more specific cache tags
+        // Clear only NutriAssist cache keys for this child
+        $indexKey = $this->childCacheIndexKey($childId);
+        $cacheKeys = Cache::get($indexKey, []);
+        foreach ($cacheKeys as $cacheKey) {
+            Cache::forget($cacheKey);
+        }
+        Cache::forget($indexKey);
 
         return response()->json([
             'success' => true,
             'message' => 'Cache cleared successfully',
         ], 200);
+    }
+
+    private function consumeDailyQuota(int $userId, int $dailyLimit): bool
+    {
+        $dailyKey = 'nutriassist_daily_' . $userId . '_' . now()->toDateString();
+        $currentCount = (int) Cache::get($dailyKey, 0);
+
+        if ($currentCount >= $dailyLimit) {
+            return false;
+        }
+
+        Cache::put($dailyKey, $currentCount + 1, now()->endOfDay());
+
+        return true;
+    }
+
+    private function rememberChildCacheKey(int $childId, string $cacheKey): void
+    {
+        $indexKey = $this->childCacheIndexKey($childId);
+        $existingKeys = Cache::get($indexKey, []);
+
+        if (!in_array($cacheKey, $existingKeys, true)) {
+            $existingKeys[] = $cacheKey;
+            Cache::put($indexKey, $existingKeys, now()->addDays(2));
+        }
+    }
+
+    private function childCacheIndexKey(int $childId): string
+    {
+        return 'nutriassist_keys_' . $childId;
     }
 }

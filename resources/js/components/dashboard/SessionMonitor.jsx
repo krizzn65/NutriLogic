@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getUser, logoutWithApi } from '../../lib/auth';
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getUser, logoutWithApi } from "../../lib/auth";
 import {
     getSessionTimeout,
     getLastActivity,
     updateLastActivity,
-    initActivityTracking
-} from '../../lib/sessionTimeout';
+    initActivityTracking,
+} from "../../lib/sessionTimeout";
 import {
     Dialog,
     DialogContent,
@@ -41,11 +41,13 @@ export default function SessionMonitor({ children }) {
             // If session expired due to inactivity
             if (elapsedMinutes >= timeout) {
                 // Log out first to clear session
-                logoutWithApi().then(() => {
-                    setIsTimeoutModalOpen(true);
-                }).catch(() => {
-                    setIsTimeoutModalOpen(true);
-                });
+                logoutWithApi()
+                    .then(() => {
+                        setIsTimeoutModalOpen(true);
+                    })
+                    .catch(() => {
+                        setIsTimeoutModalOpen(true);
+                    });
             }
         };
 
@@ -63,19 +65,26 @@ export default function SessionMonitor({ children }) {
 
     const handleConfirm = () => {
         setIsTimeoutModalOpen(false);
-        navigate('/auth');
+        navigate("/auth");
     };
 
     return (
         <>
             {children}
 
-            <Dialog open={isTimeoutModalOpen} onOpenChange={() => { }}>
-                <DialogContent className="sm:max-w-[425px] rounded-[30px] p-6 bg-white" hideClose={true}>
+            <Dialog open={isTimeoutModalOpen} onOpenChange={() => {}}>
+                <DialogContent
+                    size="sm"
+                    className="rounded-[30px] p-6 bg-white"
+                    hideClose={true}
+                >
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-gray-900 text-center">Sesi Berakhir</DialogTitle>
+                        <DialogTitle className="text-xl font-bold text-gray-900 text-center">
+                            Sesi Berakhir
+                        </DialogTitle>
                         <DialogDescription className="text-gray-500 mt-2 text-center">
-                            Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan login kembali untuk melanjutkan.
+                            Sesi Anda telah berakhir karena tidak ada aktivitas.
+                            Silakan login kembali untuk melanjutkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-6 flex justify-center sm:justify-center">

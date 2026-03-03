@@ -18,15 +18,6 @@ use App\Http\Controllers\PosyanduController;
 use App\Http\Controllers\WeighingLogController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/debug-user', function () {
-    $user = \App\Models\User::where('email', 'kader@kader.com')->first();
-    if (!$user) return 'User not found';
-    return [
-        'password_hash' => $user->getAttributes()['password'], // Get raw attribute
-        'is_hashed' => \Illuminate\Support\Facades\Hash::info($user->getAttributes()['password']),
-    ];
-});
-
 // Public authentication routes
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
@@ -59,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Weighing logs routes
     Route::prefix('weighing-logs')->group(function () {
         Route::get('/', [WeighingLogController::class, 'index']);
-        Route::post('/', [WeighingLogController::class, 'store']);
+        Route::post('/', [WeighingLogController::class, 'store'])->middleware('throttle:8,1');
         Route::get('/child/{childId}', [WeighingLogController::class, 'index']);
         Route::get('/{id}', [WeighingLogController::class, 'show']);
         Route::put('/{id}', [WeighingLogController::class, 'update']);
@@ -69,7 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Meal logs routes
     Route::prefix('meal-logs')->group(function () {
         Route::get('/', [MealLogController::class, 'index']);
-        Route::post('/', [MealLogController::class, 'store']);
+        Route::post('/', [MealLogController::class, 'store'])->middleware('throttle:12,1');
         Route::get('/child/{childId}', [MealLogController::class, 'index']);
         Route::get('/{id}', [MealLogController::class, 'show']);
         Route::put('/{id}', [MealLogController::class, 'update']);
@@ -108,7 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Nutri-Assist routes
     Route::prefix('nutri-assist')->group(function () {
-        Route::post('/recommend', [NutriAssistController::class, 'recommend']);
+        Route::post('/recommend', [NutriAssistController::class, 'recommend'])->middleware('throttle:20,1');
     });
 
     // Parent dashboard routes
@@ -123,9 +114,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Parent consultation routes
         Route::get('/kaders', [ParentConsultationController::class, 'getKaders']);
         Route::get('/consultations', [ParentConsultationController::class, 'index']);
-        Route::post('/consultations', [ParentConsultationController::class, 'store']);
+        Route::post('/consultations', [ParentConsultationController::class, 'store'])->middleware('throttle:10,1');
         Route::get('/consultations/{id}', [ParentConsultationController::class, 'show']);
-        Route::post('/consultations/{id}/messages', [ParentConsultationController::class, 'sendMessage']);
+        Route::post('/consultations/{id}/messages', [ParentConsultationController::class, 'sendMessage'])->middleware('throttle:15,1');
         Route::get('/consultations/{id}/child-data', [ParentConsultationController::class, 'getChildData']);
         Route::delete('/consultations/{id}', [ParentConsultationController::class, 'destroy']);
 
@@ -224,7 +215,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('consultations')->group(function () {
             Route::get('/', [App\Http\Controllers\KaderConsultationController::class, 'index']);
             Route::get('/{id}', [App\Http\Controllers\KaderConsultationController::class, 'show']);
-            Route::post('/{id}/messages', [App\Http\Controllers\KaderConsultationController::class, 'storeMessage']);
+            Route::post('/{id}/messages', [App\Http\Controllers\KaderConsultationController::class, 'storeMessage'])->middleware('throttle:20,1');
             Route::put('/{id}/close', [App\Http\Controllers\KaderConsultationController::class, 'close']);
             Route::delete('/{id}', [App\Http\Controllers\KaderConsultationController::class, 'destroy']);
             Route::get('/{id}/child-data', [App\Http\Controllers\KaderConsultationController::class, 'getChildData']);
@@ -316,6 +307,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Activity Logs
         Route::get('/activity-logs', [App\Http\Controllers\AdminActivityLogController::class, 'index']);
+
+        // Admin profile
+        Route::prefix('profile')->group(function () {
+            Route::put('/', [App\Http\Controllers\AdminProfileController::class, 'update']);
+            Route::put('/password', [App\Http\Controllers\AdminProfileController::class, 'updatePassword']);
+        });
 
         // Admin Notifications
         Route::prefix('notifications')->group(function () {

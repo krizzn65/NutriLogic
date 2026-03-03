@@ -2,71 +2,37 @@ import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import {
     Home,
-    User,
-    Settings,
-    Users,
     Building2,
     UserCog,
     BarChart3,
-    Shield,
     Database,
-    LogOut,
     Activity,
-    ArrowLeft,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
-import { logoutWithApi } from "../../lib/auth";
+import { ADMIN_SIDEBAR_NAV } from "../../constants/navigationConfigs";
+
+const ADMIN_ICON_MAP = {
+    home: Home,
+    "building-2": Building2,
+    "user-cog": UserCog,
+    database: Database,
+    "bar-chart-3": BarChart3,
+    activity: Activity,
+};
 
 export default function SidebarSuperAdmin() {
-    const navigate = useNavigate();
     const [open, setOpen] = useState(false);
 
-    const links = [
-        {
-            label: "Dashboard",
-            href: "/dashboard",
+    const links = ADMIN_SIDEBAR_NAV.map((item) => {
+        const IconComponent = ADMIN_ICON_MAP[item.icon];
+        return {
+            label: item.label,
+            href: item.href,
             icon: (
-                <Home className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
+                <IconComponent className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
             ),
-        },
-        {
-            label: "Manajemen Posyandu",
-            href: "/dashboard/posyandu",
-            icon: (
-                <Building2 className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Manajemen Kader",
-            href: "/dashboard/kader",
-            icon: (
-                <UserCog className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Data Anak",
-            href: "/dashboard/anak",
-            icon: (
-                <Database className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Laporan Sistem",
-            href: "/dashboard/laporan",
-            icon: (
-                <BarChart3 className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-        {
-            label: "Log Aktivitas",
-            href: "/dashboard/logs",
-            icon: (
-                <Activity className="text-white dark:text-neutral-200 h-5 w-5 shrink-0" />
-            ),
-        },
-
-    ];
+        };
+    });
 
     return (
         <Sidebar open={open} setOpen={setOpen}>
@@ -77,11 +43,9 @@ export default function SidebarSuperAdmin() {
                         {links.map((link, idx) => (
                             <SidebarLink key={idx} link={link} />
                         ))}
-
                     </div>
                 </div>
-                <div>
-                </div>
+                <div></div>
             </SidebarBody>
         </Sidebar>
     );
@@ -94,7 +58,11 @@ const Logo = () => {
             className="font-normal flex flex-col space-y-1 items-start text-sm text-white py-1 relative z-20"
         >
             <div className="flex space-x-2 items-center">
-                <img src={assets.logo_das} alt="NutriLogic" className="h-8 w-8 shrink-0" />
+                <img
+                    src={assets.logo_das}
+                    alt="NutriLogic"
+                    className="h-8 w-8 shrink-0"
+                />
                 <span className="font-bold text-white whitespace-pre">
                     NutriLogic
                 </span>
@@ -112,7 +80,11 @@ const LogoIcon = () => {
             href="#"
             className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
         >
-            <img src={assets.logo_das} alt="NutriLogic" className="h-8 w-8 shrink-0" />
+            <img
+                src={assets.logo_das}
+                alt="NutriLogic"
+                className="h-8 w-8 shrink-0"
+            />
         </a>
     );
 };

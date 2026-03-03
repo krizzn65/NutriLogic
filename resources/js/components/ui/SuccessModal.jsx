@@ -1,66 +1,61 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X } from "lucide-react";
 
-export default function SuccessModal({ isOpen, onClose, title, message }) {
+const SUCCESS_AUTO_DISMISS_MS = 5000;
+
+export default function SuccessModal({
+    isOpen,
+    onClose,
+    title,
+    message,
+    duration = SUCCESS_AUTO_DISMISS_MS,
+}) {
+    useEffect(() => {
+        if (!isOpen || duration <= 0) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            onClose?.();
+        }, duration);
+
+        return () => window.clearTimeout(timer);
+    }, [duration, isOpen, onClose]);
+
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={onClose}
-                    />
-
-                    {/* Modal */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
-                    >
-                        {/* Success Icon Header */}
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 text-center border-b border-green-100">
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                                className="inline-flex items-center justify-center w-20 h-20 bg-green-500 rounded-full mb-4"
-                            >
-                                <CheckCircle className="w-12 h-12 text-white" />
-                            </motion.div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                                {title || "Berhasil!"}
-                            </h3>
-                            <p className="text-gray-600">
-                                {message || "Operasi berhasil dilakukan"}
-                            </p>
-                        </div>
-
-                        {/* Action Button */}
-                        <div className="p-6">
+                <motion.div
+                    initial={{ opacity: 0, y: -16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.2 }}
+                    className="fixed top-4 right-4 left-4 sm:left-auto z-[10000] pointer-events-auto sm:w-[360px] sm:max-w-[90vw]"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div className="w-full rounded-xl border border-emerald-100 bg-emerald-50 shadow-lg px-4 py-3">
+                        <div className="flex items-start gap-3">
+                            <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 leading-5">
+                                    {title || "Berhasil!"}
+                                </p>
+                                <p className="text-sm text-gray-700 leading-5">
+                                    {message || "Operasi berhasil dilakukan"}
+                                </p>
+                            </div>
                             <button
                                 onClick={onClose}
-                                className="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-green-500/30"
+                                className="rounded-md p-1 text-gray-500 hover:bg-white/70 hover:text-gray-700 transition-colors"
+                                aria-label="Tutup notifikasi sukses"
                             >
-                                OK
+                                <X className="h-4 w-4" />
                             </button>
                         </div>
-
-                        {/* Close Button */}
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </motion.div>
-                </div>
+                    </div>
+                </motion.div>
             )}
         </AnimatePresence>
     );

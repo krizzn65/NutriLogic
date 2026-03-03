@@ -10,7 +10,7 @@ class ParentProfileController extends Controller
 {
     /**
      * Update user profile
-     * 
+     *
      * Updates name, phone, email, address, rt, rw, and posyandu for the authenticated parent
      */
     public function update(Request $request): JsonResponse
@@ -64,6 +64,13 @@ class ParentProfileController extends Controller
 
         $user->save();
 
+        AdminActivityLogController::log(
+            'update',
+            "Orang tua {$user->name} memperbarui profil",
+            'User',
+            $user->id
+        );
+
         // Load posyandu relationship for response
         $user->load('posyandu');
 
@@ -82,8 +89,8 @@ class ParentProfileController extends Controller
                     'name' => $user->posyandu->name,
                 ] : null,
                 'role' => $user->role,
-                'profile_photo_url' => $user->profile_photo_path 
-                    ? asset('storage/' . $user->profile_photo_path) 
+                'profile_photo_url' => $user->profile_photo_path
+                    ? asset('storage/' . $user->profile_photo_path)
                     : null,
             ],
         ], 200);
@@ -91,7 +98,7 @@ class ParentProfileController extends Controller
 
     /**
      * Update user password
-     * 
+     *
      * Changes password after verifying current password
      */
     public function updatePassword(Request $request): JsonResponse
@@ -123,9 +130,15 @@ class ParentProfileController extends Controller
         $user->password = Hash::make($validated['new_password']);
         $user->save();
 
+        AdminActivityLogController::log(
+            'update',
+            "Orang tua {$user->name} mengubah password akun",
+            'User',
+            $user->id
+        );
+
         return response()->json([
             'message' => 'Password updated successfully.',
         ], 200);
     }
 }
-

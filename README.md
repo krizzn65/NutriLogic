@@ -261,22 +261,11 @@ php artisan serve
 
 Akses aplikasi di `http://localhost:8000`
 
-### 🔑 **Default Credentials**
+### **Akun Seed (Security Note)**
 
-**Super Admin:**
-
--   Email: `admin@admin.com`
--   Password: `password`
-
-**Kader:**
-
--   Email: `kader@kader.com`
--   Password: `password`
-
-**Orang Tua:**
-
--   Email: `ibu@ibu.com`
--   Password: `password`
+-   Seeder membuat akun contoh untuk pengujian lokal.
+-   Password default tidak ditampilkan di dokumentasi.
+-   Setelah seed, lakukan reset password melalui panel admin atau flow forgot password sebelum digunakan.
 
 ---
 

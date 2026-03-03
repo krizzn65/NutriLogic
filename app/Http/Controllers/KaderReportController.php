@@ -219,6 +219,14 @@ class KaderReportController extends Controller
             ], 400);
         }
 
+        AdminActivityLogController::log(
+            'export',
+            "Kader {$user->name} mengexport data anak",
+            'Report',
+            null,
+            ['posyandu_id' => $user->posyandu_id]
+        );
+
         $children = Child::with(['parent'])
             ->where('posyandu_id', $user->posyandu_id)
             ->where('is_active', true)
@@ -235,7 +243,7 @@ class KaderReportController extends Controller
 
         // Generate CSV
         $csvData = "ID,Nama Lengkap,NIK,Tanggal Lahir,Jenis Kelamin,Nama Orang Tua,Status Gizi Terakhir\n";
-        
+
         foreach ($children as $child) {
             $csvData .= sprintf(
                 "%d,%s,%s,%s,%s,%s,%s\n",
@@ -275,6 +283,18 @@ class KaderReportController extends Controller
             'date_to' => ['required', 'date'],
         ]);
 
+        AdminActivityLogController::log(
+            'export',
+            "Kader {$user->name} mengexport data penimbangan",
+            'Report',
+            null,
+            [
+                'posyandu_id' => $user->posyandu_id,
+                'date_from' => $validated['date_from'],
+                'date_to' => $validated['date_to'],
+            ]
+        );
+
         // Get all children IDs in posyandu
         $childIds = Child::where('posyandu_id', $user->posyandu_id)
             ->pluck('id');
@@ -287,7 +307,7 @@ class KaderReportController extends Controller
 
         // Generate CSV
         $csvData = "Tanggal,Nama Anak,Berat (kg),Tinggi (cm),Lengan (cm),Kepala (cm),Status Gizi,Catatan\n";
-        
+
         foreach ($weighings as $weighing) {
             $csvData .= sprintf(
                 "%s,%s,%.1f,%.1f,%s,%s,%s,%s\n",

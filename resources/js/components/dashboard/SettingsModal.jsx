@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
+    DialogDescription,
 } from "../ui/dialog";
 import SuccessModal from "../ui/SuccessModal";
 import {
@@ -11,8 +13,9 @@ import {
     Lock,
     Settings as SettingsIcon,
     Eye,
-    EyeOff
+    EyeOff,
 } from "lucide-react";
+import logger from "../../lib/logger";
 
 export default function SettingsModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(false);
@@ -31,8 +34,8 @@ export default function SettingsModal({ isOpen, onClose }) {
 
     const [successModal, setSuccessModal] = useState({
         isOpen: false,
-        title: '',
-        message: ''
+        title: "",
+        message: "",
     });
 
     useEffect(() => {
@@ -56,7 +59,8 @@ export default function SettingsModal({ isOpen, onClose }) {
             await api.put("/parent/profile/password", {
                 current_password: passwordForm.current_password,
                 new_password: passwordForm.new_password,
-                new_password_confirmation: passwordForm.new_password_confirmation,
+                new_password_confirmation:
+                    passwordForm.new_password_confirmation,
             });
 
             setPasswordForm({
@@ -67,16 +71,15 @@ export default function SettingsModal({ isOpen, onClose }) {
 
             setSuccessModal({
                 isOpen: true,
-                title: 'Password Berhasil Diubah',
-                message: 'Password Anda telah berhasil diperbarui.'
+                title: "Password Berhasil Diubah",
+                message: "Password Anda telah berhasil diperbarui.",
             });
-
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message ||
                 "Gagal mengubah password. Silakan coba lagi.";
             setPasswordError(errorMessage);
-            console.error("Error updating password:", err);
+            logger.error("Error updating password:", err);
         } finally {
             setPasswordSaving(false);
         }
@@ -92,15 +95,27 @@ export default function SettingsModal({ isOpen, onClose }) {
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent hideClose={true} className="w-[90%] md:w-full sm:max-w-2xl p-0 bg-white border-none shadow-2xl rounded-3xl md:rounded-[40px] overflow-hidden">
+                <DialogContent
+                    size="xl"
+                    hideClose={true}
+                    className="w-[90%] md:w-full p-0 bg-white border-none shadow-2xl rounded-3xl md:rounded-[40px] overflow-hidden"
+                >
+                    <DialogTitle className="sr-only">Pengaturan</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Kelola keamanan akun Anda.
+                    </DialogDescription>
                     {/* Header */}
                     <div className="px-8 py-6 bg-white flex items-start gap-4 border-b border-gray-100">
                         <div className="p-3 bg-blue-50 rounded-xl">
                             <SettingsIcon className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Pengaturan</h2>
-                            <p className="text-sm text-gray-500 mt-1">Kelola keamanan akun Anda</p>
+                            <h2 className="text-xl font-bold text-gray-900">
+                                Pengaturan
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Kelola keamanan akun Anda
+                            </p>
                         </div>
                         <button
                             onClick={onClose}
@@ -129,10 +144,17 @@ export default function SettingsModal({ isOpen, onClose }) {
                                 <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
                             </div>
                         ) : (
-                            <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                            <form
+                                onSubmit={handlePasswordSubmit}
+                                className="space-y-6"
+                            >
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-1">Ubah Password</h3>
-                                    <p className="text-sm text-gray-500">Perbarui password akun Anda</p>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                        Ubah Password
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        Perbarui password akun Anda
+                                    </p>
                                 </div>
 
                                 {passwordError && (
@@ -143,33 +165,80 @@ export default function SettingsModal({ isOpen, onClose }) {
 
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-900">Password Saat Ini</label>
+                                        <label
+                                            htmlFor="settings-current-password"
+                                            className="text-sm font-bold text-gray-900"
+                                        >
+                                            Password Saat Ini
+                                        </label>
                                         <div className="relative">
                                             <input
-                                                type={showCurrentPassword ? "text" : "password"}
-                                                value={passwordForm.current_password}
-                                                onChange={(e) => handlePasswordInputChange("current_password", e.target.value)}
+                                                id="settings-current-password"
+                                                type={
+                                                    showCurrentPassword
+                                                        ? "text"
+                                                        : "password"
+                                                }
+                                                value={
+                                                    passwordForm.current_password
+                                                }
+                                                onChange={(e) =>
+                                                    handlePasswordInputChange(
+                                                        "current_password",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 placeholder:text-gray-400"
                                                 placeholder="Masukkan password saat ini"
                                                 required
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                onClick={() =>
+                                                    setShowCurrentPassword(
+                                                        !showCurrentPassword,
+                                                    )
+                                                }
                                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                aria-label={
+                                                    showCurrentPassword
+                                                        ? "Sembunyikan password saat ini"
+                                                        : "Tampilkan password saat ini"
+                                                }
                                             >
-                                                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                {showCurrentPassword ? (
+                                                    <EyeOff className="w-4 h-4" />
+                                                ) : (
+                                                    <Eye className="w-4 h-4" />
+                                                )}
                                             </button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-900">Password Baru</label>
+                                        <label
+                                            htmlFor="settings-new-password"
+                                            className="text-sm font-bold text-gray-900"
+                                        >
+                                            Password Baru
+                                        </label>
                                         <div className="relative">
                                             <input
-                                                type={showNewPassword ? "text" : "password"}
-                                                value={passwordForm.new_password}
-                                                onChange={(e) => handlePasswordInputChange("new_password", e.target.value)}
+                                                id="settings-new-password"
+                                                type={
+                                                    showNewPassword
+                                                        ? "text"
+                                                        : "password"
+                                                }
+                                                value={
+                                                    passwordForm.new_password
+                                                }
+                                                onChange={(e) =>
+                                                    handlePasswordInputChange(
+                                                        "new_password",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 placeholder:text-gray-400"
                                                 placeholder="Minimal 8 karakter"
                                                 required
@@ -177,21 +246,51 @@ export default function SettingsModal({ isOpen, onClose }) {
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                onClick={() =>
+                                                    setShowNewPassword(
+                                                        !showNewPassword,
+                                                    )
+                                                }
                                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                aria-label={
+                                                    showNewPassword
+                                                        ? "Sembunyikan password baru"
+                                                        : "Tampilkan password baru"
+                                                }
                                             >
-                                                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                {showNewPassword ? (
+                                                    <EyeOff className="w-4 h-4" />
+                                                ) : (
+                                                    <Eye className="w-4 h-4" />
+                                                )}
                                             </button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-900">Konfirmasi Password Baru</label>
+                                        <label
+                                            htmlFor="settings-confirm-password"
+                                            className="text-sm font-bold text-gray-900"
+                                        >
+                                            Konfirmasi Password Baru
+                                        </label>
                                         <div className="relative">
                                             <input
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                value={passwordForm.new_password_confirmation}
-                                                onChange={(e) => handlePasswordInputChange("new_password_confirmation", e.target.value)}
+                                                id="settings-confirm-password"
+                                                type={
+                                                    showConfirmPassword
+                                                        ? "text"
+                                                        : "password"
+                                                }
+                                                value={
+                                                    passwordForm.new_password_confirmation
+                                                }
+                                                onChange={(e) =>
+                                                    handlePasswordInputChange(
+                                                        "new_password_confirmation",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm text-gray-900 placeholder:text-gray-400"
                                                 placeholder="Ulangi password baru"
                                                 required
@@ -199,10 +298,23 @@ export default function SettingsModal({ isOpen, onClose }) {
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                onClick={() =>
+                                                    setShowConfirmPassword(
+                                                        !showConfirmPassword,
+                                                    )
+                                                }
                                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                aria-label={
+                                                    showConfirmPassword
+                                                        ? "Sembunyikan konfirmasi password"
+                                                        : "Tampilkan konfirmasi password"
+                                                }
                                             >
-                                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                {showConfirmPassword ? (
+                                                    <EyeOff className="w-4 h-4" />
+                                                ) : (
+                                                    <Eye className="w-4 h-4" />
+                                                )}
                                             </button>
                                         </div>
                                     </div>
@@ -215,9 +327,12 @@ export default function SettingsModal({ isOpen, onClose }) {
                                 >
                                     {passwordSaving ? (
                                         <span className="flex items-center justify-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin" /> Memproses...
+                                            <Loader2 className="w-4 h-4 animate-spin" />{" "}
+                                            Memproses...
                                         </span>
-                                    ) : "Update Password"}
+                                    ) : (
+                                        "Update Password"
+                                    )}
                                 </button>
                             </form>
                         )}
@@ -228,7 +343,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             <SuccessModal
                 isOpen={successModal.isOpen}
                 onClose={() => {
-                    setSuccessModal({ isOpen: false, title: '', message: '' });
+                    setSuccessModal({ isOpen: false, title: "", message: "" });
                     onClose();
                 }}
                 title={successModal.title}

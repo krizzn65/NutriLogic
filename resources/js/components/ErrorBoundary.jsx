@@ -1,5 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import { ServerErrorPage } from './ui/500-server-error';
+import logger from "../lib/logger";
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -14,7 +15,7 @@ class ErrorBoundary extends React.Component {
 
     componentDidCatch(error, errorInfo) {
         // You can also log the error to an error reporting service
-        console.error("Uncaught error:", error, errorInfo);
+        logger.error("Uncaught error:", error, errorInfo);
     }
 
     render() {
@@ -28,3 +29,4 @@ class ErrorBoundary extends React.Component {
 }
 
 export default ErrorBoundary;
+

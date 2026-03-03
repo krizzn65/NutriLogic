@@ -1,16 +1,25 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import api from "../../lib/api";
-import { FileText, Plus, Edit2, Trash2, Eye, EyeOff, Search } from "lucide-react";
+import {
+    FileText,
+    Plus,
+    Edit2,
+    Trash2,
+    Eye,
+    EyeOff,
+    Search,
+} from "lucide-react";
 import GenericListSkeleton from "../loading/GenericListSkeleton";
+import logger from "../../lib/logger";
 
 export default function ContentManagement() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [articles, setArticles] = useState([]);
     const [filters, setFilters] = useState({
-        category: '',
-        is_published: '',
-        search: '',
+        category: "",
+        is_published: "",
+        search: "",
     });
     const [showModal, setShowModal] = useState(false);
     const [editingArticle, setEditingArticle] = useState(null);
@@ -25,15 +34,17 @@ export default function ContentManagement() {
             setError(null);
             const params = {};
             if (filters.category) params.category = filters.category;
-            if (filters.is_published) params.is_published = filters.is_published;
+            if (filters.is_published)
+                params.is_published = filters.is_published;
             if (filters.search) params.search = filters.search;
 
-            const response = await api.get('/admin/articles', { params });
+            const response = await api.get("/admin/articles", { params });
             setArticles(response.data.data);
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Gagal memuat data artikel.';
+            const errorMessage =
+                err.response?.data?.message || "Gagal memuat data artikel.";
             setError(errorMessage);
-            console.error('Articles fetch error:', err);
+            logger.error("Articles fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -50,7 +61,11 @@ export default function ContentManagement() {
     };
 
     const handleDelete = async (article) => {
-        if (!window.confirm(`Apakah Anda yakin ingin menghapus artikel "${article.title}"?`)) {
+        if (
+            !window.confirm(
+                `Apakah Anda yakin ingin menghapus artikel "${article.title}"?`,
+            )
+        ) {
             return;
         }
 
@@ -58,7 +73,7 @@ export default function ContentManagement() {
             await api.delete(`/admin/articles/${article.id}`);
             fetchArticles();
         } catch (err) {
-            alert(err.response?.data?.message || 'Gagal menghapus artikel.');
+            alert(err.response?.data?.message || "Gagal menghapus artikel.");
         }
     };
 
@@ -67,37 +82,33 @@ export default function ContentManagement() {
             await api.patch(`/admin/articles/${article.id}/toggle-publish`);
             fetchArticles();
         } catch (err) {
-            alert(err.response?.data?.message || 'Gagal mengubah status publikasi.');
+            alert(
+                err.response?.data?.message ||
+                    "Gagal mengubah status publikasi.",
+            );
         }
     };
 
     const getCategoryLabel = (category) => {
         const labels = {
-            tips: 'Tips',
-            article: 'Artikel',
-            announcement: 'Pengumuman',
+            tips: "Tips",
+            article: "Artikel",
+            announcement: "Pengumuman",
         };
         return labels[category] || category;
     };
 
     const getCategoryColor = (category) => {
         const colors = {
-            tips: 'bg-blue-100 text-blue-800',
-            article: 'bg-green-100 text-green-800',
-            announcement: 'bg-orange-100 text-orange-800',
+            tips: "bg-blue-100 text-blue-800",
+            article: "bg-green-100 text-green-800",
+            announcement: "bg-orange-100 text-orange-800",
         };
-        return colors[category] || 'bg-gray-100 text-gray-800';
+        return colors[category] || "bg-gray-100 text-gray-800";
     };
 
     if (loading && articles.length === 0) {
-        return (
-            <div className="p-4 md:p-10 w-full h-full bg-gray-50">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <GenericListSkeleton itemCount={6} />;
     }
 
     return (
@@ -106,8 +117,12 @@ export default function ContentManagement() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Manajemen Konten</h1>
-                        <p className="text-gray-600 mt-2">Kelola artikel, tips, dan pengumuman</p>
+                        <h1 className="text-3xl font-bold text-gray-800">
+                            Manajemen Konten
+                        </h1>
+                        <p className="text-gray-600 mt-2">
+                            Kelola artikel, tips, dan pengumuman
+                        </p>
                     </div>
                     <button
                         onClick={handleAddNew}
@@ -122,12 +137,21 @@ export default function ContentManagement() {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="content-filter-category"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Kategori
                             </label>
                             <select
+                                id="content-filter-category"
                                 value={filters.category}
-                                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        category: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Semua Kategori</option>
@@ -138,12 +162,21 @@ export default function ContentManagement() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="content-filter-status"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Status
                             </label>
                             <select
+                                id="content-filter-status"
                                 value={filters.is_published}
-                                onChange={(e) => setFilters({ ...filters, is_published: e.target.value })}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        is_published: e.target.value,
+                                    })
+                                }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Semua Status</option>
@@ -153,13 +186,22 @@ export default function ContentManagement() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label
+                                htmlFor="content-filter-search"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
                                 Cari Judul
                             </label>
                             <input
+                                id="content-filter-search"
                                 type="text"
                                 value={filters.search}
-                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                onChange={(e) =>
+                                    setFilters({
+                                        ...filters,
+                                        search: e.target.value,
+                                    })
+                                }
                                 placeholder="Cari..."
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
@@ -196,71 +238,121 @@ export default function ContentManagement() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Judul</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Kategori</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Penulis</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Aksi</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Judul
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Kategori
+                                    </th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
+                                        Penulis
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Status
+                                    </th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {articles.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="py-8 text-center text-gray-500">
+                                        <td
+                                            colSpan="5"
+                                            className="py-8 text-center text-gray-500"
+                                        >
                                             Tidak ada data artikel
                                         </td>
                                     </tr>
                                 ) : (
                                     articles.map((article) => (
-                                        <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                        <tr
+                                            key={article.id}
+                                            className="border-b border-gray-100 hover:bg-gray-50"
+                                        >
                                             <td className="py-3 px-4">
                                                 <div className="flex items-start gap-2">
                                                     <FileText className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
                                                     <div>
-                                                        <div className="font-medium text-gray-800">{article.title}</div>
+                                                        <div className="font-medium text-gray-800">
+                                                            {article.title}
+                                                        </div>
                                                         <div className="text-xs text-gray-500 mt-0.5">
-                                                            {new Date(article.created_at).toLocaleDateString('id-ID')}
+                                                            {new Date(
+                                                                article.created_at,
+                                                            ).toLocaleDateString(
+                                                                "id-ID",
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}>
-                                                    {getCategoryLabel(article.category)}
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}
+                                                >
+                                                    {getCategoryLabel(
+                                                        article.category,
+                                                    )}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm text-gray-600">
-                                                {article.author?.name || '-'}
+                                                {article.author?.name || "-"}
                                             </td>
                                             <td className="py-3 px-4 text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${article.is_published
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                    }`}>
-                                                    {article.is_published ? 'Published' : 'Draft'}
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                        article.is_published
+                                                            ? "bg-green-100 text-green-800"
+                                                            : "bg-gray-100 text-gray-800"
+                                                    }`}
+                                                >
+                                                    {article.is_published
+                                                        ? "Published"
+                                                        : "Draft"}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={() => handleEdit(article)}
+                                                        onClick={() =>
+                                                            handleEdit(article)
+                                                        }
                                                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                         title="Edit"
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleTogglePublish(article)}
-                                                        className={`p-1.5 rounded transition-colors ${article.is_published
-                                                                ? 'text-orange-600 hover:bg-orange-50'
-                                                                : 'text-green-600 hover:bg-green-50'
-                                                            }`}
-                                                        title={article.is_published ? 'Unpublish' : 'Publish'}
+                                                        onClick={() =>
+                                                            handleTogglePublish(
+                                                                article,
+                                                            )
+                                                        }
+                                                        className={`p-1.5 rounded transition-colors ${
+                                                            article.is_published
+                                                                ? "text-orange-600 hover:bg-orange-50"
+                                                                : "text-green-600 hover:bg-green-50"
+                                                        }`}
+                                                        title={
+                                                            article.is_published
+                                                                ? "Unpublish"
+                                                                : "Publish"
+                                                        }
                                                     >
-                                                        {article.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        {article.is_published ? (
+                                                            <EyeOff className="w-4 h-4" />
+                                                        ) : (
+                                                            <Eye className="w-4 h-4" />
+                                                        )}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(article)}
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                article,
+                                                            )
+                                                        }
                                                         className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
                                                         title="Hapus"
                                                     >
@@ -295,10 +387,10 @@ export default function ContentManagement() {
 // Article Add/Edit Modal
 function ArticleModal({ article, onClose, onSuccess }) {
     const [formData, setFormData] = useState({
-        title: article?.title || '',
-        content: article?.content || '',
-        category: article?.category || 'tips',
-        image_url: article?.image_url || '',
+        title: article?.title || "",
+        content: article?.content || "",
+        category: article?.category || "tips",
+        image_url: article?.image_url || "",
         is_published: article?.is_published || false,
     });
     const [submitting, setSubmitting] = useState(false);
@@ -313,11 +405,11 @@ function ArticleModal({ article, onClose, onSuccess }) {
             if (article) {
                 await api.put(`/admin/articles/${article.id}`, formData);
             } else {
-                await api.post('/admin/articles', formData);
+                await api.post("/admin/articles", formData);
             }
             onSuccess();
         } catch (err) {
-            setError(err.response?.data?.message || 'Gagal menyimpan artikel.');
+            setError(err.response?.data?.message || "Gagal menyimpan artikel.");
         } finally {
             setSubmitting(false);
         }
@@ -328,7 +420,7 @@ function ArticleModal({ article, onClose, onSuccess }) {
             <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
-                        {article ? 'Edit Konten' : 'Tambah Konten Baru'}
+                        {article ? "Edit Konten" : "Tambah Konten Baru"}
                     </h2>
                 </div>
 
@@ -340,27 +432,45 @@ function ArticleModal({ article, onClose, onSuccess }) {
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="article-title"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             Judul <span className="text-red-500">*</span>
                         </label>
                         <input
+                            id="article-title"
                             type="text"
                             required
                             value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    title: e.target.value,
+                                })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Judul konten"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="article-category"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             Kategori <span className="text-red-500">*</span>
                         </label>
                         <select
+                            id="article-category"
                             required
                             value={formData.category}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    category: e.target.value,
+                                })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="tips">Tips</option>
@@ -370,26 +480,44 @@ function ArticleModal({ article, onClose, onSuccess }) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="article-image-url"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             URL Gambar
                         </label>
                         <input
+                            id="article-image-url"
                             type="text"
                             value={formData.image_url}
-                            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    image_url: e.target.value,
+                                })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="https://example.com/image.jpg"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="article-content"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                             Konten <span className="text-red-500">*</span>
                         </label>
                         <textarea
+                            id="article-content"
                             required
                             value={formData.content}
-                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    content: e.target.value,
+                                })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             rows="10"
                             placeholder="Isi konten..."
@@ -401,10 +529,18 @@ function ArticleModal({ article, onClose, onSuccess }) {
                             type="checkbox"
                             id="is_published"
                             checked={formData.is_published}
-                            onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    is_published: e.target.checked,
+                                })
+                            }
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="is_published" className="text-sm text-gray-700">
+                        <label
+                            htmlFor="is_published"
+                            className="text-sm text-gray-700"
+                        >
                             Publikasikan sekarang
                         </label>
                     </div>
@@ -423,7 +559,7 @@ function ArticleModal({ article, onClose, onSuccess }) {
                             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                             disabled={submitting}
                         >
-                            {submitting ? 'Menyimpan...' : 'Simpan'}
+                            {submitting ? "Menyimpan..." : "Simpan"}
                         </button>
                     </div>
                 </form>
@@ -431,3 +567,4 @@ function ArticleModal({ article, onClose, onSuccess }) {
         </div>
     );
 }
+

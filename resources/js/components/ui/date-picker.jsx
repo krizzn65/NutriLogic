@@ -9,7 +9,12 @@ import { cn } from "../../lib/utils";
 
 const dayNames = ["MIN", "SEN", "SEL", "RAB", "KAM", "JUM", "SAB"];
 
-export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", className }) {
+export function DatePicker({
+    value,
+    onChange,
+    placeholder = "Pilih Tanggal",
+    className,
+}) {
     const [date, setDate] = useState(value ? new Date(value) : new Date());
     const [isOpen, setIsOpen] = useState(false);
 
@@ -24,19 +29,27 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
 
     const nextMonth = (e) => {
         e.preventDefault();
-        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+        setViewDate(
+            new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1),
+        );
     };
 
     const prevMonth = (e) => {
         e.preventDefault();
-        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+        setViewDate(
+            new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1),
+        );
     };
 
     const handleSelectDate = (day) => {
-        const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+        const newDate = new Date(
+            viewDate.getFullYear(),
+            viewDate.getMonth(),
+            day,
+        );
         const year = newDate.getFullYear();
-        const month = String(newDate.getMonth() + 1).padStart(2, '0');
-        const d = String(newDate.getDate()).padStart(2, '0');
+        const month = String(newDate.getMonth() + 1).padStart(2, "0");
+        const d = String(newDate.getDate()).padStart(2, "0");
         const dateString = `${year}-${month}-${d}`;
 
         onChange(dateString);
@@ -54,23 +67,36 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
         setIsOpen(false);
     };
 
-    const currentMonthName = viewDate.toLocaleString("id-ID", { month: "long" });
+    const currentMonthName = viewDate.toLocaleString("id-ID", {
+        month: "long",
+    });
     const currentYear = viewDate.getFullYear();
 
-    const daysInMonth = new Date(currentYear, viewDate.getMonth() + 1, 0).getDate();
-    const firstDayOfMonth = new Date(currentYear, viewDate.getMonth(), 1).getDay();
+    const daysInMonth = new Date(
+        currentYear,
+        viewDate.getMonth() + 1,
+        0,
+    ).getDate();
+    const firstDayOfMonth = new Date(
+        currentYear,
+        viewDate.getMonth(),
+        1,
+    ).getDay();
 
     const renderDays = () => {
         const days = [];
 
         // Empty cells
         for (let i = 0; i < firstDayOfMonth; i++) {
-            days.push(<div key={`empty-${i}`} className="w-8 h-8" />);
+            days.push(
+                <div key={`empty-${i}`} className="w-7 h-7 sm:w-8 sm:h-8" />,
+            );
         }
 
         // Days
         for (let i = 1; i <= daysInMonth; i++) {
-            const isSelected = value &&
+            const isSelected =
+                value &&
                 new Date(value).getDate() === i &&
                 new Date(value).getMonth() === viewDate.getMonth() &&
                 new Date(value).getFullYear() === viewDate.getFullYear();
@@ -85,16 +111,16 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
                     key={i}
                     onClick={() => handleSelectDate(i)}
                     className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-full text-sm transition-all",
+                        "w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm transition-all",
                         isSelected
                             ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-200"
                             : isToday
-                                ? "bg-blue-50 text-blue-600 font-bold border border-blue-200"
-                                : "text-gray-700 hover:bg-gray-100"
+                              ? "bg-blue-50 text-blue-600 font-bold border border-blue-200"
+                              : "text-gray-700 hover:bg-gray-100",
                     )}
                 >
                     {i}
-                </button>
+                </button>,
             );
         }
         return days;
@@ -103,8 +129,12 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
     const formatDateDisplay = (dateString) => {
         if (!dateString) return null;
         const d = new Date(dateString);
-        return d.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' });
-    }
+        return d.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        });
+    };
 
     return (
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -112,10 +142,13 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
                 <button
                     className={cn(
                         "flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm",
-                        className
+                        className,
                     )}
                 >
-                    <Icon icon="lucide:calendar" className="text-gray-400 w-4 h-4" />
+                    <Icon
+                        icon="lucide:calendar"
+                        className="text-gray-400 w-4 h-4"
+                    />
                     <span className={value ? "text-gray-900" : "text-gray-400"}>
                         {formatDateDisplay(value) || placeholder}
                     </span>
@@ -127,23 +160,43 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
                             }}
                             className="ml-1 hover:bg-gray-200 rounded-full p-0.5 transition-colors"
                         >
-                            <Icon icon="lucide:x" className="text-gray-500 w-3 h-3" />
+                            <Icon
+                                icon="lucide:x"
+                                className="text-gray-500 w-3 h-3"
+                            />
                         </button>
                     )}
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="p-4 w-auto bg-white shadow-xl border border-gray-100 rounded-xl z-50" align="start">
+            <DropdownMenuContent
+                className="p-3 sm:p-4 w-[min(100vw-1rem,20rem)] bg-white shadow-xl border border-gray-100 rounded-xl z-50"
+                align="start"
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-bold text-gray-800 capitalize">
                         {currentMonthName} {currentYear}
                     </span>
                     <div className="flex gap-1">
-                        <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded-md text-gray-600">
-                            <Icon icon="lucide:chevron-left" width="16" height="16" />
+                        <button
+                            onClick={prevMonth}
+                            className="p-1 hover:bg-gray-100 rounded-md text-gray-600"
+                        >
+                            <Icon
+                                icon="lucide:chevron-left"
+                                width="16"
+                                height="16"
+                            />
                         </button>
-                        <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded-md text-gray-600">
-                            <Icon icon="lucide:chevron-right" width="16" height="16" />
+                        <button
+                            onClick={nextMonth}
+                            className="p-1 hover:bg-gray-100 rounded-md text-gray-600"
+                        >
+                            <Icon
+                                icon="lucide:chevron-right"
+                                width="16"
+                                height="16"
+                            />
                         </button>
                     </div>
                 </div>
@@ -151,7 +204,10 @@ export function DatePicker({ value, onChange, placeholder = "Pilih Tanggal", cla
                 {/* Days Header */}
                 <div className="grid grid-cols-7 gap-1 mb-2 text-center">
                     {dayNames.map((day) => (
-                        <div key={day} className="text-[10px] font-semibold text-gray-400">
+                        <div
+                            key={day}
+                            className="text-[10px] font-semibold text-gray-400"
+                        >
                             {day}
                         </div>
                     ))}

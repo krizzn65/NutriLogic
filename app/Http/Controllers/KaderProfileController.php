@@ -30,8 +30,8 @@ class KaderProfileController extends Controller
                     'id' => $user->posyandu->id,
                     'name' => $user->posyandu->name,
                 ] : null,
-                'profile_photo_url' => $user->profile_photo_path 
-                    ? asset('storage/' . $user->profile_photo_path) 
+                'profile_photo_url' => $user->profile_photo_path
+                    ? asset('storage/' . $user->profile_photo_path)
                     : null,
             ],
         ], 200);
@@ -69,6 +69,13 @@ class KaderProfileController extends Controller
 
         $user->save();
 
+        AdminActivityLogController::log(
+            'update',
+            "Kader {$user->name} memperbarui profil",
+            'User',
+            $user->id
+        );
+
         return response()->json([
             'data' => [
                 'id' => $user->id,
@@ -76,8 +83,8 @@ class KaderProfileController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role,
-                'profile_photo_url' => $user->profile_photo_path 
-                    ? asset('storage/' . $user->profile_photo_path) 
+                'profile_photo_url' => $user->profile_photo_path
+                    ? asset('storage/' . $user->profile_photo_path)
                     : null,
             ],
             'message' => 'Profil berhasil diperbarui.',
@@ -110,6 +117,13 @@ class KaderProfileController extends Controller
         $user->update([
             'password' => Hash::make($validated['new_password']),
         ]);
+
+        AdminActivityLogController::log(
+            'update',
+            "Kader {$user->name} mengubah password akun",
+            'User',
+            $user->id
+        );
 
         return response()->json([
             'message' => 'Password berhasil diubah.',

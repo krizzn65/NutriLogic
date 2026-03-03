@@ -7,7 +7,6 @@ use App\Models\Posyandu;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
@@ -73,6 +72,7 @@ class AdminUserController extends Controller
             'rw' => ['nullable', 'string', 'max:10'],
             'role' => ['required', Rule::in(['kader', 'admin'])], // ibu removed - parents register via self-registration or kader
             'posyandu_id' => ['nullable', 'exists:posyandus,id'],
+            'password' => ['nullable', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'],
         ]);
 
         // Validate posyandu_id for kader
@@ -82,9 +82,9 @@ class AdminUserController extends Controller
             ], 422);
         }
 
-        // Generate random password
-        $password = Str::random(8);
-        $validated['password'] = Hash::make($password);
+        // Use provided password if available, otherwise generate a secure temporary one.
+        $rawPassword = $validated['password'] ?? $this->generateSecurePassword();
+        $validated['password'] = Hash::make($rawPassword);
 
         $user = User::create($validated);
 
@@ -93,8 +93,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'data' => $user,
-            'password' => $password, // Return password for first-time setup
-            'message' => 'User berhasil ditambahkan.',
+            'message' => 'User berhasil ditambahkan. Password tidak dikirim melalui API.',
         ], 201);
     }
 
@@ -176,8 +175,8 @@ class AdminUserController extends Controller
 
         return response()->json([
             'data' => $user,
-            'message' => $user->is_active 
-                ? 'User berhasil diaktifkan.' 
+            'message' => $user->is_active
+                ? 'User berhasil diaktifkan.'
                 : 'User berhasil dinonaktifkan.',
         ], 200);
     }
@@ -205,24 +204,18 @@ class AdminUserController extends Controller
         // Store old password hash for audit trail
         $oldPasswordHash = $user->password;
 
-        // Check if manual password is provided
-        if ($request->has('password') && !empty($request->password)) {
-            $request->validate([
-                'password' => [
-                    'required',
-                    'string',
-                    'min:8',
-                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-                ],
-            ], [
-                'password.min' => 'Password minimal 8 karakter.',
-                'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka.',
-            ]);
-            $newPassword = $request->password;
-        } else {
-            // Generate new random password with complexity requirements
-            $newPassword = $this->generateSecurePassword();
-        }
+        $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+            ],
+        ], [
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, dan 1 angka.',
+        ]);
+        $newPassword = $request->password;
 
         $newPasswordHash = Hash::make($newPassword);
         $user->password = $newPasswordHash;
@@ -233,7 +226,7 @@ class AdminUserController extends Controller
             'user_id' => $user->id,
             'type' => 'warning',
             'title' => 'Password Anda Telah Direset',
-            'message' => 'Password akun Anda telah direset oleh Admin. Password baru: ' . $newPassword . '. Silakan login dengan password baru dan segera ubah password Anda.',
+            'message' => 'Password akun Anda telah direset oleh Admin. Silakan gunakan password baru yang sudah diinformasikan oleh admin dan segera ubah password Anda.',
             'link' => null,
             'metadata' => [
                 'reset_by' => auth()->id(),
@@ -252,13 +245,12 @@ class AdminUserController extends Controller
                 'action' => 'reset_password',
                 'before' => ['password_hash' => substr($oldPasswordHash, 0, 20) . '...'],
                 'after' => ['password_hash' => substr($newPasswordHash, 0, 20) . '...'],
-                'manual_password' => $request->has('password'),
+                'manual_password' => true,
             ]
         );
 
         return response()->json([
-            'password' => $newPassword,
-            'message' => 'Password berhasil direset.',
+            'message' => 'Password berhasil direset. Password baru tidak ditampilkan melalui API.',
         ], 200);
     }
 

@@ -1,114 +1,160 @@
-import { defineConfig } from 'vite';
-import laravel from 'laravel-vite-plugin';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
-import path from 'path';
+import { defineConfig } from "vite";
+import laravel from "laravel-vite-plugin";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
+import path from "path";
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.jsx'],
+            input: ["resources/css/app.css", "resources/js/app.jsx"],
             refresh: true,
         }),
         react({
-            jsxRuntime: 'classic',
+            jsxRuntime: "classic",
         }),
         VitePWA({
-            registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+            registerType: "autoUpdate",
+            includeAssets: ["favicon.ico", "apple-touch-icon.png"],
             manifest: {
-                name: 'NutriLogic - Sistem Informasi Posyandu',
-                short_name: 'NutriLogic',
-                description: 'Aplikasi monitoring gizi dan kesehatan anak posyandu',
-                theme_color: '#3b82f6',
-                background_color: '#ffffff',
-                display: 'standalone',
-                orientation: 'portrait',
-                scope: '/',
-                start_url: '/',
-                categories: ['health', 'medical', 'lifestyle'],
+                name: "NutriLogic - Sistem Informasi Posyandu",
+                short_name: "NutriLogic",
+                description:
+                    "Aplikasi monitoring gizi dan kesehatan anak posyandu",
+                theme_color: "#3b82f6",
+                background_color: "#ffffff",
+                display: "standalone",
+                orientation: "portrait",
+                scope: "/",
+                start_url: "/",
+                categories: ["health", "medical", "lifestyle"],
                 icons: [
                     {
-                        src: '/icons/icon.svg',
-                        sizes: 'any',
-                        type: 'image/svg+xml',
-                        purpose: 'any'
+                        src: "/icons/icon.svg",
+                        sizes: "any",
+                        type: "image/svg+xml",
+                        purpose: "any",
                     },
                     {
-                        src: '/logo_das.svg',
-                        sizes: 'any',
-                        type: 'image/svg+xml',
-                        purpose: 'maskable'
+                        src: "/logo_das.svg",
+                        sizes: "any",
+                        type: "image/svg+xml",
+                        purpose: "maskable",
                     },
                     {
-                        src: '/icons/icon-192x192.png',
-                        sizes: '192x192',
-                        type: 'image/png',
-                        purpose: 'any'
+                        src: "/icons/icon-192x192.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "any",
                     },
                     {
-                        src: '/icons/icon-512x512.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                        purpose: 'any maskable'
-                    }
-                ]
+                        src: "/icons/icon-512x512.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "any maskable",
+                    },
+                ],
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
                 maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
                 runtimeCaching: [
                     {
                         urlPattern: /^https:\/\/api\.dicebear\.com\/.*/i,
-                        handler: 'CacheFirst',
+                        handler: "CacheFirst",
                         options: {
-                            cacheName: 'avatar-cache',
+                            cacheName: "avatar-cache",
                             expiration: {
                                 maxEntries: 50,
-                                maxAgeSeconds: 60 * 60 * 24 * 30
+                                maxAgeSeconds: 60 * 60 * 24 * 30,
                             },
                             cacheableResponse: {
-                                statuses: [0, 200]
-                            }
-                        }
+                                statuses: [0, 200],
+                            },
+                        },
                     },
                     {
                         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-                        handler: 'CacheFirst',
+                        handler: "CacheFirst",
                         options: {
-                            cacheName: 'image-cache',
+                            cacheName: "image-cache",
                             expiration: {
                                 maxEntries: 100,
-                                maxAgeSeconds: 60 * 60 * 24 * 30
-                            }
-                        }
+                                maxAgeSeconds: 60 * 60 * 24 * 30,
+                            },
+                        },
                     },
                     {
                         urlPattern: /\.(?:woff|woff2|ttf|eot)$/,
-                        handler: 'CacheFirst',
+                        handler: "CacheFirst",
                         options: {
-                            cacheName: 'font-cache',
+                            cacheName: "font-cache",
                             expiration: {
                                 maxEntries: 20,
-                                maxAgeSeconds: 60 * 60 * 24 * 365
-                            }
-                        }
-                    }
-                ]
-            }
+                                maxAgeSeconds: 60 * 60 * 24 * 365,
+                            },
+                        },
+                    },
+                ],
+            },
         }),
     ],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, './resources/js'),
+            "@": path.resolve(__dirname, "./resources/js"),
+        },
+    },
+    build: {
+        sourcemap: false,
+        target: "es2020",
+        cssCodeSplit: true,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (!id.includes("node_modules")) return;
+
+                    if (
+                        id.includes("react-router-dom") ||
+                        id.includes("react-dom") ||
+                        id.includes("/react/")
+                    ) {
+                        return "vendor-react";
+                    }
+
+                    if (
+                        id.includes("@radix-ui") ||
+                        id.includes("lucide-react")
+                    ) {
+                        return "vendor-ui";
+                    }
+
+                    if (id.includes("framer-motion")) {
+                        return "vendor-motion";
+                    }
+
+                    if (
+                        id.includes("recharts") ||
+                        id.includes("react-leaflet") ||
+                        id.includes("leaflet")
+                    ) {
+                        return "vendor-data-viz";
+                    }
+
+                    if (id.includes("xlsx")) {
+                        return "vendor-xlsx";
+                    }
+
+                    return "vendor-misc";
+                },
+            },
         },
     },
     server: {
-        host: '0.0.0.0',
+        host: "0.0.0.0",
         port: 5173,
         strictPort: true,
         hmr: {
-            host: 'localhost',
+            host: "localhost",
             port: 5173,
         },
         watch: {

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../lib/api";
+import logger from "../../lib/logger";
 
 export default function EditAnakForm() {
     const navigate = useNavigate();
@@ -29,10 +30,10 @@ export default function EditAnakForm() {
 
     const fetchPosyandus = async () => {
         try {
-            const response = await api.get('/posyandus');
+            const response = await api.get("/posyandus");
             setPosyandus(response.data.data || response.data);
         } catch (err) {
-            console.error('Failed to fetch posyandus:', err);
+            logger.error("Failed to fetch posyandus:", err);
         }
     };
 
@@ -54,8 +55,8 @@ export default function EditAnakForm() {
                 is_active: child.is_active ?? true,
             });
         } catch (err) {
-            console.error('Failed to fetch child data:', err);
-            setError(err.response?.data?.message || 'Gagal memuat data anak');
+            logger.error("Failed to fetch child data:", err);
+            setError(err.response?.data?.message || "Gagal memuat data anak");
         } finally {
             setLoading(false);
         }
@@ -63,16 +64,16 @@ export default function EditAnakForm() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === "checkbox" ? checked : value,
         }));
 
         // Clear error for this field
         if (errors[name]) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
                 ...prev,
-                [name]: null
+                [name]: null,
             }));
         }
     };
@@ -104,11 +105,13 @@ export default function EditAnakForm() {
             const today = new Date();
             const maxAge = new Date();
             maxAge.setFullYear(maxAge.getFullYear() - 18); // Maksimal 18 tahun (anak posyandu)
-            
+
             if (birthDate > today) {
-                newErrors.birth_date = "Tanggal lahir tidak boleh di masa depan";
+                newErrors.birth_date =
+                    "Tanggal lahir tidak boleh di masa depan";
             } else if (birthDate < maxAge) {
-                newErrors.birth_date = "Usia anak melebihi batas maksimal (18 tahun)";
+                newErrors.birth_date =
+                    "Usia anak melebihi batas maksimal (18 tahun)";
             }
         }
 
@@ -116,11 +119,19 @@ export default function EditAnakForm() {
             newErrors.gender = "Jenis kelamin wajib dipilih";
         }
 
-        if (formData.birth_weight_kg && (parseFloat(formData.birth_weight_kg) < 0 || parseFloat(formData.birth_weight_kg) > 10)) {
+        if (
+            formData.birth_weight_kg &&
+            (parseFloat(formData.birth_weight_kg) < 0 ||
+                parseFloat(formData.birth_weight_kg) > 10)
+        ) {
             newErrors.birth_weight_kg = "Berat lahir harus antara 0-10 kg";
         }
 
-        if (formData.birth_height_cm && (parseFloat(formData.birth_height_cm) < 0 || parseFloat(formData.birth_height_cm) > 100)) {
+        if (
+            formData.birth_height_cm &&
+            (parseFloat(formData.birth_height_cm) < 0 ||
+                parseFloat(formData.birth_height_cm) > 100)
+        ) {
             newErrors.birth_height_cm = "Tinggi lahir harus antara 0-100 cm";
         }
 
@@ -144,8 +155,12 @@ export default function EditAnakForm() {
                 nik: formData.nik ? formData.nik.trim() : null,
                 birth_date: formData.birth_date,
                 gender: formData.gender,
-                birth_weight_kg: formData.birth_weight_kg ? parseFloat(formData.birth_weight_kg) : null,
-                birth_height_cm: formData.birth_height_cm ? parseFloat(formData.birth_height_cm) : null,
+                birth_weight_kg: formData.birth_weight_kg
+                    ? parseFloat(formData.birth_weight_kg)
+                    : null,
+                birth_height_cm: formData.birth_height_cm
+                    ? parseFloat(formData.birth_height_cm)
+                    : null,
                 notes: formData.notes ? formData.notes.trim() : null,
                 is_active: formData.is_active,
             };
@@ -153,17 +168,20 @@ export default function EditAnakForm() {
             await api.put(`/children/${id}`, dataToSubmit);
 
             // Navigate back to list with success message
-            navigate('/dashboard/anak', {
-                state: { message: 'Data anak berhasil diperbarui!' }
+            navigate("/dashboard/anak", {
+                state: { message: "Data anak berhasil diperbarui!" },
             });
         } catch (err) {
-            console.error('Submit error:', err);
+            logger.error("Submit error:", err);
 
             if (err.response?.data?.errors) {
                 // Validation errors from backend
                 setErrors(err.response.data.errors);
             } else {
-                setError(err.response?.data?.message || 'Gagal memperbarui data anak. Silakan coba lagi.');
+                setError(
+                    err.response?.data?.message ||
+                        "Gagal memperbarui data anak. Silakan coba lagi.",
+                );
             }
         } finally {
             setSubmitting(false);
@@ -171,18 +189,20 @@ export default function EditAnakForm() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('Apakah Anda yakin ingin menonaktifkan data anak ini?')) {
+        if (!confirm("Apakah Anda yakin ingin menonaktifkan data anak ini?")) {
             return;
         }
 
         try {
             await api.delete(`/children/${id}`);
-            navigate('/dashboard/anak', {
-                state: { message: 'Data anak berhasil dinonaktifkan!' }
+            navigate("/dashboard/anak", {
+                state: { message: "Data anak berhasil dinonaktifkan!" },
             });
         } catch (err) {
-            console.error('Delete error:', err);
-            setError(err.response?.data?.message || 'Gagal menonaktifkan data anak');
+            logger.error("Delete error:", err);
+            setError(
+                err.response?.data?.message || "Gagal menonaktifkan data anak",
+            );
         }
     };
 
@@ -207,11 +227,21 @@ export default function EditAnakForm() {
                 {/* Header */}
                 <PageHeader title="Edit Data Anak" subtitle="Portal Orang Tua">
                     <button
-                        onClick={() => navigate('/dashboard/anak')}
+                        onClick={() => navigate("/dashboard/anak")}
                         className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                     >
-                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <svg
+                            className="w-6 h-6 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                            />
                         </svg>
                     </button>
                 </PageHeader>
@@ -220,8 +250,16 @@ export default function EditAnakForm() {
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
                         <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            <svg
+                                className="w-5 h-5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clipRule="evenodd"
+                                />
                             </svg>
                             <span>{error}</span>
                         </div>
@@ -229,12 +267,19 @@ export default function EditAnakForm() {
                 )}
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <form
+                    onSubmit={handleSubmit}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Nama Lengkap */}
                         <div className="md:col-span-2">
-                            <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-2">
-                                Nama Lengkap <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="full_name"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Nama Lengkap{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -242,18 +287,26 @@ export default function EditAnakForm() {
                                 name="full_name"
                                 value={formData.full_name}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.full_name ? 'border-red-500' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.full_name
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Masukkan nama lengkap anak"
                             />
                             {errors.full_name && (
-                                <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.full_name}
+                                </p>
                             )}
                         </div>
 
                         {/* NIK */}
                         <div>
-                            <label htmlFor="nik" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                htmlFor="nik"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
                                 NIK (Opsional)
                             </label>
                             <input
@@ -265,19 +318,28 @@ export default function EditAnakForm() {
                                 maxLength="16"
                                 pattern="[0-9]*"
                                 inputMode="numeric"
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.nik ? 'border-red-500' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.nik
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Masukkan 16 digit NIK"
                             />
                             {errors.nik && (
-                                <p className="mt-1 text-sm text-red-600">{errors.nik}</p>
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.nik}
+                                </p>
                             )}
                         </div>
 
                         {/* Tanggal Lahir */}
                         <div>
-                            <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700 mb-2">
-                                Tanggal Lahir <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="birth_date"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Tanggal Lahir{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="date"
@@ -285,41 +347,66 @@ export default function EditAnakForm() {
                                 name="birth_date"
                                 value={formData.birth_date}
                                 onChange={handleChange}
-                                max={new Date().toISOString().split('T')[0]}
-                                min={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.birth_date ? 'border-red-500' : 'border-gray-300'
-                                    }`}
+                                max={new Date().toISOString().split("T")[0]}
+                                min={
+                                    new Date(
+                                        new Date().setFullYear(
+                                            new Date().getFullYear() - 18,
+                                        ),
+                                    )
+                                        .toISOString()
+                                        .split("T")[0]
+                                }
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.birth_date
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                }`}
                             />
                             {errors.birth_date && (
-                                <p className="mt-1 text-sm text-red-600">{errors.birth_date}</p>
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.birth_date}
+                                </p>
                             )}
                         </div>
 
                         {/* Jenis Kelamin */}
                         <div>
-                            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                                Jenis Kelamin <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="gender"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Jenis Kelamin{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="gender"
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.gender ? 'border-red-500' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.gender
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                }`}
                             >
                                 <option value="">Pilih jenis kelamin</option>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
                             {errors.gender && (
-                                <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.gender}
+                                </p>
                             )}
                         </div>
 
                         {/* Posyandu (Read-only) */}
                         <div>
-                            <label htmlFor="posyandu_id" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                htmlFor="posyandu_id"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
                                 Posyandu
                             </label>
                             <select
@@ -331,17 +418,25 @@ export default function EditAnakForm() {
                             >
                                 <option value="">Pilih posyandu</option>
                                 {posyandus.map((posyandu) => (
-                                    <option key={posyandu.id} value={posyandu.id}>
+                                    <option
+                                        key={posyandu.id}
+                                        value={posyandu.id}
+                                    >
                                         {posyandu.name}
                                     </option>
                                 ))}
                             </select>
-                            <p className="mt-1 text-xs text-gray-500">Posyandu tidak dapat diubah</p>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Posyandu tidak dapat diubah
+                            </p>
                         </div>
 
                         {/* Berat Lahir */}
                         <div>
-                            <label htmlFor="birth_weight_kg" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                htmlFor="birth_weight_kg"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
                                 Berat Lahir (kg)
                             </label>
                             <input
@@ -353,18 +448,26 @@ export default function EditAnakForm() {
                                 step="0.1"
                                 min="0"
                                 max="10"
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.birth_weight_kg ? 'border-red-500' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.birth_weight_kg
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Contoh: 3.2"
                             />
                             {errors.birth_weight_kg && (
-                                <p className="mt-1 text-sm text-red-600">{errors.birth_weight_kg}</p>
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.birth_weight_kg}
+                                </p>
                             )}
                         </div>
 
                         {/* Tinggi Lahir */}
                         <div>
-                            <label htmlFor="birth_height_cm" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                htmlFor="birth_height_cm"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
                                 Tinggi Lahir (cm)
                             </label>
                             <input
@@ -376,18 +479,26 @@ export default function EditAnakForm() {
                                 step="0.1"
                                 min="0"
                                 max="100"
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.birth_height_cm ? 'border-red-500' : 'border-gray-300'
-                                    }`}
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                    errors.birth_height_cm
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                }`}
                                 placeholder="Contoh: 48.5"
                             />
                             {errors.birth_height_cm && (
-                                <p className="mt-1 text-sm text-red-600">{errors.birth_height_cm}</p>
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.birth_height_cm}
+                                </p>
                             )}
                         </div>
 
                         {/* Catatan */}
                         <div className="md:col-span-2">
-                            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                htmlFor="notes"
+                                className="block text-sm font-medium text-gray-700 mb-2"
+                            >
                                 Catatan (Opsional)
                             </label>
                             <textarea
@@ -403,17 +514,26 @@ export default function EditAnakForm() {
 
                         {/* Status Aktif */}
                         <div className="md:col-span-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label
+                                htmlFor="edit-anak-active"
+                                className="flex items-center gap-2 cursor-pointer"
+                            >
                                 <input
+                                    id="edit-anak-active"
                                     type="checkbox"
                                     name="is_active"
                                     checked={formData.is_active}
                                     onChange={handleChange}
                                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 />
-                                <span className="text-sm font-medium text-gray-700">Data anak aktif</span>
+                                <span className="text-sm font-medium text-gray-700">
+                                    Data anak aktif
+                                </span>
                             </label>
-                            <p className="mt-1 text-xs text-gray-500 ml-6">Nonaktifkan jika anak sudah tidak terdaftar di posyandu</p>
+                            <p className="mt-1 text-xs text-gray-500 ml-6">
+                                Nonaktifkan jika anak sudah tidak terdaftar di
+                                posyandu
+                            </p>
                         </div>
                     </div>
 
@@ -431,7 +551,7 @@ export default function EditAnakForm() {
                         <div className="flex gap-3">
                             <button
                                 type="button"
-                                onClick={() => navigate('/dashboard/anak')}
+                                onClick={() => navigate("/dashboard/anak")}
                                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                 disabled={submitting}
                             >
@@ -449,8 +569,18 @@ export default function EditAnakForm() {
                                     </>
                                 ) : (
                                     <>
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        <svg
+                                            className="w-5 h-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M5 13l4 4L19 7"
+                                            />
                                         </svg>
                                         Simpan Perubahan
                                     </>
@@ -463,3 +593,4 @@ export default function EditAnakForm() {
         </div>
     );
 }
+

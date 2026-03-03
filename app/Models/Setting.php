@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class Setting extends Model
 {
@@ -19,9 +21,17 @@ class Setting extends Model
      */
     public static function get(string $key, $default = null)
     {
+        if (!self::settingsTableExists()) {
+            return $default;
+        }
+
         return Cache::remember("setting_{$key}", 3600, function () use ($key, $default) {
-            $setting = self::where('key', $key)->first();
-            
+            try {
+                $setting = self::where('key', $key)->first();
+            } catch (QueryException) {
+                return $default;
+            }
+
             if (!$setting) {
                 return $default;
             }
@@ -66,8 +76,17 @@ class Setting extends Model
      */
     public static function getAll(): array
     {
+        if (!self::settingsTableExists()) {
+            return [];
+        }
+
         return Cache::remember('all_settings', 3600, function () {
-            $settings = self::all();
+            try {
+                $settings = self::all();
+            } catch (QueryException) {
+                return [];
+            }
+
             $result = [];
 
             foreach ($settings as $setting) {
@@ -89,5 +108,21 @@ class Setting extends Model
             Cache::forget("setting_{$key}");
         }
     }
-}
 
+    protected static function settingsTableExists(): bool
+    {
+        static $exists = null;
+
+        if ($exists !== null) {
+            return $exists;
+        }
+
+        try {
+            $exists = Schema::hasTable((new self())->getTable());
+        } catch (\Throwable) {
+            $exists = false;
+        }
+
+        return $exists;
+    }
+}
