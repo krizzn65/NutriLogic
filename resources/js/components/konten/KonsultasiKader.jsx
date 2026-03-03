@@ -213,7 +213,7 @@ export default function KonsultasiKader() {
                                         <div className="flex items-start gap-3">
                                             {/* Avatar */}
                                             <div className="relative flex-shrink-0">
-                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-sm border border-blue-200">
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center text-blue-600 font-bold text-sm border border-blue-200">
                                                     {consultation.parent?.name?.substring(0, 2).toUpperCase() || 'OR'}
                                                 </div>
                                                 {consultation.parent?.is_online && (
@@ -372,3 +372,4 @@ export default function KonsultasiKader() {
         </div>
     );
 }
+

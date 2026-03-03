@@ -377,9 +377,9 @@ export default function DataAnakKader() {
                                                     {child.gender === 'L' ? (
                                                         <span className="text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Laki-laki</span>
                                                     ) : (
-                                                        <span className="text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Perempuan</span>
+                                                        <span className="text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Perempuan</span>
                                                     )}
-                                                    <span className="text-gray-300">•</span>
+                                                    <span className="text-gray-300"></span>
                                                     <span>{formatAge(child.age_in_months)}</span>
                                                 </div>
                                             </div>
@@ -467,7 +467,7 @@ export default function DataAnakKader() {
                                                                 {child.gender === 'L' ? (
                                                                     <span className="text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Laki-laki</span>
                                                                 ) : (
-                                                                    <span className="text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Perempuan</span>
+                                                                    <span className="text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded text-[10px] font-medium">Perempuan</span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -592,7 +592,7 @@ export default function DataAnakKader() {
                     </button>
 
                     <div className="ml-4 text-sm text-gray-600 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                        Halaman {pagination.current_page} dari {pagination.last_page} • Total: {pagination.total} anak
+                        Halaman {pagination.current_page} dari {pagination.last_page}  Total: {pagination.total} anak
                     </div>
                 </div>
             )}
@@ -620,3 +620,4 @@ export default function DataAnakKader() {
         </DashboardLayout>
     );
 }
+

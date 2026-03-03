@@ -13,7 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Icon } from "@iconify/react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import kepalaBayi from "../../assets/kepala_bayi.png";
 import kepalaBayiCewe from "../../assets/kepala_bayi_cewe.png";
 import LaporanKaderSkeleton from "../loading/LaporanKaderSkeleton";
@@ -279,12 +279,12 @@ export default function LaporanKader() {
                 <PageHeader title="Laporan & Ekspor" subtitle="Portal Kader" showProfile={true} />
             }
         >
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto mb-10">
                 {/* Main Card Container */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
 
                     {/* Toolbar Section */}
-                    <div className="p-4 lg:p-6 border-b border-gray-100 bg-white z-10 relative">
+                    <div className="p-5 lg:p-7 border-b border-gray-100 bg-white z-10 relative">
                         <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
 
                             {/* Left: Primary Filters */}
@@ -351,7 +351,7 @@ export default function LaporanKader() {
                                             { value: "kurus", label: "Kurus (Wasting)", color: "bg-yellow-500" },
                                             { value: "sangat_kurus", label: "Sangat Kurus", color: "bg-red-500" },
                                             { value: "lebih", label: "Risiko Lebih", color: "bg-blue-500" },
-                                            { value: "gemuk", label: "Gemuk (Obesitas)", color: "bg-purple-500" },
+                                            { value: "gemuk", label: "Gemuk (Obesitas)", color: "bg-indigo-500" },
                                         ].map((status) => (
                                             <DropdownMenuItem key={status.value} onClick={() => handleFilterChange("status", status.value)} className="cursor-pointer gap-2">
                                                 <span className={`w-2 h-2 rounded-full ${status.color}`} />
@@ -391,7 +391,7 @@ export default function LaporanKader() {
                                                 placeholder="Mulai"
                                                 className="h-9 w-auto min-w-[100px] text-sm border-0 bg-transparent focus:ring-0 px-2 justify-start hover:bg-gray-100 rounded-lg"
                                             />
-                                            <span className="text-gray-300">→</span>
+                                            <span className="text-gray-300"></span>
                                             <DatePicker
                                                 value={filters.end_date}
                                                 onChange={(date) => handleFilterChange("end_date", date)}
@@ -483,19 +483,25 @@ export default function LaporanKader() {
                                 <LaporanKaderSkeleton rowCount={6} />
                             </div>
                         ) : error ? (
-                            <div className="p-8 text-center">
-                                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Icon icon="lucide:alert-circle" className="w-8 h-8 text-red-500" />
+                            <div className="p-12 text-center">
+                                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Icon icon="lucide:alert-circle" className="w-10 h-10 text-red-500" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-1">Terjadi Kesalahan</h3>
-                                <p className="text-gray-500">{error}</p>
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">Terjadi Kesalahan</h3>
+                                <p className="text-gray-500 text-sm">{error}</p>
+                                <button
+                                    onClick={() => fetchHistory(pagination.current_page)}
+                                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors"
+                                >
+                                    Coba Lagi
+                                </button>
                             </div>
                         ) : historyData.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-96 text-gray-400">
                                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                     <Icon icon="lucide:clipboard-x" className="w-10 h-10 text-gray-300" />
                                 </div>
-                                <p className="text-gray-500 font-medium">Tidak ada data ditemukan</p>
+                                <p className="text-gray-500 font-bold">Tidak ada data ditemukan</p>
                                 <p className="text-sm text-gray-400 mt-1">Coba sesuaikan filter pencarian Anda</p>
                             </div>
                         ) : (
@@ -503,7 +509,7 @@ export default function LaporanKader() {
                                 {/* Desktop Table */}
                                 <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="bg-gray-50/50 border-b border-gray-200">
+                                        <thead className="bg-gray-50/80 border-b border-gray-100">
                                             <tr>
                                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ANAK</th>
                                                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-blue-600" onClick={() => handleSort('date')}>
@@ -682,24 +688,27 @@ export default function LaporanKader() {
 
                     {/* Footer / Pagination */}
                     {pagination.last_page > 1 && (
-                        <div className="p-4 border-t border-gray-100 bg-white flex justify-center">
-                            <div className="flex items-center gap-2">
+                        <div className="p-5 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between">
+                            <p className="text-xs text-gray-400 font-medium hidden sm:block">
+                                Menampilkan halaman {pagination.current_page} dari {pagination.last_page}
+                            </p>
+                            <div className="flex items-center gap-1 mx-auto sm:mx-0">
                                 <button
                                     onClick={() => handlePageChange(pagination.current_page - 1)}
                                     disabled={pagination.current_page === 1}
-                                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                                    className="p-2 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-transparent disabled:hover:shadow-none transition-all"
                                 >
-                                    <Icon icon="lucide:chevron-left" className="w-5 h-5 text-gray-600" />
+                                    <Icon icon="lucide:chevron-left" className="w-4 h-4 text-gray-600" />
                                 </button>
-                                <span className="text-sm font-medium text-gray-600">
-                                    Halaman {pagination.current_page} dari {pagination.last_page}
+                                <span className="text-sm font-bold text-gray-700 px-3">
+                                    {pagination.current_page} / {pagination.last_page}
                                 </span>
                                 <button
                                     onClick={() => handlePageChange(pagination.current_page + 1)}
                                     disabled={pagination.current_page === pagination.last_page}
-                                    className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                                    className="p-2 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-transparent disabled:hover:shadow-none transition-all"
                                 >
-                                    <Icon icon="lucide:chevron-right" className="w-5 h-5 text-gray-600" />
+                                    <Icon icon="lucide:chevron-right" className="w-4 h-4 text-gray-600" />
                                 </button>
                             </div>
                         </div>
@@ -709,3 +718,4 @@ export default function LaporanKader() {
         </DashboardLayout>
     );
 }
+

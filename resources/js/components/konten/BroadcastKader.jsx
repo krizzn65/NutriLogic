@@ -171,7 +171,7 @@ export default function BroadcastKader() {
         const colors = {
             jadwal_posyandu: 'bg-blue-50 text-blue-600 border-blue-200',
             info_gizi: 'bg-green-50 text-green-600 border-green-200',
-            pengumuman_umum: 'bg-purple-50 text-purple-600 border-purple-200',
+            pengumuman_umum: 'bg-indigo-50 text-indigo-600 border-indigo-200',
             lainnya: 'bg-gray-50 text-gray-600 border-gray-200',
         };
         return colors[type] || colors.lainnya;
@@ -358,7 +358,7 @@ export default function BroadcastKader() {
                         <div className="mt-6 space-y-3">
                             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Distribusi Tipe</div>
                             {[
-                                { label: 'Umum', count: broadcasts.filter(b => b.type === 'pengumuman_umum').length, color: 'bg-purple-500' },
+                                { label: 'Umum', count: broadcasts.filter(b => b.type === 'pengumuman_umum').length, color: 'bg-indigo-500' },
                                 { label: 'Jadwal', count: broadcasts.filter(b => b.type === 'jadwal_posyandu').length, color: 'bg-blue-500' },
                                 { label: 'Info Gizi', count: broadcasts.filter(b => b.type === 'info_gizi').length, color: 'bg-green-500' },
                             ].map((stat, idx) => (
@@ -553,3 +553,4 @@ export default function BroadcastKader() {
         </DashboardLayout>
     );
 }
+
